@@ -1,0 +1,30 @@
+{
+  "name": "ladysion",
+  "version": "1.0.0",
+  "description": "基于LangGraph的AI聊天程序",
+  "private": true,
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "dev:client": "cd client && npm run dev",
+    "dev:server": "cd server && npm run dev",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "build:client": "cd client && npm run build",
+    "build:server": "cd server && npm run build",
+    "build": "npm run build:server && npm run build:client",
+    "start": "cd server && npm start"
+  },
+  "keywords": [
+    "ai",
+    "chat",
+    "langgraph",
+    "hexagonal-architecture"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+} 
