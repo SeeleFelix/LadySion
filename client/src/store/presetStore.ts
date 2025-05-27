@@ -1,6 +1,15 @@
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
-import type { PresetType, InstructPreset, ContextPreset, SystemPromptPreset, MacroDescription, Preset } from '../types/preset';
+import { ref, computed } from 'vue';
+import type { 
+  PresetType, 
+  InstructPreset, 
+  ContextPreset, 
+  SystemPromptPreset, 
+  MacroDescription, 
+  Preset,
+  ApiResponse
+} from '../types/preset';
+import * as presetApi from '../api/presetApi';
 
 export const usePresetStore = defineStore('preset', () => {
   // 状态
@@ -119,7 +128,7 @@ export const usePresetStore = defineStore('preset', () => {
     error.value = null;
     
     try {
-      // 模拟API调用延迟
+      // 暂时使用模拟数据
       await new Promise(resolve => setTimeout(resolve, 500));
       
       switch (type) {
@@ -168,7 +177,20 @@ export const usePresetStore = defineStore('preset', () => {
       const preset = typePresets.find(p => p.name === name);
       
       if (preset) {
-        selectedPresets.value[type] = preset as any;
+        switch (type) {
+          case 'instruct':
+            selectedPresets.value.instruct = preset as InstructPreset;
+            break;
+          case 'context':
+            selectedPresets.value.context = preset as ContextPreset;
+            break;
+          case 'sysprompt':
+            selectedPresets.value.sysprompt = preset as SystemPromptPreset;
+            break;
+          case 'macros':
+            selectedPresets.value.macros = preset as MacroDescription;
+            break;
+        }
       } else {
         throw new Error(`预设 "${name}" 不存在`);
       }
@@ -215,10 +237,10 @@ export const usePresetStore = defineStore('preset', () => {
 
   return {
     // 状态
-    presets,
-    selectedPresets,
-    loading,
-    error,
+    presets: computed(() => presets.value),
+    selectedPresets: computed(() => selectedPresets.value),
+    loading: computed(() => loading.value),
+    error: computed(() => error.value),
     
     // Actions
     loadPresets,
