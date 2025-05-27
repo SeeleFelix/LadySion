@@ -4,6 +4,17 @@ import { CharacterController, ConversationController, createCharacterRoutes, cre
 import { AppConfig, DependencyContainer, createDefaultCharacters } from './infrastructure/config';
 import { CharacterService, ConversationService } from './domain/ports/input';
 import { LLMService } from './domain/ports/output';
+import { PresetUseCases } from './domain/usecases/preset/PresetUseCases';
+import { FileSystemPresetRepository } from './infrastructure/adapters/FileSystemPresetRepository';
+import { MacroSystem } from './domain/services/MacroSystem';
+import { InstructModeService } from './domain/services/InstructModeService';
+import { ContextTemplateService } from './domain/services/ContextTemplateService';
+import { SystemPromptService } from './domain/services/SystemPromptService';
+import { MasterPresetService } from './domain/services/MasterPresetService';
+import { PresetController } from './api/controllers/PresetController';
+import { createPresetRoutes } from './api/routes/presetRoutes';
+import path from 'path';
+import { createDefaultPresets } from './data/defaultPresets';
 
 /**
  * 应用程序类 - 应用的入口点
@@ -12,6 +23,14 @@ export class Application {
   private app: Express;
   private container: DependencyContainer;
   private config: AppConfig;
+  private context: {
+    presetUseCases?: PresetUseCases;
+    macroSystem?: MacroSystem;
+    instructModeService?: InstructModeService;
+    contextTemplateService?: ContextTemplateService;
+    systemPromptService?: SystemPromptService;
+    masterPresetService?: MasterPresetService;
+  } = {};
   
   constructor() {
     this.app = express();
@@ -77,10 +96,65 @@ export class Application {
       // 创建默认角色
       const characterService = this.container.resolve<CharacterService>('CharacterService');
       await createDefaultCharacters(characterService);
+      
+      // 注册预设系统
+      this.registerPresetSystem();
+      
+      // 创建默认预设
+      if (this.context.presetUseCases) {
+        await createDefaultPresets(this.context.presetUseCases);
+      }
     } catch (error) {
       console.error('应用初始化失败:', error);
       throw error;
     }
+  }
+  
+  /**
+   * 添加预设系统注册方法
+   */
+  private registerPresetSystem() {
+    // 创建预设存储库
+    const presetRepository = new FileSystemPresetRepository(path.join(process.cwd(), 'data/presets'));
+    
+    // 创建预设用例
+    const presetUseCases = new PresetUseCases(presetRepository);
+    
+    // 创建宏系统
+    const macroSystem = new MacroSystem();
+    macroSystem.registerDefaultMacros();
+    
+    // 创建服务
+    const instructModeService = new InstructModeService(presetUseCases, macroSystem);
+    const contextTemplateService = new ContextTemplateService(presetUseCases, macroSystem);
+    const systemPromptService = new SystemPromptService(presetUseCases, macroSystem);
+    const masterPresetService = new MasterPresetService(
+      presetUseCases,
+      instructModeService,
+      contextTemplateService,
+      systemPromptService
+    );
+    
+    // 创建控制器
+    const presetController = new PresetController(
+      presetUseCases,
+      instructModeService,
+      contextTemplateService,
+      systemPromptService,
+      masterPresetService
+    );
+    
+    // 注册路由
+    const presetRoutes = createPresetRoutes(presetController);
+    this.app.use('/api', presetRoutes);
+    
+    // 将服务添加到应用程序上下文
+    this.context.presetUseCases = presetUseCases;
+    this.context.macroSystem = macroSystem;
+    this.context.instructModeService = instructModeService;
+    this.context.contextTemplateService = contextTemplateService;
+    this.context.systemPromptService = systemPromptService;
+    this.context.masterPresetService = masterPresetService;
   }
   
   /**

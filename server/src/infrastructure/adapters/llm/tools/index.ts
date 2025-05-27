@@ -11,7 +11,7 @@ export const weatherTool = new DynamicStructuredTool({
   schema: z.object({
     location: z.string().describe('要查询天气的城市，例如"北京"或"上海"'),
   }),
-  func: async ({ location }) => {
+  func: async ({ location }: { location: string }) => {
     // 这里只是模拟返回，实际应用中应该调用真实的天气API
     const weatherData: Record<string, string> = {
       '北京': '晴天，26°C',
@@ -33,7 +33,7 @@ export const searchTool = new DynamicStructuredTool({
   schema: z.object({
     query: z.string().describe('搜索查询字符串'),
   }),
-  func: async ({ query }) => {
+  func: async ({ query }: { query: string }) => {
     // 模拟搜索结果
     return `关于"${query}"的搜索结果：这是一个模拟的搜索结果，在实际应用中可以连接到真实的搜索API。`;
   },

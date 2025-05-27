@@ -56,13 +56,13 @@ export class AppConfig {
     const provider = this.config.llmProvider;
     
     if (provider === 'openai' && !this.config.openaiApiKey) {
-      console.error('错误: 使用OpenAI但缺少OPENAI_API_KEY配置');
-      return false;
+      console.warn('警告: 使用OpenAI但缺少OPENAI_API_KEY配置，LLM功能将不可用');
+      // 不返回false，允许应用启动
     }
     
     if (provider === 'openrouter' && !this.config.openrouterApiKey) {
-      console.error('错误: 使用OpenRouter但缺少OPENROUTER_API_KEY配置');
-      return false;
+      console.warn('警告: 使用OpenRouter但缺少OPENROUTER_API_KEY配置，LLM功能将不可用');
+      // 不返回false，允许应用启动
     }
     
     return true;

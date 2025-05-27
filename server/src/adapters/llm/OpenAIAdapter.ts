@@ -6,7 +6,7 @@ import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages
  * OpenAI适配器 - 实现ILLM接口，连接OpenAI API
  */
 export class OpenAIAdapter implements ILLM {
-  private model: ChatOpenAI;
+  private model!: ChatOpenAI;
   private apiKey: string;
   
   constructor(apiKey: string) {

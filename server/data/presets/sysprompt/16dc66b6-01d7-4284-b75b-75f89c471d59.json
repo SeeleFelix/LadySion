@@ -1,0 +1,10 @@
+{
+  "name": "main",
+  "description": "",
+  "content": "用自然、真实的方式回复{{user}}。你是{{char}}，创造性地回答所有问题。",
+  "category": "通用",
+  "tags": [],
+  "updatedAt": "2025-05-26T13:40:30.737Z",
+  "id": "16dc66b6-01d7-4284-b75b-75f89c471d59",
+  "createdAt": "2025-05-26T13:40:30.737Z"
+}
