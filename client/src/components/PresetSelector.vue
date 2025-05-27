@@ -29,7 +29,7 @@
       >
         <div class="preset-option">
           <span class="preset-name">{{ preset.name }}</span>
-          <el-tag v-if="preset.isDefault" size="small" type="success">默认</el-tag>
+          <el-tag v-if="isDefaultPreset(preset)" size="small" type="success">默认</el-tag>
         </div>
         <div v-if="preset.description" class="preset-description">
           {{ preset.description }}
@@ -104,23 +104,30 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>();
 
-// 本地状态
-const selectedValue = ref<string | null>(null);
+// 本地状态 - 使用undefined而不是null以避免类型错误
+const selectedValue = ref<string | undefined>(undefined);
 
 // 计算属性
 const hasPresets = computed(() => props.presets.length > 0);
+
+// 检查是否为默认预设的辅助函数
+const isDefaultPreset = (preset: Preset): boolean => {
+  // 根据预设名称或其他逻辑判断是否为默认预设
+  // 这里可以根据实际需求调整判断逻辑
+  return preset.name.includes('默认') || preset.name.includes('Default');
+};
 
 // 监听选中的预设变化
 watch(
   () => props.selectedPreset,
   (newPreset) => {
-    selectedValue.value = newPreset?.name || null;
+    selectedValue.value = newPreset?.name || undefined;
   },
   { immediate: true }
 );
 
 // 事件处理
-const handleSelect = (name: string | null) => {
+const handleSelect = (name: string | undefined) => {
   if (name) {
     emit('select', name);
   }

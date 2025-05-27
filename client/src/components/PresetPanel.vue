@@ -59,11 +59,11 @@
           @edit="handleEditPreset"
         >
           <template #preview="{ preset }">
-            <div v-if="preset" class="instruct-preview">
-              <p><strong>系统提示:</strong> {{ preset.content.system_prompt.substring(0, 50) }}...</p>
-              <p><strong>输入前缀:</strong> {{ preset.content.input_prefix }}</p>
-              <p><strong>输出前缀:</strong> {{ preset.content.output_prefix }}</p>
-              <p><strong>停止序列:</strong> {{ preset.content.stop_sequence }}</p>
+            <div v-if="isInstructPreset(preset)" class="instruct-preview">
+              <p><strong>停止序列:</strong> {{ preset.stopSequence || '无' }}</p>
+              <p><strong>输入序列:</strong> {{ preset.inputSequence || '无' }}</p>
+              <p><strong>输出序列:</strong> {{ preset.outputSequence || '无' }}</p>
+              <p><strong>启用包装:</strong> {{ preset.wrap ? '是' : '否' }}</p>
             </div>
           </template>
         </preset-selector>
@@ -81,11 +81,11 @@
           @edit="handleEditPreset"
         >
           <template #preview="{ preset }">
-            <div v-if="preset" class="context-preview">
-              <p><strong>模板:</strong> {{ preset.content.template.substring(0, 50) }}...</p>
-              <p><strong>最大长度:</strong> {{ preset.content.max_length }}</p>
-              <p><strong>扫描深度:</strong> {{ preset.content.scan_depth }}</p>
-              <p><strong>频率惩罚:</strong> {{ preset.content.frequency_penalty }}</p>
+            <div v-if="isContextPreset(preset)" class="context-preview">
+              <p><strong>内容:</strong> {{ getContentPreview(preset.content) }}</p>
+              <p><strong>前缀:</strong> {{ preset.prefix || '无' }}</p>
+              <p><strong>后缀:</strong> {{ preset.suffix || '无' }}</p>
+              <p><strong>优先级:</strong> {{ preset.priority || '默认' }}</p>
             </div>
           </template>
         </preset-selector>
@@ -103,13 +103,14 @@
           @edit="handleEditPreset"
         >
           <template #preview="{ preset }">
-            <div v-if="preset" class="sysprompt-preview">
-              <p><strong>提示词:</strong> {{ preset.content.prompt.substring(0, 100) }}...</p>
+            <div v-if="isSystemPromptPreset(preset)" class="sysprompt-preview">
+              <p><strong>内容:</strong> {{ getContentPreview(preset.content) }}</p>
               <p><strong>状态:</strong> 
-                <el-tag :type="preset.content.enabled ? 'success' : 'danger'" size="small">
-                  {{ preset.content.enabled ? '启用' : '禁用' }}
+                <el-tag :type="preset.enabled ? 'success' : 'danger'" size="small">
+                  {{ preset.enabled ? '启用' : '禁用' }}
                 </el-tag>
               </p>
+              <p><strong>分类:</strong> {{ preset.category || '未分类' }}</p>
             </div>
           </template>
         </preset-selector>
@@ -127,7 +128,7 @@
           @refresh="handleRefreshMacros"
         >
           <template #preview="{ preset }">
-            <div v-if="preset" class="macro-preview">
+            <div v-if="isMacroDescription(preset)" class="macro-preview">
               <p><strong>宏名称:</strong> {{ preset.name }}</p>
               <p><strong>示例:</strong> {{ preset.example || '无示例' }}</p>
             </div>
@@ -172,7 +173,13 @@ import { ElCard, ElButton, ElAlert, ElEmpty, ElTag } from 'element-plus';
 import { Refresh } from '@element-plus/icons-vue';
 import PresetSelector from './PresetSelector.vue';
 import { usePresets } from '../composables/usePresets';
-import type { Preset } from '../types/preset';
+import type { 
+  Preset, 
+  InstructPreset, 
+  ContextPreset, 
+  SystemPromptPreset, 
+  MacroDescription 
+} from '../types/preset';
 
 // 使用组合式函数
 const {
@@ -192,6 +199,29 @@ const {
   initialize,
   clearError,
 } = usePresets();
+
+// 类型守卫函数
+const isInstructPreset = (preset: Preset): preset is InstructPreset => {
+  return 'inputSequence' in preset && 'outputSequence' in preset;
+};
+
+const isContextPreset = (preset: Preset): preset is ContextPreset => {
+  return 'content' in preset && typeof preset.content === 'string' && !('enabled' in preset);
+};
+
+const isSystemPromptPreset = (preset: Preset): preset is SystemPromptPreset => {
+  return 'content' in preset && 'enabled' in preset;
+};
+
+const isMacroDescription = (preset: Preset): preset is MacroDescription => {
+  return 'example' in preset || (!('content' in preset) && !('inputSequence' in preset));
+};
+
+// 辅助函数
+const getContentPreview = (content: string): string => {
+  if (!content) return '无内容';
+  return content.length > 50 ? `${content.substring(0, 50)}...` : content;
+};
 
 // 计算属性 - 各类型预设
 const instructPresets = computed(() => getPresetsByType('instruct'));

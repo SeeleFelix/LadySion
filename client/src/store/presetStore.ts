@@ -40,114 +40,61 @@ export const usePresetStore = defineStore('preset', () => {
   const loading = ref(false);
   const error = ref<string | null>(null);
 
-  // 模拟数据
-  const mockInstructPresets: InstructPreset[] = [
-    {
-      id: '1',
-      name: '默认指令模式',
-      description: '标准的指令模式配置',
-      content: {
-        enabled: true,
-        system_prompt: '你是一个有用的AI助手',
-        input_prefix: '用户: ',
-        output_prefix: '助手: ',
-        system_prefix: '系统: ',
-        stop_sequence: '\n\n',
-        separator_sequence: '\n',
-        wrap: false,
-        macro: false
-      },
-      isDefault: true
-    },
-    {
-      id: '2',
-      name: 'ChatML格式',
-      description: 'ChatML风格的指令模式',
-      content: {
-        enabled: true,
-        system_prompt: '<|im_start|>system\n你是一个有用的AI助手<|im_end|>',
-        input_prefix: '<|im_start|>user\n',
-        output_prefix: '<|im_start|>assistant\n',
-        system_prefix: '<|im_start|>system\n',
-        stop_sequence: '<|im_end|>',
-        separator_sequence: '\n',
-        wrap: true,
-        macro: false
-      },
-      isDefault: false
-    }
-  ];
-
-  const mockContextPresets: ContextPreset[] = [
-    {
-      id: '1',
-      name: '默认上下文',
-      description: '标准的上下文模板',
-      content: {
-        template: '{{char}}和{{user}}的对话\n\n{{history}}',
-        max_length: 2048,
-        scan_depth: 100,
-        frequency_penalty: 0.7,
-        presence_penalty: 0.7
-      },
-      isDefault: true
-    }
-  ];
-
-  const mockSystemPrompts: SystemPromptPreset[] = [
-    {
-      id: '1',
-      name: '默认系统提示',
-      description: '标准的系统提示词',
-      content: {
-        prompt: '你是一个有用、无害、诚实的AI助手。请用中文回答用户的问题。',
-        enabled: true
-      },
-      isDefault: true
-    }
-  ];
-
-  const mockMacros: MacroDescription[] = [
-    {
-      id: '1',
-      name: '{{char}}',
-      description: '角色名称',
-      example: 'Luna'
-    },
-    {
-      id: '2',
-      name: '{{user}}',
-      description: '用户名称',
-      example: '用户'
-    }
-  ];
-
-  // Actions
+  // Actions - 调用真实API
   const loadPresets = async (type: PresetType) => {
     loading.value = true;
     error.value = null;
     
     try {
-      // 暂时使用模拟数据
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      switch (type) {
-        case 'instruct':
-          presets.value.instruct = mockInstructPresets;
-          break;
-        case 'context':
-          presets.value.context = mockContextPresets;
-          break;
-        case 'sysprompt':
-          presets.value.sysprompt = mockSystemPrompts;
-          break;
-        case 'macros':
-          presets.value.macros = mockMacros;
-          break;
+      if (type === 'macros') {
+        // 宏使用特殊端点
+        const response = await presetApi.getMacroDescriptions();
+        const macroData = response.data.map((macro: any) => ({
+          id: macro.name || `macro-${Date.now()}`,
+          name: macro.name,
+          description: macro.description,
+          example: macro.example,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }));
+        presets.value.macros = macroData;
+      } else {
+        // 其他预设类型使用通用端点
+        const response = await presetApi.getAllPresets(type);
+        const presetData = response.data;
+        
+        switch (type) {
+          case 'instruct':
+            presets.value.instruct = presetData as InstructPreset[];
+            break;
+          case 'context':
+            presets.value.context = presetData as ContextPreset[];
+            break;
+          case 'sysprompt':
+            presets.value.sysprompt = presetData as SystemPromptPreset[];
+            break;
+        }
       }
     } catch (err) {
-      error.value = err instanceof Error ? err.message : '加载预设失败';
+      const errorMessage = err instanceof Error ? err.message : '加载预设失败';
+      error.value = errorMessage;
       console.error('加载预设失败:', err);
+      
+      // API调用失败时清空数据
+      switch (type) {
+        case 'instruct':
+          presets.value.instruct = [];
+          break;
+        case 'context':
+          presets.value.context = [];
+          break;
+        case 'sysprompt':
+          presets.value.sysprompt = [];
+          break;
+        case 'macros':
+          presets.value.macros = [];
+          break;
+      }
     } finally {
       loading.value = false;
     }
@@ -176,7 +123,33 @@ export const usePresetStore = defineStore('preset', () => {
       const typePresets = getPresetsByType(type);
       const preset = typePresets.find(p => p.name === name);
       
-      if (preset) {
+      if (!preset) {
+        throw new Error(`预设 "${name}" 不存在`);
+      }
+
+      // 调用后端API选择预设
+      try {
+        switch (type) {
+          case 'instruct':
+            await presetApi.selectInstructPreset(preset.id);
+            selectedPresets.value.instruct = preset as InstructPreset;
+            break;
+          case 'context':
+            await presetApi.selectContextPreset(preset.id);
+            selectedPresets.value.context = preset as ContextPreset;
+            break;
+          case 'sysprompt':
+            await presetApi.selectSystemPromptPreset(preset.id);
+            selectedPresets.value.sysprompt = preset as SystemPromptPreset;
+            break;
+          case 'macros':
+            // 宏不需要选择API调用，只需本地状态更新
+            selectedPresets.value.macros = preset as MacroDescription;
+            break;
+        }
+      } catch (apiError) {
+        // 即使API调用失败，也更新本地状态（优雅降级）
+        console.warn('API选择调用失败，仅更新本地状态:', apiError);
         switch (type) {
           case 'instruct':
             selectedPresets.value.instruct = preset as InstructPreset;
@@ -191,8 +164,6 @@ export const usePresetStore = defineStore('preset', () => {
             selectedPresets.value.macros = preset as MacroDescription;
             break;
         }
-      } else {
-        throw new Error(`预设 "${name}" 不存在`);
       }
     } catch (err) {
       error.value = err instanceof Error ? err.message : '选择预设失败';
@@ -208,9 +179,20 @@ export const usePresetStore = defineStore('preset', () => {
     error.value = null;
     
     try {
-      // 模拟保存配置
-      await new Promise(resolve => setTimeout(resolve, 300));
-      console.log(`更新${type}配置:`, config);
+      // 调用后端配置更新API
+      switch (type) {
+        case 'instruct':
+          await presetApi.updateInstructModeConfig(config);
+          break;
+        case 'context':
+          await presetApi.updateContextTemplateConfig(config);
+          break;
+        case 'sysprompt':
+          await presetApi.updateSystemPromptConfig(config);
+          break;
+        default:
+          console.log(`更新${type}配置:`, config);
+      }
     } catch (err) {
       error.value = err instanceof Error ? err.message : '更新配置失败';
       console.error('更新配置失败:', err);
@@ -220,19 +202,122 @@ export const usePresetStore = defineStore('preset', () => {
     }
   };
 
-  // 初始化加载默认预设
-  const initializeStore = async () => {
-    await Promise.all([
-      loadPresets('instruct'),
-      loadPresets('context'),
-      loadPresets('sysprompt'),
-      loadPresets('macros')
-    ]);
+  // 保存预设
+  const savePreset = async (type: PresetType, preset: Partial<Preset>) => {
+    loading.value = true;
+    error.value = null;
     
-    // 选择默认预设
-    selectedPresets.value.instruct = presets.value.instruct.find(p => p.isDefault) || null;
-    selectedPresets.value.context = presets.value.context.find(p => p.isDefault) || null;
-    selectedPresets.value.sysprompt = presets.value.sysprompt.find(p => p.isDefault) || null;
+    try {
+      const response = await presetApi.savePreset(type, preset);
+      const savedPreset = response.data;
+      
+      // 更新本地状态
+      const typePresets = getPresetsByType(type);
+      const existingIndex = typePresets.findIndex(p => p.id === preset.id);
+      
+      if (existingIndex >= 0) {
+        // 更新现有预设
+        switch (type) {
+          case 'instruct':
+            presets.value.instruct[existingIndex] = savedPreset as InstructPreset;
+            break;
+          case 'context':
+            presets.value.context[existingIndex] = savedPreset as ContextPreset;
+            break;
+          case 'sysprompt':
+            presets.value.sysprompt[existingIndex] = savedPreset as SystemPromptPreset;
+            break;
+          case 'macros':
+            presets.value.macros[existingIndex] = savedPreset as MacroDescription;
+            break;
+        }
+      } else {
+        // 添加新预设
+        switch (type) {
+          case 'instruct':
+            presets.value.instruct.push(savedPreset as InstructPreset);
+            break;
+          case 'context':
+            presets.value.context.push(savedPreset as ContextPreset);
+            break;
+          case 'sysprompt':
+            presets.value.sysprompt.push(savedPreset as SystemPromptPreset);
+            break;
+          case 'macros':
+            presets.value.macros.push(savedPreset as MacroDescription);
+            break;
+        }
+      }
+      
+      return savedPreset;
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : '保存预设失败';
+      console.error('保存预设失败:', err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  // 删除预设
+  const deletePreset = async (type: PresetType, id: string) => {
+    loading.value = true;
+    error.value = null;
+    
+    try {
+      await presetApi.deletePreset(type, id);
+      
+      // 从本地状态移除
+      switch (type) {
+        case 'instruct':
+          presets.value.instruct = presets.value.instruct.filter(p => p.id !== id);
+          if (selectedPresets.value.instruct?.id === id) {
+            selectedPresets.value.instruct = null;
+          }
+          break;
+        case 'context':
+          presets.value.context = presets.value.context.filter(p => p.id !== id);
+          if (selectedPresets.value.context?.id === id) {
+            selectedPresets.value.context = null;
+          }
+          break;
+        case 'sysprompt':
+          presets.value.sysprompt = presets.value.sysprompt.filter(p => p.id !== id);
+          if (selectedPresets.value.sysprompt?.id === id) {
+            selectedPresets.value.sysprompt = null;
+          }
+          break;
+        case 'macros':
+          presets.value.macros = presets.value.macros.filter(p => p.id !== id);
+          if (selectedPresets.value.macros?.id === id) {
+            selectedPresets.value.macros = null;
+          }
+          break;
+      }
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : '删除预设失败';
+      console.error('删除预设失败:', err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  // 初始化加载所有预设
+  const initializeStore = async () => {
+    try {
+      await Promise.all([
+        loadPresets('instruct'),
+        loadPresets('context'),
+        loadPresets('sysprompt'),
+        loadPresets('macros')
+      ]);
+      
+      // 不自动选择默认预设，让用户手动选择
+    } catch (err) {
+      console.error('初始化预设store失败:', err);
+      // 不抛出错误，允许应用继续运行
+    }
   };
 
   return {
@@ -247,6 +332,8 @@ export const usePresetStore = defineStore('preset', () => {
     getPresetsByType,
     selectPreset,
     updateConfig,
+    savePreset,
+    deletePreset,
     initializeStore
   };
 }); 

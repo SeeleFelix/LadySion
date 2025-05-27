@@ -4,7 +4,8 @@
 export enum PresetType {
   INSTRUCT = 'instruct',
   CONTEXT = 'context',
-  SYSTEM_PROMPT = 'system-prompt',
+  SYSTEM_PROMPT = 'sysprompt',
+  MACROS = 'macros',
   POST_HISTORY_INSTRUCTIONS = 'post-history-instructions'
 }
 
