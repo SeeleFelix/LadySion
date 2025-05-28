@@ -9,11 +9,11 @@
       <div class="left-panel" :class="{ collapsed: leftPanelCollapsed }">
         <div class="panel-header">
           <div class="panel-title">
-            <i class="fas fa-sliders-h"></i>
-            <span>AI 配置</span>
+            <font-awesome-icon icon="sliders-h" />
+            <span v-show="!leftPanelCollapsed">AI 配置</span>
           </div>
-          <button class="collapse-btn" @click="toggleLeftPanel">
-            <i class="fas" :class="leftPanelCollapsed ? 'fa-chevron-right' : 'fa-chevron-left'"></i>
+          <button class="collapse-btn ls-btn ls-btn--ghost" @click="toggleLeftPanel">
+            <font-awesome-icon :icon="leftPanelCollapsed ? 'chevron-right' : 'chevron-left'" />
           </button>
         </div>
         
@@ -30,8 +30,8 @@
               />
             </el-select>
             <div class="preset-actions">
-              <el-button size="small" @click="$router.push('/presets')" type="primary">
-                <i class="fas fa-cog"></i> 管理预设
+              <el-button size="small" @click="$router.push('/presets')" class="ls-btn ls-btn--primary">
+                <font-awesome-icon icon="cog" /> 管理预设
               </el-button>
             </div>
           </div>
@@ -41,80 +41,113 @@
             <h4>生成参数</h4>
             <div class="parameter-group">
               <div class="parameter-item">
-                <label>温度</label>
-                <el-slider v-model="temperature" :min="0" :max="2" :step="0.1" show-input />
+                <label>Temperature: {{ temperature }}</label>
+                <el-slider
+                  v-model="temperature"
+                  :min="0"
+                  :max="2"
+                  :step="0.1"
+                  show-stops
+                  class="st-slider"
+                />
               </div>
+              
               <div class="parameter-item">
-                <label>最大令牌</label>
-                <el-slider v-model="maxTokens" :min="50" :max="2048" :step="50" show-input />
+                <label>Max Tokens: {{ maxTokens }}</label>
+                <el-slider
+                  v-model="maxTokens"
+                  :min="1"
+                  :max="4096"
+                  :step="1"
+                  class="st-slider"
+                />
               </div>
+              
               <div class="parameter-item">
-                <label>Top P</label>
-                <el-slider v-model="topP" :min="0" :max="1" :step="0.1" show-input />
+                <label>Top P: {{ topP }}</label>
+                <el-slider
+                  v-model="topP"
+                  :min="0"
+                  :max="1"
+                  :step="0.01"
+                  class="st-slider"
+                />
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- 中央聊天区域 -->
+      <!-- 聊天区域 -->
       <div class="chat-area">
-        <!-- 顶部栏 -->
         <div class="chat-header">
-          <div class="chat-title">
-            <div class="character-info">
-              <img :src="currentCharacter.avatar" :alt="currentCharacter.name" class="character-avatar">
-              <div class="character-details">
-                <h3>{{ currentCharacter.name }}</h3>
-                <p>{{ currentCharacter.description }}</p>
-              </div>
+          <div class="character-info">
+            <div class="ls-avatar ls-avatar--md">
+              <img :src="currentCharacter.avatar" :alt="currentCharacter.name" />
+            </div>
+            <div class="character-details">
+              <h3>{{ currentCharacter.name }}</h3>
+              <span class="character-status">{{ currentCharacter.description }}</span>
             </div>
           </div>
+          
           <div class="chat-actions">
-            <el-button circle size="small" @click="clearChat">
-              <i class="fas fa-trash"></i>
+            <ThemeSwitcher />
+            <el-button class="ls-btn ls-btn--secondary" @click="exportChat">
+              <font-awesome-icon icon="download" />
+              <span class="btn-text">导出</span>
             </el-button>
-            <el-button circle size="small" @click="exportChat">
-              <i class="fas fa-download"></i>
+            <el-button class="ls-btn ls-btn--danger" @click="clearChat">
+              <font-awesome-icon icon="trash" />
+              <span class="btn-text">清空</span>
             </el-button>
+            <button class="collapse-btn ls-btn ls-btn--ghost" @click="toggleRightPanel">
+              <font-awesome-icon :icon="rightPanelCollapsed ? 'chevron-left' : 'chevron-right'" />
+            </button>
           </div>
         </div>
 
-        <!-- 消息区域 -->
+        <!-- 消息列表 -->
         <div class="messages-container" ref="messagesContainer">
-          <div class="messages-list">
+          <div v-if="messages.length === 0" class="empty-chat">
+            <div class="empty-icon">
+              <font-awesome-icon icon="comments" />
+            </div>
+            <h3>开始新的对话</h3>
+            <p>选择一个角色预设，然后开始聊天吧！</p>
+          </div>
+          
+          <div v-else class="messages-list">
             <div 
               v-for="message in messages" 
-              :key="message.id" 
-              class="message-wrapper"
-              :class="{ 'user-message': message.type === 'user', 'assistant-message': message.type === 'assistant' }"
+              :key="message.id"
+              class="ls-message"
+              :class="`ls-message--${message.type}`"
             >
-              <div class="message-avatar">
-                <img 
-                  :src="message.type === 'user' ? userAvatar : currentCharacter.avatar" 
-                  :alt="message.type === 'user' ? '用户' : currentCharacter.name"
-                >
-              </div>
-              <div class="message-content">
-                <div class="message-header">
-                  <span class="message-author">
-                    {{ message.type === 'user' ? '你' : currentCharacter.name }}
-                  </span>
-                  <span class="message-time">
-                    {{ formatTime(message.timestamp) }}
-                  </span>
+              <div class="ls-message__avatar">
+                <div class="ls-avatar ls-avatar--sm">
+                  <img 
+                    :src="message.type === 'user' ? userAvatar : currentCharacter.avatar" 
+                    :alt="message.type === 'user' ? 'User' : currentCharacter.name"
+                  />
                 </div>
-                <div class="message-text" v-html="formatMessage(message.content)"></div>
-                <div class="message-actions">
-                  <button class="action-btn" @click="editMessage(message)">
-                    <i class="fas fa-edit"></i>
-                  </button>
-                  <button class="action-btn" @click="deleteMessage(message.id)">
-                    <i class="fas fa-trash"></i>
-                  </button>
-                  <button class="action-btn" @click="regenerateMessage(message)" v-if="message.type === 'assistant'">
-                    <i class="fas fa-redo"></i>
-                  </button>
+              </div>
+              
+              <div class="ls-message__content">
+                <div class="ls-message__bubble" v-html="formatMessage(message.content)"></div>
+                <div class="ls-message__meta">
+                  <span class="ls-message__time">{{ formatTime(message.timestamp) }}</span>
+                  <div class="ls-message__actions">
+                    <button class="ls-btn ls-btn--sm" @click="editMessage(message)">
+                      <font-awesome-icon icon="edit" />
+                    </button>
+                    <button class="ls-btn ls-btn--sm" @click="deleteMessage(message.id)">
+                      <font-awesome-icon icon="trash" />
+                    </button>
+                    <button class="ls-btn ls-btn--sm" @click="regenerateMessage(message)">
+                      <font-awesome-icon icon="redo" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -122,88 +155,95 @@
         </div>
 
         <!-- 输入区域 -->
-        <div class="chat-input-area">
+        <div class="input-area">
           <div class="input-container">
             <el-input
-              v-model="inputMessage"
+              v-model="newMessage"
               type="textarea"
               :rows="3"
-              placeholder="在这里输入你的消息..."
-              class="st-input"
+              placeholder="输入消息..."
+              class="message-input ls-textarea"
               @keydown.ctrl.enter="sendMessage"
-              :disabled="isGenerating"
+              @keydown.meta.enter="sendMessage"
             />
             <div class="input-actions">
-              <el-button 
-                type="primary" 
-                @click="sendMessage" 
-                :loading="isGenerating"
-                class="send-btn"
-              >
-                <i class="fas fa-paper-plane"></i>
-                发送
-              </el-button>
-              <el-button 
-                v-if="isGenerating"
-                @click="stopGeneration"
-                type="danger"
-                class="stop-btn"
-              >
-                <i class="fas fa-stop"></i>
-                停止
-              </el-button>
+              <div class="input-info">
+                <span class="token-count">{{ messageTokens }} tokens</span>
+                <span class="shortcuts">Ctrl+Enter 发送</span>
+              </div>
+              <div class="send-actions">
+                <el-button 
+                  class="ls-btn ls-btn--secondary"
+                  @click="regenerateLastMessage"
+                  :disabled="messages.length === 0"
+                >
+                  <font-awesome-icon icon="redo" />
+                </el-button>
+                <el-button 
+                  class="ls-btn ls-btn--primary send-btn"
+                  @click="sendMessage"
+                  :disabled="!newMessage.trim() || isGenerating"
+                  :loading="isGenerating"
+                >
+                  <font-awesome-icon icon="paper-plane" />
+                  发送
+                </el-button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- 右侧角色面板 -->
+      <!-- 右侧面板 -->
       <div class="right-panel" :class="{ collapsed: rightPanelCollapsed }">
         <div class="panel-header">
           <div class="panel-title">
-            <i class="fas fa-users"></i>
-            <span>角色</span>
+            <font-awesome-icon icon="user" />
+            <span v-show="!rightPanelCollapsed">角色信息</span>
           </div>
-          <button class="collapse-btn" @click="toggleRightPanel">
-            <i class="fas" :class="rightPanelCollapsed ? 'fa-chevron-left' : 'fa-chevron-right'"></i>
+          <button class="collapse-btn ls-btn ls-btn--ghost" @click="toggleRightPanel">
+            <font-awesome-icon :icon="rightPanelCollapsed ? 'chevron-left' : 'chevron-right'" />
           </button>
         </div>
         
         <div class="panel-content" v-show="!rightPanelCollapsed">
-          <!-- 当前角色信息 -->
-          <div class="current-character">
-            <div class="character-card">
-              <img :src="currentCharacter.avatar" :alt="currentCharacter.name" class="character-image">
-              <div class="character-info">
-                <h4>{{ currentCharacter.name }}</h4>
-                <p>{{ currentCharacter.description }}</p>
+          <!-- 角色卡片 -->
+          <div class="character-card ls-card">
+            <div class="character-avatar">
+              <div class="ls-avatar ls-avatar--xl">
+                <img :src="currentCharacter.avatar" :alt="currentCharacter.name" />
+              </div>
+            </div>
+            <div class="character-info-detail">
+              <h3>{{ currentCharacter.name }}</h3>
+              <p class="character-description">{{ currentCharacter.description }}</p>
+              <div class="character-tags">
+                <span 
+                  v-for="tag in currentCharacter.tags" 
+                  :key="tag"
+                  class="ls-tag ls-tag--accent"
+                >
+                  {{ tag }}
+                </span>
               </div>
             </div>
           </div>
 
-          <!-- 角色列表 -->
-          <div class="character-list">
-            <h4>可用角色</h4>
-            <div class="character-grid">
-              <div 
-                v-for="character in characters" 
-                :key="character.id"
-                class="character-item"
-                :class="{ active: character.id === currentCharacter.id }"
-                @click="selectCharacter(character)"
-              >
-                <img :src="character.avatar" :alt="character.name">
-                <span>{{ character.name }}</span>
-              </div>
+          <!-- 聊天统计 -->
+          <div class="chat-stats ls-card">
+            <h4>聊天统计</h4>
+            <div class="stat-item">
+              <span class="stat-label">消息数量</span>
+              <span class="stat-value">{{ messages.length }}</span>
             </div>
-            <el-button 
-              type="primary" 
-              @click="$router.push('/characters')"
-              class="manage-btn"
-              block
-            >
-              <i class="fas fa-cog"></i> 管理角色
-            </el-button>
+            <div class="stat-item">
+              <span class="stat-label">总字符数</span>
+              <span class="stat-value">{{ totalCharacters }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">聊天时长</span>
+              <span class="stat-value">{{ chatDuration }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -212,12 +252,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, nextTick, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
+import ThemeSwitcher from '@/components/common/ThemeSwitcher.vue'
 
+// 接口定义
 interface Message {
   id: string
-  type: 'user' | 'assistant'
+  type: 'user' | 'bot' | 'system'
   content: string
   timestamp: Date
 }
@@ -225,94 +267,66 @@ interface Message {
 interface Character {
   id: string
   name: string
-  avatar: string
   description: string
+  avatar: string
+  tags: string[]
 }
 
 interface Preset {
   id: string
   name: string
-  type: string
+  description: string
 }
 
 // 响应式数据
 const leftPanelCollapsed = ref(false)
 const rightPanelCollapsed = ref(false)
-const inputMessage = ref('')
+const messages = ref<Message[]>([])
+const newMessage = ref('')
 const isGenerating = ref(false)
 const messagesContainer = ref<HTMLElement>()
 
 // 配置参数
-const temperature = ref(0.7)
-const maxTokens = ref(150)
-const topP = ref(0.9)
 const selectedPreset = ref('')
+const temperature = ref(0.7)
+const maxTokens = ref(2048)
+const topP = ref(0.9)
 
-// 用户头像
-const userAvatar = 'https://api.dicebear.com/7.x/avataaars/svg?seed=User&backgroundColor=409EFF'
-
-// 示例角色数据
-const sampleCharacters = [
-  {
-    id: '1',
-    name: 'Aria',
-    description: '友善的AI助手',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Aria',
-    personality: '友善、乐于助人、聪明'
-  },
-  {
-    id: '2', 
-    name: 'Luna',
-    description: '神秘的月之女神',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Luna',
-    personality: '神秘、优雅、智慧'
-  },
-  {
-    id: '3',
-    name: 'Rex',
-    description: '勇敢的探险家',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Rex',
-    personality: '勇敢、冒险、坚强'
-  },
-  {
-    id: '4',
-    name: 'Sage',
-    description: '智慧的贤者',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sage',
-    personality: '智慧、沉稳、博学'
-  }
-]
-
-// 当前选中的角色
-const currentCharacter = ref(sampleCharacters[0])
-
-// 响应式数据
-const characters = ref(sampleCharacters)
-
-// 预设列表
-const presets = ref<Preset[]>([])
-
-// 消息列表
-const messages = ref<Message[]>([
-  {
-    id: '1',
-    type: 'assistant',
-    content: '你好！我是 ' + sampleCharacters[0].name + '，' + sampleCharacters[0].description + '。有什么我可以帮助你的吗？',
-    timestamp: new Date(Date.now() - 300000) // 5分钟前
-  },
-  {
-    id: '2',
-    type: 'user',
-    content: '你好！很高兴认识你。能告诉我更多关于你的信息吗？',
-    timestamp: new Date(Date.now() - 240000) // 4分钟前
-  },
-  {
-    id: '3',
-    type: 'assistant',
-    content: '当然可以！我是一个' + sampleCharacters[0].personality + '的AI角色。我喜欢与人交流，解答问题，分享有趣的想法。我会尽我所能帮助你，让我们的对话变得有意义和愉快！',
-    timestamp: new Date(Date.now() - 180000) // 3分钟前
-  }
+// 预设数据
+const presets = ref<Preset[]>([
+  { id: '1', name: 'Alpaca', description: '指令跟随模型' },
+  { id: '2', name: 'ChatML', description: '对话标记语言' },
+  { id: '3', name: 'Vicuna', description: '基于Llama的聊天模型' }
 ])
+
+// 当前角色
+const currentCharacter = ref<Character>({
+  id: '1',
+  name: 'Lady Sion',
+  description: '智能AI助手，友善且乐于助人',
+  avatar: '/api/placeholder/64/64',
+  tags: ['AI助手', '友善', '智能']
+})
+
+const userAvatar = '/api/placeholder/64/64'
+
+// 计算属性
+const messageTokens = computed(() => {
+  // 简单的token计算，实际应该使用tokenizer
+  return Math.ceil(newMessage.value.length / 3.5)
+})
+
+const totalCharacters = computed(() => {
+  return messages.value.reduce((total, msg) => total + msg.content.length, 0)
+})
+
+const chatDuration = computed(() => {
+  if (messages.value.length === 0) return '0分钟'
+  const first = messages.value[0].timestamp
+  const last = messages.value[messages.value.length - 1].timestamp
+  const duration = Math.floor((last.getTime() - first.getTime()) / 60000)
+  return `${duration}分钟`
+})
 
 // 方法
 const toggleLeftPanel = () => {
@@ -323,114 +337,87 @@ const toggleRightPanel = () => {
   rightPanelCollapsed.value = !rightPanelCollapsed.value
 }
 
-const selectCharacter = (character: Character) => {
-  currentCharacter.value = character
-  // 清空消息或切换对话
-  messages.value = [{
-    id: Date.now().toString(),
-    type: 'assistant',
-    content: `你好！我是${character.name}，${character.description}`,
-    timestamp: new Date()
-  }]
-}
-
 const sendMessage = async () => {
-  if (!inputMessage.value.trim() || isGenerating.value) return
+  if (!newMessage.value.trim() || isGenerating.value) return
 
-  const userMessage: Message = {
+  // 添加用户消息
+  const userMsg: Message = {
     id: Date.now().toString(),
     type: 'user',
-    content: inputMessage.value,
+    content: newMessage.value.trim(),
     timestamp: new Date()
   }
-
-  messages.value.push(userMessage)
-  const messageContent = inputMessage.value
-  inputMessage.value = ''
-  isGenerating.value = true
-
+  
+  messages.value.push(userMsg)
+  const userInput = newMessage.value
+  newMessage.value = ''
+  
+  // 滚动到底部
   await nextTick()
   scrollToBottom()
 
+  // 模拟AI回复
+  isGenerating.value = true
   try {
-    const response = await fetch('/api/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        message: messageContent,
-        character: currentCharacter.value.id,
-        temperature: temperature.value,
-        maxTokens: maxTokens.value,
-        topP: topP.value
+    // 这里应该调用实际的AI API
+    setTimeout(() => {
+      const botMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'bot',
+        content: `感谢您的消息："${userInput}"。我是Lady Sion，很高兴与您交流！`,
+        timestamp: new Date()
+      }
+      
+      messages.value.push(botMsg)
+      isGenerating.value = false
+      
+      nextTick(() => {
+        scrollToBottom()
       })
-    })
-
-    if (!response.ok) {
-      throw new Error('网络错误')
-    }
-
-    const data = await response.json()
-
-    const assistantMessage: Message = {
-      id: (Date.now() + 1).toString(),
-      type: 'assistant',
-      content: data.message,
-      timestamp: new Date()
-    }
-
-    messages.value.push(assistantMessage)
-    await nextTick()
-    scrollToBottom()
+    }, 1500)
   } catch (error) {
-    console.error('发送消息失败:', error)
-    ElMessage.error('发送消息失败，请稍后再试')
-  } finally {
     isGenerating.value = false
+    ElMessage.error('消息发送失败')
   }
-}
-
-const stopGeneration = () => {
-  isGenerating.value = false
-  // 这里应该取消正在进行的请求
 }
 
 const clearChat = () => {
   messages.value = []
+  ElMessage.success('聊天记录已清空')
 }
 
 const exportChat = () => {
-  const chatData = {
-    character: currentCharacter.value,
-    messages: messages.value,
-    exportTime: new Date().toISOString()
-  }
+  // 实现聊天记录导出
+  ElMessage.info('导出功能开发中...')
+}
+
+const regenerateLastMessage = () => {
+  if (messages.value.length === 0) return
   
-  const blob = new Blob([JSON.stringify(chatData, null, 2)], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `chat_${currentCharacter.value.name}_${new Date().toISOString().split('T')[0]}.json`
-  a.click()
-  URL.revokeObjectURL(url)
+  const lastMessage = messages.value[messages.value.length - 1]
+  if (lastMessage.type === 'bot') {
+    regenerateMessage(lastMessage)
+  }
 }
 
 const editMessage = (message: Message) => {
   // 实现消息编辑功能
   console.log('编辑消息:', message)
+  ElMessage.info('编辑功能开发中...')
 }
 
 const deleteMessage = (messageId: string) => {
   const index = messages.value.findIndex(m => m.id === messageId)
   if (index > -1) {
     messages.value.splice(index, 1)
+    ElMessage.success('消息已删除')
   }
 }
 
 const regenerateMessage = (message: Message) => {
   // 实现消息重新生成功能
   console.log('重新生成消息:', message)
+  ElMessage.info('重新生成功能开发中...')
 }
 
 const formatMessage = (content: string): string => {
@@ -451,11 +438,13 @@ const scrollToBottom = () => {
 // 加载预设列表
 const loadPresets = async () => {
   try {
-    const response = await fetch('/api/presets')
-    if (response.ok) {
-      const data = await response.json()
-      presets.value = data
-    }
+    // 这里应该调用实际的API
+    // const response = await fetch('/api/presets')
+    // if (response.ok) {
+    //   const data = await response.json()
+    //   presets.value = data
+    // }
+    console.log('预设加载完成')
   } catch (error) {
     console.error('加载预设失败:', error)
   }
@@ -469,9 +458,10 @@ onMounted(() => {
 <style scoped>
 .silly-tavern-home {
   height: 100vh;
-  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  background: var(--theme-main-bg);
   position: relative;
   overflow: hidden;
+  color: var(--text-primary);
 }
 
 .background-blur {
@@ -480,8 +470,8 @@ onMounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: radial-gradient(circle at center, rgba(68, 68, 68, 0.3) 0%, rgba(34, 34, 34, 0.8) 100%);
-  backdrop-filter: blur(2px);
+  background: radial-gradient(circle at center, var(--glass-bg-dark) 0%, var(--theme-main-bg) 100%);
+  backdrop-filter: blur(var(--blur-chat));
   z-index: 0;
 }
 
@@ -492,34 +482,38 @@ onMounted(() => {
   z-index: 1;
 }
 
-/* 左侧面板 */
-.left-panel {
-  width: 320px;
-  background: rgba(26, 26, 26, 0.95);
-  backdrop-filter: blur(10px);
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
-  transition: width 0.3s ease;
+/* 面板通用样式 */
+.left-panel,
+.right-panel {
+  background: var(--st-glass-bg);
+  backdrop-filter: blur(var(--blur-main));
+  border: 1px solid var(--st-glass-border);
+  transition: width var(--duration-normal) var(--easing-ease-in-out);
   display: flex;
   flex-direction: column;
+  box-shadow: var(--shadow-lg);
+}
+
+.left-panel {
+  width: 320px;
+  border-right: none;
+  border-radius: 0 var(--radius-xl) var(--radius-xl) 0;
+  margin: var(--space-4) 0 var(--space-4) var(--space-4);
+}
+
+.right-panel {
+  width: 280px;
+  border-left: none;
+  border-radius: var(--radius-xl) 0 0 var(--radius-xl);
+  margin: var(--space-4) var(--space-4) var(--space-4) 0;
 }
 
 .left-panel.collapsed {
-  width: 50px;
-}
-
-/* 右侧面板 */
-.right-panel {
-  width: 280px;
-  background: rgba(26, 26, 26, 0.95);
-  backdrop-filter: blur(10px);
-  border-left: 1px solid rgba(255, 255, 255, 0.1);
-  transition: width 0.3s ease;
-  display: flex;
-  flex-direction: column;
+  width: 60px;
 }
 
 .right-panel.collapsed {
-  width: 50px;
+  width: 60px;
 }
 
 /* 面板头部 */
@@ -527,69 +521,73 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 15px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.3);
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--st-glass-border);
+  background: var(--glass-bg-dark);
+  border-radius: inherit;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
 }
 
 .panel-title {
   display: flex;
   align-items: center;
-  gap: 10px;
-  color: #fff;
-  font-weight: bold;
+  gap: var(--space-2);
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  text-shadow: var(--text-shadow);
 }
 
 .collapse-btn {
-  background: none;
-  border: none;
-  color: #888;
-  cursor: pointer;
-  padding: 5px;
-  border-radius: 4px;
-  transition: all 0.2s;
-}
-
-.collapse-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* 面板内容 */
 .panel-content {
   flex: 1;
-  padding: 20px;
+  padding: var(--space-4);
   overflow-y: auto;
-  color: #ccc;
+  color: var(--text-secondary);
 }
 
 .config-section {
-  margin-bottom: 30px;
+  margin-bottom: var(--space-8);
 }
 
 .config-section h4 {
-  color: #fff;
-  margin-bottom: 15px;
-  font-size: 14px;
+  color: var(--text-primary);
+  margin-bottom: var(--space-4);
+  font-size: var(--text-sm);
   text-transform: uppercase;
   letter-spacing: 1px;
+  text-shadow: var(--text-shadow);
+  border-bottom: 1px solid var(--st-glass-border);
+  padding-bottom: var(--space-2);
 }
 
 .parameter-group {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--space-6);
 }
 
 .parameter-item label {
   display: block;
-  margin-bottom: 8px;
-  color: #bbb;
-  font-size: 13px;
+  margin-bottom: var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: 500;
 }
 
 .preset-actions {
-  margin-top: 15px;
+  margin-top: var(--space-4);
 }
 
 /* 聊天区域 */
@@ -597,270 +595,245 @@ onMounted(() => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: rgba(42, 42, 42, 0.8);
-  backdrop-filter: blur(5px);
+  background: var(--theme-chat-bg);
+  backdrop-filter: blur(var(--blur-chat));
+  margin: var(--space-4);
+  border-radius: var(--radius-2xl);
+  border: 1px solid var(--st-glass-border);
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
 }
 
 .chat-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 20px;
-  background: rgba(0, 0, 0, 0.4);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: var(--space-4) var(--space-6);
+  background: var(--glass-bg-dark);
+  border-bottom: 1px solid var(--st-glass-border);
 }
 
 .character-info {
   display: flex;
   align-items: center;
-  gap: 15px;
-}
-
-.character-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  gap: var(--space-4);
 }
 
 .character-details h3 {
   margin: 0;
-  color: #fff;
-  font-size: 16px;
+  color: var(--text-primary);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  text-shadow: var(--text-shadow);
 }
 
-.character-details p {
-  margin: 5px 0 0 0;
-  color: #888;
-  font-size: 12px;
+.character-status {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
 }
 
 .chat-actions {
   display: flex;
-  gap: 10px;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.btn-text {
+  margin-left: var(--space-1);
 }
 
 /* 消息区域 */
 .messages-container {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
+  padding: var(--space-4);
+  scroll-behavior: smooth;
 }
 
-.message-wrapper {
+.empty-chat {
   display: flex;
-  gap: 15px;
-  margin-bottom: 20px;
-}
-
-.message-avatar img {
-  width: 35px;
-  height: 35px;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.message-content {
-  flex: 1;
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 12px;
-  padding: 15px;
-  backdrop-filter: blur(5px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  position: relative;
-}
-
-.user-message .message-content {
-  background: rgba(64, 158, 255, 0.2);
-  border-color: rgba(64, 158, 255, 0.3);
-}
-
-.message-header {
-  display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
-  margin-bottom: 8px;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  color: var(--text-muted);
 }
 
-.message-author {
-  font-weight: bold;
-  color: #fff;
-  font-size: 13px;
+.empty-icon {
+  font-size: var(--text-3xl);
+  margin-bottom: var(--space-4);
+  opacity: 0.5;
 }
 
-.message-time {
-  color: #888;
-  font-size: 11px;
+.empty-chat h3 {
+  color: var(--text-secondary);
+  margin-bottom: var(--space-2);
 }
 
-.message-text {
-  color: #ddd;
-  line-height: 1.5;
-}
-
-.message-actions {
-  position: absolute;
-  top: 10px;
-  right: 10px;
+.messages-list {
   display: flex;
-  gap: 5px;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.message-content:hover .message-actions {
-  opacity: 1;
-}
-
-.action-btn {
-  background: rgba(0, 0, 0, 0.6);
-  border: none;
-  color: #888;
-  padding: 4px 6px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 11px;
-  transition: all 0.2s;
-}
-
-.action-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  flex-direction: column;
+  gap: var(--space-4);
 }
 
 /* 输入区域 */
-.chat-input-area {
-  padding: 20px;
-  background: rgba(0, 0, 0, 0.4);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+.input-area {
+  padding: var(--space-4) var(--space-6);
+  border-top: 1px solid var(--st-glass-border);
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(var(--blur-md));
 }
 
 .input-container {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: var(--space-3);
+}
+
+.message-input {
+  resize: none;
 }
 
 .input-actions {
   display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-}
-
-/* 角色相关 */
-.current-character {
-  margin-bottom: 30px;
-}
-
-.character-card {
-  background: rgba(0, 0, 0, 0.4);
-  border-radius: 12px;
-  padding: 15px;
-  text-align: center;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.character-image {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  margin-bottom: 10px;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-}
-
-.character-card h4 {
-  margin: 0 0 5px 0;
-  color: #fff;
-}
-
-.character-card p {
-  margin: 0;
-  color: #888;
-  font-size: 12px;
-}
-
-.character-list h4 {
-  color: #fff;
-  margin-bottom: 15px;
-  font-size: 14px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.character-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.character-item {
-  display: flex;
-  flex-direction: column;
+  justify-content: space-between;
   align-items: center;
-  padding: 10px;
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.character-item:hover {
-  background: rgba(255, 255, 255, 0.1);
-  transform: translateY(-2px);
+.input-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
 }
 
-.character-item.active {
-  background: rgba(64, 158, 255, 0.3);
-  border-color: rgba(64, 158, 255, 0.5);
+.send-actions {
+  display: flex;
+  gap: var(--space-2);
 }
 
-.character-item img {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  margin-bottom: 5px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+.send-btn {
+  min-width: 100px;
 }
 
-.character-item span {
-  color: #ccc;
-  font-size: 11px;
+/* 角色卡片 */
+.character-card {
   text-align: center;
+  margin-bottom: var(--space-6);
 }
 
-.manage-btn {
+.character-avatar {
+  margin-bottom: var(--space-4);
+}
+
+.character-info-detail h3 {
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+  text-shadow: var(--text-shadow);
+}
+
+.character-description {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  margin-bottom: var(--space-4);
+}
+
+.character-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: center;
+}
+
+/* 聊天统计 */
+.chat-stats h4 {
+  color: var(--text-primary);
+  margin-bottom: var(--space-4);
+  font-size: var(--text-sm);
+  text-shadow: var(--text-shadow);
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+
+.stat-label {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
+.stat-value {
+  color: var(--accent);
+  font-weight: 600;
+  font-size: var(--text-xs);
+}
+
+/* ST风格元素覆写 */
+.st-select :deep(.el-select) {
   width: 100%;
 }
 
-/* Element Plus 样式覆盖 */
-.st-select,
-.st-input {
-  --el-input-bg-color: rgba(0, 0, 0, 0.4);
-  --el-input-border-color: rgba(255, 255, 255, 0.2);
-  --el-input-hover-border-color: rgba(64, 158, 255, 0.5);
-  --el-input-focus-border-color: rgba(64, 158, 255, 0.8);
-  --el-input-text-color: #fff;
-  --el-input-placeholder-color: #888;
+.st-select :deep(.el-input__inner) {
+  background: var(--input-bg);
+  border-color: var(--input-border);
+  color: var(--text-primary);
 }
 
-/* 滚动条样式 */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+.st-slider :deep(.el-slider__runway) {
+  background: var(--glass-bg);
 }
 
-::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
+.st-slider :deep(.el-slider__bar) {
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
 }
 
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 4px;
+.st-slider :deep(.el-slider__button) {
+  border-color: var(--primary);
+  background: var(--primary);
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.5);
+/* 响应式适配 */
+@media (max-width: 1200px) {
+  .right-panel {
+    width: 240px;
+  }
+}
+
+@media (max-width: 992px) {
+  .left-panel {
+    width: 280px;
+  }
+  
+  .right-panel {
+    width: 220px;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-container {
+    flex-direction: column;
+  }
+  
+  .left-panel,
+  .right-panel {
+    width: 100%;
+    height: auto;
+    margin: var(--space-2);
+    border-radius: var(--radius-xl);
+  }
+  
+  .chat-area {
+    margin: var(--space-2);
+    flex: 1;
+  }
+  
+  .chat-actions .btn-text {
+    display: none;
+  }
 }
 </style> 

@@ -3,6 +3,44 @@ import ElementPlus from 'element-plus';
 import 'element-plus/dist/index.css';
 import * as ElementPlusIconsVue from '@element-plus/icons-vue';
 
+// 导入FontAwesome
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { 
+  faPalette, 
+  faChevronDown, 
+  faCheck, 
+  faSlidersH,
+  faChevronLeft,
+  faChevronRight,
+  faCog,
+  faDownload,
+  faTrash,
+  faComments,
+  faEdit,
+  faRedo,
+  faPaperPlane,
+  faUser
+} from '@fortawesome/free-solid-svg-icons';
+
+// 添加图标到库
+library.add(
+  faPalette, 
+  faChevronDown, 
+  faCheck, 
+  faSlidersH,
+  faChevronLeft,
+  faChevronRight,
+  faCog,
+  faDownload,
+  faTrash,
+  faComments,
+  faEdit,
+  faRedo,
+  faPaperPlane,
+  faUser
+);
+
 // 导入统一的样式系统
 import '@/styles/index.css';
 
@@ -11,6 +49,9 @@ import { pinia } from '@/stores';
 import App from './App.vue';
 
 const app = createApp(App);
+
+// 注册FontAwesome组件
+app.component('font-awesome-icon', FontAwesomeIcon);
 
 // 注册Element Plus图标
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
