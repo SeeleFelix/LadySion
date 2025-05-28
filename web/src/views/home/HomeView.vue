@@ -101,9 +101,6 @@
               <font-awesome-icon icon="trash" />
               <span class="btn-text">清空</span>
             </el-button>
-            <button class="collapse-btn ls-btn ls-btn--ghost" @click="toggleRightPanel">
-              <font-awesome-icon :icon="rightPanelCollapsed ? 'chevron-left' : 'chevron-right'" />
-            </button>
           </div>
         </div>
 
