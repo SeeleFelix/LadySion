@@ -29,7 +29,7 @@ export default [
   
   // 前端配置 (Vue3 + TypeScript)
   {
-    files: ["client/**/*.{ts,js,vue}"],
+    files: ["web/**/*.{ts,js,vue}"],
     // Vue3专用规则
   },
   
@@ -100,7 +100,7 @@ npm run lint
 ### 特定目录
 ```bash
 # 只检查前端代码
-eslint client/
+eslint web/
 
 # 只检查后端代码  
 eslint server/
@@ -116,7 +116,7 @@ eslint server/
 ## 🔄 **迁移记录**
 
 ### 从分离配置迁移
-- ✅ 删除 `client/.eslintrc.cjs`
+- ✅ 删除 `web/.eslintrc.cjs`
 - ✅ 删除 `server/.eslintrc.cjs`  
 - ✅ 创建统一的 `eslint.config.js`
 - ✅ 更新package.json scripts

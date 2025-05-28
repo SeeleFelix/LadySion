@@ -50,7 +50,7 @@ npm run format       # Prettier代码格式化
 ## 📁 项目结构
 
 ```
-client/src/
+web/src/
 ├── components/      # 组件库
 ├── views/          # 页面视图
 ├── stores/         # Pinia状态管理

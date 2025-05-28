@@ -48,7 +48,7 @@ export type { ApiResponse, ApiError } from './api'
 
 ### 前端index文件
 
-#### `client/src/types/index.ts`
+#### `web/src/types/index.ts`
 ```typescript
 // 类型定义统一导出
 export type * from './api'
@@ -60,7 +60,7 @@ export type * from './ui'
 export type { BaseEntity, Timestamps } from './common'
 ```
 
-#### `client/src/components/index.ts`
+#### `web/src/components/index.ts`
 ```typescript
 // 组件统一导出，支持自动导入
 export { default as Button } from './common/Button.vue'
@@ -74,7 +74,7 @@ export * as BusinessComponents from './business'
 export * as LayoutComponents from './layout'
 ```
 
-#### `client/src/services/index.ts`
+#### `web/src/services/index.ts`
 ```typescript
 // API服务统一导出
 export { default as characterApi } from './api/character'
@@ -89,7 +89,7 @@ export { default as sessionStorage } from './storage/sessionStorage'
 export { createApiClient } from './api/client'
 ```
 
-#### `client/src/stores/index.ts`
+#### `web/src/stores/index.ts`
 ```typescript
 // Pinia stores统一导出
 export { useCharacterStore } from './modules/character'

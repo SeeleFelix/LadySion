@@ -167,19 +167,21 @@ git config core.autocrlf input  # Linux/Mac
 git config core.autocrlf true   # Windows
 ```
 
-## 📚 项目结构速览
+## 🎯 项目结构速览
 
-### 前端结构 (client/)
+### 前端结构 (web/)
 ```
-client/src/
-├── components/        # 组件库
-│   ├── business/     # 业务组件
-│   ├── common/       # 通用组件
-│   └── layout/       # 布局组件
-├── views/            # 页面视图
-├── stores/           # 状态管理
-├── services/         # API服务
-└── styles/           # 样式文件
+web/src/
+├── components/      # 组件库
+├── views/          # 页面视图
+├── stores/         # Pinia状态管理
+├── composables/    # 组合式API
+├── services/       # API服务层
+├── types/          # TypeScript类型
+├── utils/          # 工具函数
+├── router/         # 路由配置
+├── assets/         # 静态资源
+└── styles/         # 样式文件
 ```
 
 ### 后端结构 (server/)
@@ -219,7 +221,7 @@ docs(readme): 更新安装指南
 ### 端口冲突
 ```bash
 # 如果端口被占用，可以修改端口
-# 前端: client/vite.config.ts
+# 前端: web/vite.config.ts
 server: {
   port: 5174  // 修改为其他端口
 }

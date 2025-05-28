@@ -6,7 +6,7 @@
 
 ### 1. 安装依赖
 ```bash
-cd client
+cd web
 npm install --save-dev \
   eslint \
   @typescript-eslint/eslint-plugin \
@@ -18,7 +18,7 @@ npm install --save-dev \
 ```
 
 ### 2. 更新package.json脚本
-在 `client/package.json` 中添加：
+在 `web/package.json` 中添加：
 ```json
 {
   "scripts": {
@@ -30,7 +30,7 @@ npm install --save-dev \
 
 ### 3. 创建.eslintignore
 ```bash
-# client/.eslintignore
+# web/.eslintignore
 dist
 node_modules
 *.local
@@ -77,7 +77,7 @@ data
 ### 检查代码
 ```bash
 # 前端
-cd client && npm run lint:check
+cd web && npm run lint:check
 
 # 后端  
 cd server && npm run lint:check
@@ -86,7 +86,7 @@ cd server && npm run lint:check
 ### 自动修复
 ```bash
 # 前端
-cd client && npm run lint
+cd web && npm run lint
 
 # 后端
 cd server && npm run lint
