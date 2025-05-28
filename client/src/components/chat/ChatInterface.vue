@@ -83,7 +83,7 @@
     <div class="chat-input">
       <div class="input-container">
         <button 
-          class="btn btn-icon btn-secondary" 
+          class="ls-btn ls-btn--secondary ls-btn--icon" 
           title="附件"
           @click="showAttachmentMenu = !showAttachmentMenu"
         >
@@ -94,14 +94,14 @@
           ref="messageInput"
           v-model="newMessage"
           placeholder="输入消息..."
-          class="input textarea"
+          class="ls-input ls-textarea"
           @keydown="handleKeyDown"
           @input="adjustTextareaHeight"
           rows="1"
         ></textarea>
         
         <button 
-          class="btn btn-icon btn-primary"
+          class="ls-btn ls-btn--primary ls-btn--icon"
           :disabled="!newMessage.trim() || isWaiting"
           @click="sendMessage"
           title="发送"
@@ -552,61 +552,11 @@ watch(() => props.currentCharacter, (newCharacter) => {
   align-items: flex-end;
 }
 
-.attachment-btn {
-  padding: 0.75rem;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--st-text-secondary);
-  transition: all 0.2s ease;
-}
-
-.attachment-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  color: var(--st-text-primary);
-}
-
-.message-input {
+.input-container .ls-input {
   flex: 1;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  padding: 0.75rem 1rem;
-  color: var(--st-text-primary);
-  font-family: inherit;
-  font-size: 0.95rem;
-  line-height: 1.4;
-  resize: none;
-  overflow-y: auto;
-  transition: border-color 0.2s ease;
-}
-
-.message-input:focus {
-  outline: none;
-  border-color: var(--st-accent-color);
-  box-shadow: 0 0 0 3px rgba(var(--st-accent-color-rgb), 0.2);
-}
-
-.message-input::placeholder {
-  color: var(--st-text-secondary);
-  opacity: 0.6;
-}
-
-.send-btn {
-  padding: 0.75rem;
-  border-radius: 8px;
-  background: var(--st-accent-color);
-  color: white;
-  transition: all 0.2s ease;
-}
-
-.send-btn:hover:not(:disabled) {
-  background: var(--st-accent-color-hover);
-  transform: translateY(-1px);
-}
-
-.send-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  min-height: 44px;
+  max-height: 120px;
+  resize: vertical;
 }
 
 .attachment-menu {
