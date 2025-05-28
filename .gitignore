@@ -41,3 +41,4 @@ logs/
 *.bak
 
 server/data/
+server/data/presets.db
