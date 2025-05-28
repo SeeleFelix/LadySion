@@ -172,14 +172,14 @@ import { computed } from 'vue';
 import { ElCard, ElButton, ElAlert, ElEmpty, ElTag } from 'element-plus';
 import { Refresh } from '@element-plus/icons-vue';
 import PresetSelector from './PresetSelector.vue';
-import { usePresets } from '../composables/usePresets';
+import { usePresets } from '@/composables/usePresets';
 import type { 
   Preset, 
   InstructPreset, 
   ContextPreset, 
   SystemPromptPreset, 
   MacroDescription 
-} from '../types/preset';
+} from '@/types/preset';
 
 // 使用组合式函数
 const {

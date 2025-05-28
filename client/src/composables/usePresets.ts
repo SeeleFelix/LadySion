@@ -1,7 +1,135 @@
 import { computed, ref, watch } from 'vue';
-import { usePresetStore } from '../store';
-import { LoadingState, createAppError, type AppError } from '../store';
-import type { PresetType, Preset } from '../types/preset';
+import { defineStore } from 'pinia';
+import { ElMessage } from 'element-plus';
+import { presetApi } from '@/services';
+import type { PresetType, Preset, BasePreset } from '@/services';
+
+// 扩展BasePreset类型，添加isDefault属性
+interface ExtendedBasePreset extends BasePreset {
+  isDefault?: boolean
+}
+
+// 扩展各种预设类型
+interface ExtendedInstructPreset extends ExtendedBasePreset {
+  type: 'instruct'
+  template: string
+  parameters: Record<string, any>
+}
+
+interface ExtendedContextPreset extends ExtendedBasePreset {
+  type: 'context'
+  template: string
+  variables: Record<string, any>
+}
+
+interface ExtendedSystemPromptPreset extends ExtendedBasePreset {
+  type: 'sysprompt'
+  content: string
+  parameters: Record<string, any>
+}
+
+interface ExtendedMasterPreset extends ExtendedBasePreset {
+  type: 'master'
+  data: Record<string, any>
+}
+
+type ExtendedPreset = ExtendedInstructPreset | ExtendedContextPreset | ExtendedSystemPromptPreset | ExtendedMasterPreset
+
+/**
+ * 预设Store
+ */
+export const usePresetStore = defineStore('preset', () => {
+  // 状态
+  const presets = ref<Record<PresetType, ExtendedPreset[]>>({
+    instruct: [],
+    context: [],
+    sysprompt: [],
+    master: []
+  });
+  
+  const selectedPresets = ref<Record<PresetType, ExtendedPreset | null>>({
+    instruct: null,
+    context: null,
+    sysprompt: null,
+    master: null
+  });
+  
+  const loading = ref(false);
+  const error = ref<string | null>(null);
+
+  // 操作方法
+  const loadPresets = async (type: PresetType) => {
+    loading.value = true;
+    error.value = null;
+    try {
+      const result = await presetApi.getAll(type);
+      presets.value[type] = result.map(preset => ({
+        ...preset,
+        isDefault: false // 可以根据实际需要设置默认值
+      })) as ExtendedPreset[];
+    } catch (err: any) {
+      const errorMessage = err.message || `加载${type}预设失败`;
+      error.value = errorMessage;
+      ElMessage.error(errorMessage);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const selectPreset = async (type: PresetType, id: string) => {
+    loading.value = true;
+    error.value = null;
+    try {
+      // 这里可以调用API选择预设的方法
+      switch (type) {
+        case 'instruct':
+          await presetApi.selectInstructPreset(id);
+          break;
+        case 'context':
+          await presetApi.selectContextPreset(id);
+          break;
+        case 'sysprompt':
+          await presetApi.selectSystemPromptPreset(id);
+          break;
+      }
+      
+      // 更新本地选中状态
+      const preset = presets.value[type].find(p => p.id === id);
+      if (preset) {
+        selectedPresets.value[type] = preset;
+      }
+    } catch (err: any) {
+      const errorMessage = err.message || `选择${type}预设失败`;
+      error.value = errorMessage;
+      ElMessage.error(errorMessage);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const getPresetsByType = (type: PresetType): ExtendedPreset[] => {
+    return presets.value[type] || [];
+  };
+
+  const initializeStore = async () => {
+    // 初始化所有预设类型
+    const types: PresetType[] = ['instruct', 'context', 'sysprompt', 'master'];
+    await Promise.all(types.map(type => loadPresets(type)));
+  };
+
+  return {
+    presets,
+    selectedPresets,
+    loading,
+    error,
+    loadPresets,
+    selectPreset,
+    getPresetsByType,
+    initializeStore
+  };
+});
 
 /**
  * 预设管理组合式函数
@@ -11,13 +139,13 @@ export function usePresets() {
   const presetStore = usePresetStore();
   
   // 本地响应式状态
-  const currentError = ref<AppError | null>(null);
-  const loadingState = ref<LoadingState>(LoadingState.IDLE);
+  const currentError = ref<string | null>(null);
+  const loadingState = ref<'idle' | 'loading' | 'success' | 'error'>('idle');
   
   // 计算属性
-  const isLoading = computed(() => loadingState.value === LoadingState.LOADING);
+  const isLoading = computed(() => loadingState.value === 'loading');
   const hasError = computed(() => currentError.value !== null);
-  const isInitialized = computed(() => loadingState.value !== LoadingState.IDLE);
+  const isInitialized = computed(() => loadingState.value !== 'idle');
   
   // 错误处理
   const clearError = () => {
@@ -26,67 +154,56 @@ export function usePresets() {
   
   const handleError = (error: unknown, operation: string) => {
     const message = error instanceof Error ? error.message : `${operation}失败`;
-    currentError.value = createAppError(message, 'PRESET_ERROR', error);
-    loadingState.value = LoadingState.ERROR;
+    currentError.value = message;
+    loadingState.value = 'error';
     console.error(`${operation}失败:`, error);
   };
   
   // 预设操作
   const loadPresets = async (type: PresetType) => {
     try {
-      loadingState.value = LoadingState.LOADING;
+      loadingState.value = 'loading';
       clearError();
       
       await presetStore.loadPresets(type);
       
-      loadingState.value = LoadingState.SUCCESS;
+      loadingState.value = 'success';
     } catch (error) {
       handleError(error, `加载${type}预设`);
       throw error;
     }
   };
   
-  const selectPreset = async (type: PresetType, name: string) => {
+  const selectPreset = async (type: PresetType, id: string) => {
     try {
-      loadingState.value = LoadingState.LOADING;
+      loadingState.value = 'loading';
       clearError();
       
-      await presetStore.selectPreset(type, name);
+      await presetStore.selectPreset(type, id);
       
-      loadingState.value = LoadingState.SUCCESS;
+      loadingState.value = 'success';
     } catch (error) {
       handleError(error, `选择${type}预设`);
       throw error;
     }
   };
   
-  const getPresetsByType = (type: PresetType): Preset[] => {
+  const getPresetsByType = (type: PresetType): ExtendedPreset[] => {
     return presetStore.getPresetsByType(type);
   };
   
   const getSelectedPreset = (type: PresetType) => {
-    switch (type) {
-      case 'instruct':
-        return presetStore.selectedPresets.instruct;
-      case 'context':
-        return presetStore.selectedPresets.context;
-      case 'sysprompt':
-        return presetStore.selectedPresets.sysprompt;
-      case 'macros':
-        return presetStore.selectedPresets.macros;
-      default:
-        return null;
-    }
+    return presetStore.selectedPresets[type];
   };
   
   const initialize = async () => {
     try {
-      loadingState.value = LoadingState.LOADING;
+      loadingState.value = 'loading';
       clearError();
       
       await presetStore.initializeStore();
       
-      loadingState.value = LoadingState.SUCCESS;
+      loadingState.value = 'success';
     } catch (error) {
       handleError(error, '初始化预设');
       throw error;
@@ -98,8 +215,8 @@ export function usePresets() {
     () => presetStore.error,
     (error) => {
       if (error) {
-        currentError.value = createAppError(error, 'STORE_ERROR');
-        loadingState.value = LoadingState.ERROR;
+        currentError.value = error;
+        loadingState.value = 'error';
       }
     }
   );
@@ -146,7 +263,7 @@ export function useInstructPresets() {
   return {
     ...rest,
     loadPresets: () => loadPresets('instruct'),
-    selectPreset: (name: string) => selectPreset('instruct', name),
+    selectPreset: (id: string) => selectPreset('instruct', id),
     presets: computed(() => getPresetsByType('instruct')),
     selectedPreset: computed(() => getSelectedPreset('instruct')),
   };
@@ -164,7 +281,7 @@ export function useContextPresets() {
   return {
     ...rest,
     loadPresets: () => loadPresets('context'),
-    selectPreset: (name: string) => selectPreset('context', name),
+    selectPreset: (id: string) => selectPreset('context', id),
     presets: computed(() => getPresetsByType('context')),
     selectedPreset: computed(() => getSelectedPreset('context')),
   };
@@ -182,7 +299,7 @@ export function useSystemPromptPresets() {
   return {
     ...rest,
     loadPresets: () => loadPresets('sysprompt'),
-    selectPreset: (name: string) => selectPreset('sysprompt', name),
+    selectPreset: (id: string) => selectPreset('sysprompt', id),
     presets: computed(() => getPresetsByType('sysprompt')),
     selectedPreset: computed(() => getSelectedPreset('sysprompt')),
   };

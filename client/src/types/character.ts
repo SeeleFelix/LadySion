@@ -5,12 +5,10 @@ export interface Character {
   id: string
   name: string
   description: string
-  personality: string
-  scenario: string
-  avatar: string
-  greeting: string
-  exampleDialogues: ExampleDialogue[]
-  tags: string[]
+  avatar?: string
+  systemPrompt?: string
+  exampleDialogue?: string
+  personality?: string
   createdAt: string
   updatedAt: string
 }
@@ -50,4 +48,27 @@ export interface CharacterStats {
   totalConversations: number
   averageMessageLength: number
   mostUsedTags: string[]
+}
+
+// 创建角色的数据类型
+export interface CreateCharacterData {
+  name: string
+  description: string
+  avatar?: string
+  systemPrompt?: string
+  exampleDialogue?: string
+  personality?: string
+}
+
+// 更新角色的数据类型
+export interface UpdateCharacterData extends Partial<CreateCharacterData> {
+  id: string
+}
+
+// 角色状态
+export interface CharacterState {
+  characters: Character[]
+  currentCharacter: Character | null
+  loading: boolean
+  error: string | null
 } 

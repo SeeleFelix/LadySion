@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import PresetPanel from '../PresetPanel.vue';
+import PresetPanel from './PresetPanel.vue';
 </script>
 
 <style scoped>

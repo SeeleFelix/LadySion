@@ -183,13 +183,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { ContextPreset } from '../../types/preset';
-import * as presetStore from '../../store/presetStore';
+import type { ContextPreset } from '@/types/preset';
+import { usePresetStore } from '@/stores';
 
 // 预设列表
-const presets = computed(() => presetStore.state.contextPresets.value);
-const selectedPreset = computed(() => presetStore.state.selectedContextPreset.value);
-const loading = computed(() => presetStore.state.loading.value.context);
+const presets = computed(() => usePresetStore().state.contextPresets.value);
+const selectedPreset = computed(() => usePresetStore().state.selectedContextPreset.value);
+const loading = computed(() => usePresetStore().state.loading.value.context);
 
 // 预设编辑
 const editDialogVisible = ref(false);
@@ -215,7 +215,7 @@ const getRowClassName = ({ row }: { row: ContextPreset }) => {
 // 选择预设
 const selectPreset = async (preset: ContextPreset) => {
   try {
-    await presetStore.selectContextPreset(preset.id);
+    await usePresetStore().selectContextPreset(preset.id);
     ElMessage.success(`已选择预设: ${preset.name}`);
   } catch (error) {
     ElMessage.error('选择预设失败');
@@ -258,7 +258,7 @@ const savePreset = async () => {
   }
   
   try {
-    await presetStore.saveContextPreset(editingPreset.value);
+    await usePresetStore().saveContextPreset(editingPreset.value);
     editDialogVisible.value = false;
     ElMessage.success('预设保存成功');
   } catch (error) {
@@ -277,7 +277,7 @@ const deletePreset = async () => {
   if (!presetToDelete.value) return;
   
   try {
-    await presetStore.deleteContextPreset(presetToDelete.value.id);
+    await usePresetStore().deleteContextPreset(presetToDelete.value.id);
     deleteDialogVisible.value = false;
     ElMessage.success('预设删除成功');
   } catch (error) {
@@ -309,7 +309,7 @@ const getFormattedChatStart = () => {
 
 // 加载预设
 onMounted(async () => {
-  await presetStore.loadContextPresets();
+  await usePresetStore().loadContextPresets();
 });
 </script>
 

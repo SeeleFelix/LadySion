@@ -26,4 +26,32 @@ export interface Conversation {
   messages: Message[];
   createdAt: number;
   updatedAt: number;
+}
+
+// API响应通用类型
+export interface ApiResponse<T = any> {
+  data: T
+  message?: string
+  success: boolean
+}
+
+// 分页响应类型
+export interface PaginatedResponse<T> {
+  data: T[]
+  total: number
+  page: number
+  pageSize: number
+}
+
+// 请求状态类型
+export type RequestStatus = 'idle' | 'loading' | 'success' | 'error'
+
+// HTTP请求方法
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
+
+// API错误类型
+export interface ApiError {
+  code: string
+  message: string
+  details?: any
 } 

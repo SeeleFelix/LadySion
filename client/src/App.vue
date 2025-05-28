@@ -98,7 +98,7 @@
 import { ref } from 'vue'
 import ChatInterface from './components/chat/ChatInterface.vue'
 import PresetManagement from './components/preset/PresetManagement.vue'
-import type { Character } from './types/character'
+import type { Character } from '@/types/character'
 
 // 抽屉状态
 const leftDrawerOpen = ref(false)

@@ -151,9 +151,9 @@
 import { ref, computed, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Delete, Edit, Select, Search } from '@element-plus/icons-vue';
-import type { SystemPromptPreset } from '../../types/preset';
-import * as presetApi from '../../api/presetApi';
-import { PresetType } from '../../types/preset';
+import type { SystemPromptPreset } from '@/types/preset';
+import { presetApi } from '@/services/api/preset';
+import type { PresetType } from '@/services/api/preset';
 
 // 预设数据
 const presets = ref<SystemPromptPreset[]>([]);
@@ -204,23 +204,14 @@ onMounted(async () => {
   await loadPresets();
 });
 
-// 加载预设
+// 加载系统提示词列表
 async function loadPresets() {
   isLoading.value = true;
   try {
-    const response = await presetApi.getAllPresets(PresetType.SYSTEM_PROMPT);
-    presets.value = response.data;
-    
-    // 如果有选定的预设，检查是否仍然存在
-    if (selectedPresetId.value) {
-      const exists = presets.value.some(p => p.id === selectedPresetId.value);
-      if (!exists) {
-        selectedPresetId.value = null;
-      }
-    }
-  } catch (error) {
-    console.error('加载系统提示词失败:', error);
-    ElMessage.error('加载系统提示词失败');
+    const response = await presetApi.getAll('sysprompt' as PresetType);
+    presets.value = response as SystemPromptPreset[];
+  } catch (error: any) {
+    ElMessage.error(error.message || '加载失败');
   } finally {
     isLoading.value = false;
   }
@@ -273,65 +264,61 @@ function handleEditPreset(preset: SystemPromptPreset) {
   startEditing();
 }
 
-// 保存预设
+// 保存系统提示词
 async function savePreset() {
+  if (!editingPreset.value.name.trim()) {
+    ElMessage.warning('请输入名称');
+    return;
+  }
+  
   try {
     const isNew = !editingPreset.value.id;
-    const response = await presetApi.savePreset(
-      PresetType.SYSTEM_PROMPT, 
+    const response = await presetApi.save(
+      'sysprompt' as PresetType, 
       editingPreset.value
     );
     
     ElMessage.success(isNew ? '创建系统提示词成功' : '更新系统提示词成功');
-    
-    await loadPresets();
-    selectedPresetId.value = response.data.id;
-    editing.value = false;
-    isNewPreset.value = false;
-  } catch (error) {
-    console.error('保存系统提示词失败:', error);
-    ElMessage.error('保存系统提示词失败');
+    showEditDialog.value = false;
+    loadPresets();
+  } catch (error: any) {
+    ElMessage.error(error.message || '保存失败');
   }
 }
 
-// 删除预设
-function handleDeletePreset(id: string) {
+// 删除系统提示词
+function deletePreset(id: string) {
   ElMessageBox.confirm(
-    '确定要删除这个系统提示词吗？此操作无法撤销。',
-    '删除确认',
+    '确定要删除这个系统提示词吗？此操作不可恢复。',
+    '确认删除',
     {
-      confirmButtonText: '确定',
+      confirmButtonText: '删除',
       cancelButtonText: '取消',
-      type: 'warning'
+      type: 'warning',
     }
   ).then(async () => {
     try {
-      await presetApi.deletePreset(PresetType.SYSTEM_PROMPT, id);
+      await presetApi.remove('sysprompt' as PresetType, id);
       ElMessage.success('删除系统提示词成功');
       
-      if (selectedPresetId.value === id) {
-        selectedPresetId.value = null;
-      }
-      
-      await loadPresets();
-    } catch (error) {
-      console.error('删除系统提示词失败:', error);
-      ElMessage.error('删除系统提示词失败');
+      // 重新加载预设列表
+      loadPresets();
+    } catch (error: any) {
+      ElMessage.error(error.message || '删除失败');
     }
   }).catch(() => {
-    // 用户取消删除
+    ElMessage.info('已取消删除');
   });
 }
 
-// 应用预设
+// 应用系统提示词
 async function handleApplyPreset(id: string) {
   try {
     await presetApi.selectSystemPromptPreset(id);
     ElMessage.success('应用系统提示词成功');
     selectedPresetId.value = id;
-  } catch (error) {
-    console.error('应用系统提示词失败:', error);
-    ElMessage.error('应用系统提示词失败');
+  } catch (error: any) {
+    ElMessage.error(error.message || '应用失败');
   }
 }
 

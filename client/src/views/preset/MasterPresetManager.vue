@@ -217,8 +217,8 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Search, UploadFilled } from '@element-plus/icons-vue';
-import * as presetApi from '../../api/presetApi';
-import { PresetType, InstructPreset, ContextPreset, SystemPromptPreset, MasterPreset } from '../../types/preset';
+import { presetApi } from '@/services/api/preset';
+import type { PresetType, InstructPreset, ContextPreset, SystemPromptPreset, MasterPreset } from '@/services/api/preset';
 
 const router = useRouter();
 const activeTab = ref('current');

@@ -74,8 +74,8 @@
 import { computed, ref, watch } from 'vue';
 import { ElSelect, ElOption, ElButton, ElTag, ElAlert, ElCard } from 'element-plus';
 import { Refresh, Edit } from '@element-plus/icons-vue';
-import type { Preset } from '../types/preset';
-import type { AppError } from '../store';
+import type { Preset } from '@/types/preset';
+import type { AppError } from '@/stores';
 
 interface Props {
   title: string;
