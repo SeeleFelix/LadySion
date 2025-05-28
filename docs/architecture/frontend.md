@@ -197,70 +197,190 @@ export const characterApi = new CharacterService()
 ## 🚀 最佳实践
 
 ### 1. 组件命名
-```
-- PascalCase for components: CharacterCard.vue
-- camelCase for composables: useCharacter.ts
-- kebab-case for files: character-list.vue (可选)
-```
+- **PascalCase**: 所有组件文件使用PascalCase
+- **描述性命名**: 组件名要清楚表达用途
+- **业务前缀**: 业务组件可加业务前缀 (如 `ChatMessageBubble`)
 
-### 2. 状态管理
+### 2. 状态管理原则
 ```typescript
-// 优先使用局部状态
-const localState = ref('value')
-
-// 需要共享时使用Store
-const globalStore = useCharacterStore()
-
-// 复杂逻辑抽取为Composable
-const { characters, createCharacter } = useCharacter()
-```
-
-### 3. 类型安全
-```typescript
-// 所有API返回值都要定义类型
-interface Character {
-  id: string
-  name: string
-  description: string
+// ✅ 推荐 - 细粒度状态管理
+const useUIStore = () => {
+  const sidebarVisible = ref(true)
+  const theme = ref('dark')
+  
+  return { sidebarVisible, theme }
 }
 
-// 使用泛型增强复用性
-interface ApiResponse<T> {
-  data: T
-  message: string
+// ❌ 避免 - 巨型状态对象
+const useAppStore = () => {
+  const state = ref({
+    ui: { sidebarVisible: true, theme: 'dark' },
+    user: { profile: null, settings: {} },
+    chat: { messages: [], characters: [] }
+    // ... 太多状态混在一起
+  })
 }
 ```
 
-## 📈 迁移计划
+### 3. 错误处理策略
+```typescript
+// composables/useErrorHandler.ts
+export function useErrorHandler() {
+  const handleApiError = (error: unknown) => {
+    if (error instanceof ApiError) {
+      ElMessage.error(error.message)
+    } else {
+      ElMessage.error('操作失败，请重试')
+      console.error('Unexpected error:', error)
+    }
+  }
+  
+  return { handleApiError }
+}
+```
 
-### 阶段1: 重构目录结构 ✅
-- 调整目录布局
-- 修复导入路径
-- 建立基础架构
+### 4. 响应式数据管理
+```typescript
+// ✅ 推荐 - 明确的响应式引用
+const characters = ref<Character[]>([])
+const loading = ref(false)
 
-### 阶段2: 重构状态管理
-- 简化Store设计
-- 创建Composables
-- 统一API服务
+// ✅ 推荐 - 计算属性用于派生状态
+const activeCharacters = computed(() => 
+  characters.value.filter(c => c.active)
+)
 
-### 阶段3: 重构组件
-- 重新分类组件
-- 优化组件API
-- 提升复用性
+// ❌ 避免 - 过度使用reactive
+const state = reactive({
+  characters: [],
+  loading: false,
+  // ... 大对象不利于性能优化
+})
+```
 
-### 阶段4: 完善类型系统
-- 补充类型定义
-- 增强类型安全
-- 优化开发体验
+## 📱 响应式设计
 
-## 🔍 与原架构对比
+### 断点设计
+```css
+/* 设计系统断点 */
+:root {
+  --breakpoint-xs: 480px;   /* 手机 */
+  --breakpoint-sm: 768px;   /* 平板 */
+  --breakpoint-md: 1024px;  /* 小笔记本 */
+  --breakpoint-lg: 1440px;  /* 桌面 */
+  --breakpoint-xl: 1920px;  /* 大屏 */
+}
+```
 
-| 方面 | 原架构 (过度设计) | 新架构 (实用主义) |
-|------|------------------|------------------|
-| 复杂度 | 过高，4层分离 | 适中，3层分离 |
-| 学习成本 | 高，需要DDD知识 | 低，Vue标准实践 |
-| 开发效率 | 慢，概念复杂 | 快，直观易懂 |
-| 维护成本 | 高，抽象层太多 | 低，结构清晰 |
-| 团队适应 | 难，需要培训 | 易，Vue开发者熟悉 |
+### 布局适配策略
+```vue
+<template>
+  <div class="app-layout">
+    <!-- 移动端: 单栏布局 -->
+    <div v-if="isMobile" class="mobile-layout">
+      <component :is="currentView" />
+    </div>
+    
+    <!-- 桌面端: 三栏布局 -->
+    <div v-else class="desktop-layout">
+      <Sidebar />
+      <MainContent />
+      <RightPanel />
+    </div>
+  </div>
+</template>
 
-这个新架构更符合Vue生态的最佳实践，既保持了清晰的结构，又避免了过度抽象。 
+<script setup lang="ts">
+import { useBreakpoints } from '@vueuse/core'
+
+const breakpoints = useBreakpoints({
+  mobile: 0,
+  tablet: 768,
+  desktop: 1024,
+})
+
+const isMobile = breakpoints.smaller('tablet')
+</script>
+```
+
+## 🎭 SillyTavern主题系统
+
+### CSS变量系统
+```css
+/* SillyTavern主题变量 */
+:root {
+  /* 主色调 */
+  --primary-bg: rgb(36, 36, 37);
+  --secondary-bg: rgba(45, 45, 50, 0.9);
+  --accent-color: #7c3aed;
+  
+  /* 文字颜色 */
+  --text-primary: #ffffff;
+  --text-secondary: #b0b0b0;
+  --text-muted: #808080;
+  
+  /* 玻璃形态效果 */
+  --glass-bg: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-blur: blur(10px);
+}
+```
+
+### 组件主题定制
+```vue
+<style scoped>
+.character-card {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 16px;
+  color: var(--text-primary);
+}
+
+.message-bubble {
+  background: linear-gradient(
+    135deg, 
+    var(--secondary-bg), 
+    rgba(124, 58, 237, 0.1)
+  );
+  border-radius: 18px;
+  padding: 12px 16px;
+}
+</style>
+```
+
+## 🔄 数据流管理
+
+### 单向数据流
+```
+用户操作 → Action → Store → View更新
+     ↑                           ↓
+API响应 ← Service ← Store Mutation
+```
+
+### 示例实现
+```typescript
+// 1. 用户触发操作
+const handleSendMessage = async (content: string) => {
+  // 2. 调用Store Action
+  await chatStore.sendMessage({
+    content,
+    characterId: currentCharacter.value.id
+  })
+}
+
+// 3. Store处理逻辑
+const sendMessage = async (data: SendMessageRequest) => {
+  // 4. 调用API Service
+  const message = await chatApi.sendMessage(data)
+  
+  // 5. 更新Store状态
+  messages.value.push(message)
+}
+
+// 6. View自动响应状态变化
+const messages = computed(() => chatStore.messages)
+```
+
+这个架构设计确保了代码的可维护性、可测试性和开发效率，同时保持了Vue生态的最佳实践。 

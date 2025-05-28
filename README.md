@@ -1,173 +1,96 @@
-# LadySion - SillyTavern风格聊天界面
+# Lady Sion - AI聊天应用
 
-## 项目简介
+## 🎯 项目概述
 
-LadySion是一个完全重新设计的聊天应用，采用了SillyTavern的界面风格和设计理念。项目包含Vue.js前端和Node.js后端，实现了现代化的AI聊天体验。
+Lady Sion 是一个基于《eden*》中 Sion 角色设计的现代化 AI 聊天应用，采用 SillyTavern 风格界面和领域驱动设计架构。
 
-## 主要特性
+### 核心特性
+- 🎨 **SillyTavern风格界面** - 深色玻璃形态主题，三栏布局设计
+- 💬 **智能聊天系统** - 多模型支持，流式响应，角色个性化
+- ⚙️ **完整预设系统** - 指令模式、上下文模板、系统提示词管理
+- 👥 **多角色支持** - 角色切换、个性化设置、头像管理
+- 🧠 **记忆系统** - 持久化对话历史，上下文关联
+- 🔧 **现代化架构** - Vue 3 + TypeScript 前端，DDD 后端架构
 
-### 🎨 SillyTavern风格界面
-- **深色玻璃形态主题**：使用`backdrop-filter: blur()`实现模糊效果
-- **三栏布局设计**：左侧AI配置面板 + 中央聊天区 + 右侧角色面板
-- **可折叠侧边栏**：支持动态显示/隐藏侧边栏
-- **完整CSS变量系统**：支持动态主题切换
-- **现代化动画效果**：丰富的交互动画和过渡效果
-
-### 💬 聊天功能
-- **多角色支持**：可选择不同AI角色进行对话
-- **消息管理**：支持编辑、删除、重新生成消息
-- **实时生成**：支持流式响应和生成控制
-- **聊天导出**：支持导出聊天记录为JSON格式
-
-### ⚙️ AI配置系统
-- **预设管理**：完整的预设系统，支持导入/导出
-- **参数调节**：温度、最大令牌数、Top P等参数控制
-- **多种预设类型**：指令模式、上下文模板、系统提示词等
-
-### 👥 角色管理
-- **角色切换**：快速切换不同AI角色
-- **角色展示**：头像、描述、个性展示
-- **角色管理**：添加、编辑、删除角色
-
-## 技术栈
-
-### 前端
-- **Vue 3** + **TypeScript**：现代化前端框架
-- **Element Plus**：UI组件库（深度定制SillyTavern主题）
-- **Font Awesome**：图标库
-- **自定义CSS主题**：完整的SillyTavern风格主题系统
-
-### 后端
-- **Node.js** + **TypeScript**：服务端环境
-- **Express.js**：Web框架
-- **SQLite**：轻量级数据库
-- **领域驱动设计（DDD）**：清洁架构模式
-
-## 项目结构
-
-```
-LadySion/
-├── client/                     # 前端Vue应用
-│   ├── src/
-│   │   ├── views/
-│   │   │   └── HomeView.vue    # SillyTavern风格主界面
-│   │   ├── styles/
-│   │   │   └── silly-tavern-theme.css  # 完整主题系统
-│   │   └── main.ts             # 应用入口
-│   └── index.html              # 页面模板
-├── server/                     # 后端Node应用
-│   ├── src/
-│   │   ├── api/                # API路由层
-│   │   ├── domain/             # 领域层
-│   │   ├── infrastructure/     # 基础设施层
-│   │   └── index.ts            # 服务器入口
-│   └── package.json
-└── SillyTavern/               # SillyTavern源码参考
-```
-
-## 安装和运行
-
-### 环境要求
-- Node.js 16+
-- npm或yarn
-
-### 安装依赖
+## 🚀 快速开始
 
 ```bash
-# 安装前端依赖
-cd client
+# 1. 克隆项目
+git clone <repository-url>
+cd LadySion
+
+# 2. 安装依赖
 npm install
 
-# 安装后端依赖
-cd ../server
-npm install
-```
+# 3. 配置环境变量
+cp .env.example .env
+# 编辑 .env 文件，添加必要的API密钥
 
-### 启动开发服务器
-
-```bash
-# 启动后端服务器（端口3000）
-cd server
+# 4. 启动开发服务器
 npm run dev
 
-# 启动前端开发服务器（端口5173）
-cd ../client
-npm run dev
+# 5. 访问应用
+# 前端: http://localhost:5173
+# 后端: http://localhost:3000
 ```
 
-### 访问应用
-打开浏览器访问：http://localhost:5173
+## 📚 完整文档
 
-## 界面展示
+所有详细文档都已迁移到 [`docs/`](./docs/) 目录中：
 
-### 主界面特性
-- **左侧面板**：AI配置、预设选择、生成参数调节
-- **中央聊天区**：角色信息、消息历史、输入框
-- **右侧面板**：当前角色详情、角色列表、角色管理
+### 🚀 新手指南
+- **[快速开始](./docs/guides/quick-start.md)** - 5分钟快速搭建开发环境
+- **[开发环境配置](./docs/guides/development-setup.md)** - 详细的开发环境配置
+- **[代码规范](./docs/guides/coding-standards.md)** - 前后端代码规范
 
-### 主题特点
-- 深色背景色：`rgb(36, 36, 37)`（SillyTavern经典配色）
-- 玻璃形态效果：`backdrop-filter: blur(10px)`
-- CSS变量系统：支持动态主题定制
-- 响应式设计：适配移动端和桌面端
+### 🏗️ 架构文档
+- **[后端架构](./docs/architecture/backend.md)** - DDD架构设计和实现
+- **[前端架构](./docs/architecture/frontend.md)** - Vue生态最佳实践
+- **[系统架构](./docs/architecture/system.md)** - 全栈系统设计
 
-## 开发特性
+### 🔧 技术指南
+- **[OpenRouter集成](./docs/technical/openrouter-guide.md)** - LLM API集成和配置
+- **[LangGraph指南](./docs/technical/langgraph-guide.md)** - AI工作流编排
+- **[文件组织](./docs/technical/index-files-guide.md)** - 项目模块化结构
 
-### SillyTavern主题系统
-完整实现了SillyTavern的设计理念：
-- CSS变量系统
-- 玻璃形态效果
-- 深色主题配色
-- 交互动画效果
-- Element Plus组件定制
+### 🎨 设计文档
+- **[Lady Sion设计哲学](./docs/design/lady-sion-philosophy.md)** - 核心设计理念
+- **[UI设计规范](./docs/design/ui-design.md)** - SillyTavern风格指南
+- **[交互设计](./docs/design/interaction-patterns.md)** - 用户体验设计
 
-### 预设管理系统
-基于SillyTavern的预设架构：
-- 指令模式预设
-- 上下文模板预设
-- 系统提示词预设
-- 宏系统支持
-- 导入导出功能
+### 📖 更多文档
+- **[API文档](./docs/api/)** - 完整的API接口文档
+- **[部署指南](./docs/deployment/)** - 生产环境部署
+- **[测试指南](./docs/testing/)** - 测试策略和实践
 
-### 角色系统
-- 多角色支持
-- 角色个性化设置
-- 头像和描述管理
-- 角色切换功能
+> 💡 **提示**: 建议从 **[文档中心](./docs/README.md)** 开始，获取完整的导航和索引。
 
-## API接口
+## 🛠️ 技术栈
 
-### 聊天接口
-- `POST /api/chat` - 发送消息
+**前端**: Vue 3, TypeScript, Element Plus, Vite  
+**后端**: Node.js, Express, TypeScript, SQLite  
+**AI集成**: OpenRouter, LangGraph, 多模型支持  
+**架构**: 领域驱动设计(DDD), 清洁架构  
 
-### 预设接口
-- `GET /api/presets/:type` - 获取预设列表
-- `POST /api/presets/:type` - 创建预设
-- `PUT /api/presets/:type/:id` - 更新预设
-- `DELETE /api/presets/:type/:id` - 删除预设
+## 🤝 贡献指南
 
-### 调试接口
-- `GET /api/debug/routes` - 查看所有路由
+我们欢迎社区贡献！请阅读：
+- [贡献指南](./docs/guides/contributing.md)
+- [代码规范](./docs/guides/coding-standards.md)
+- [提交规范](./docs/guides/commit-conventions.md)
 
-## 贡献指南
+## 📄 许可证
 
-1. Fork 项目
-2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 打开 Pull Request
+MIT License - 查看 [LICENSE](./LICENSE) 文件了解详情
 
-## 许可证
+## 🙏 致谢
 
-MIT License
-
-## 致谢
-
-- [SillyTavern](https://github.com/SillyTavern/SillyTavern) - 界面设计灵感来源
-- [Vue.js](https://vuejs.org/) - 前端框架
-- [Element Plus](https://element-plus.org/) - UI组件库
-- [Font Awesome](https://fontawesome.com/) - 图标库
+- [SillyTavern](https://github.com/SillyTavern/SillyTavern) - 界面设计灵感
+- [《eden*》](https://zh.wikipedia.org/wiki/Eden*) - Sion角色设计来源
+- Vue.js, Element Plus, Node.js 等开源项目
 
 ---
 
-**注意**：本项目是对SillyTavern界面风格的重新实现，不是SillyTavern的分支或修改版本。 
+**🎯 核心理念**: 创造一个介于纯AI助手与理想化智能体之间的过渡形态，探索AI的人格化表达和深度协作能力。
+
+📚 **[查看完整文档](./docs/README.md)** | 🚀 **[快速开始](./docs/guides/quick-start.md)** | 🏗️ **[架构设计](./docs/architecture/)** | 🎨 **[设计哲学](./docs/design/lady-sion-philosophy.md)** 
