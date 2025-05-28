@@ -1,34 +1,48 @@
 {
   "name": "ladysion",
   "version": "1.0.0",
-  "description": "基于LangGraph的AI聊天程序",
+  "description": "Lady Sion - AI Character Conversation Platform",
   "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "build": "npm run build:server && npm run build:client",
+    "build:server": "cd server && npm run build",
+    "build:client": "cd client && npm run build",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "lint:check": "eslint . --max-warnings 0",
+    "type-check": "npm run type-check:client && npm run type-check:server",
+    "type-check:client": "cd client && npm run type-check",
+    "type-check:server": "cd server && npm run type-check",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
   "workspaces": [
     "client",
-    "server"
+    "server",
+    "shared"
   ],
-  "scripts": {
-    "dev:client": "cd client && npm run dev",
-    "dev:server": "cd server && npm run dev",
-    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
-    "build:client": "cd client && npm run build",
-    "build:server": "cd server && npm run build",
-    "build": "npm run build:server && npm run build:client",
-    "start": "cd server && npm start"
+  "devDependencies": {
+    "@eslint/js": "^9.14.0",
+    "@typescript-eslint/eslint-plugin": "^8.12.2",
+    "@typescript-eslint/parser": "^8.12.2",
+    "eslint": "^9.14.0",
+    "eslint-plugin-vue": "^9.28.0",
+    "vue-eslint-parser": "^9.4.3",
+    "concurrently": "^8.2.2",
+    "typescript": "^5.6.0"
   },
+  "dependencies": {},
   "keywords": [
     "ai",
-    "chat",
-    "langgraph",
-    "hexagonal-architecture"
+    "character",
+    "conversation",
+    "vue3",
+    "typescript",
+    "node.js",
+    "express"
   ],
-  "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "concurrently": "^8.2.2"
-  },
-  "dependencies": {
-    "@element-plus/icons-vue": "^2.3.1",
-    "pinia": "^3.0.2"
-  }
+  "author": "玲珑"
 }

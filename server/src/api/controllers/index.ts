@@ -1,2 +1,2 @@
-export * from './CharacterController';
-export * from './ConversationController'; 
+export { CharacterController } from './CharacterController';
+export { ConversationController } from './ConversationController'; 
