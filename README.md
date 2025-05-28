@@ -40,28 +40,35 @@ npm run dev
 
 ### 🚀 新手指南
 - **[快速开始](./docs/guides/quick-start.md)** - 5分钟快速搭建开发环境
-- **[开发环境配置](./docs/guides/development-setup.md)** - 详细的开发环境配置
-- **[代码规范](./docs/guides/coding-standards.md)** - 前后端代码规范
+- **[共享DTO类型最佳实践](./docs/guides/shared-dto-types-best-practices.md)** - 跨模块类型定义规范
+- **[ESLint配置](./docs/guides/eslint-setup.md)** - 代码质量工具配置
+- **[ESLint遗留配置](./docs/guides/eslint-legacy.md)** - 历史配置参考
 
 ### 🏗️ 架构文档
 - **[后端架构](./docs/architecture/backend.md)** - DDD架构设计和实现
 - **[前端架构](./docs/architecture/frontend.md)** - Vue生态最佳实践
-- **[系统架构](./docs/architecture/system.md)** - 全栈系统设计
 
 ### 🔧 技术指南
 - **[OpenRouter集成](./docs/technical/openrouter-guide.md)** - LLM API集成和配置
 - **[LangGraph指南](./docs/technical/langgraph-guide.md)** - AI工作流编排
 - **[文件组织](./docs/technical/index-files-guide.md)** - 项目模块化结构
 
-### 🎨 设计文档
-- **[Lady Sion设计哲学](./docs/design/lady-sion-philosophy.md)** - 核心设计理念
-- **[UI设计规范](./docs/design/ui-design.md)** - SillyTavern风格指南
-- **[交互设计](./docs/design/interaction-patterns.md)** - 用户体验设计
+### 💭 设计哲学
+- **[Seele Felix核心哲学](./docs/philosophy/seele-felix-core-philosophy.md)** - 核心理念体系
+- **[Lady Sion哲学](./docs/philosophy/lady-sion-philosophy.md)** - 设计哲学和理念
+- **[哲学总结](./docs/philosophy/summary.md)** - 哲学文档总结
 
-### 📖 更多文档
-- **[API文档](./docs/api/)** - 完整的API接口文档
-- **[部署指南](./docs/deployment/)** - 生产环境部署
-- **[测试指南](./docs/testing/)** - 测试策略和实践
+### 🎯 战略规划
+- **[愿景使命](./docs/strategic/vision-mission.md)** - 项目愿景和核心使命
+- **[系统概览](./docs/strategic/system-overview.md)** - 高层次系统设计
+
+### 🎨 设计文档
+- **[UI设计规范](./docs/design/ui-design.md)** - SillyTavern风格指南
+
+### 📖 其他文档
+- **[API文档](./docs/api/)** - 🔄 规划中
+- **[部署指南](./docs/deployment/)** - 🔄 规划中
+- **[测试指南](./docs/testing/)** - 🔄 规划中
 
 > 💡 **提示**: 建议从 **[文档中心](./docs/README.md)** 开始，获取完整的导航和索引。
 
@@ -74,10 +81,10 @@ npm run dev
 
 ## 🤝 贡献指南
 
-我们欢迎社区贡献！请阅读：
-- [贡献指南](./docs/guides/contributing.md)
-- [代码规范](./docs/guides/coding-standards.md)
-- [提交规范](./docs/guides/commit-conventions.md)
+我们欢迎社区贡献！请参考：
+- [项目文档中心](./docs/README.md) - 完整的项目文档体系
+- [快速开始指南](./docs/guides/quick-start.md) - 开发环境搭建
+- [代码质量规范](./docs/guides/eslint-setup.md) - 代码规范和工具配置
 
 ## 📄 许可证
 
@@ -94,4 +101,4 @@ NO LIENSE
 
 **🎯 核心理念**: 创造一个介于纯AI助手与理想化智能体之间的过渡形态，探索AI的人格化表达和深度协作能力。
 
-📚 **[查看完整文档](./docs/README.md)** | 🚀 **[快速开始](./docs/guides/quick-start.md)** | 🏗️ **[架构设计](./docs/architecture/)** | 🎨 **[设计哲学](./docs/design/lady-sion-philosophy.md)** 
+📚 **[查看完整文档](./docs/README.md)** | 🚀 **[快速开始](./docs/guides/quick-start.md)** | 🏗️ **[架构设计](./docs/architecture/)** | 💭 **[设计哲学](./docs/philosophy/lady-sion-philosophy.md)** 
