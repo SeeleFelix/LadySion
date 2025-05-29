@@ -6,7 +6,8 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { Resource, createResourceProxy } from '../createResourceMapper'
+import { Resource } from '../types'
+import { createResourceProxy } from '../createResourceMapper'
 
 // 定义测试资源实体
 interface Apple {
