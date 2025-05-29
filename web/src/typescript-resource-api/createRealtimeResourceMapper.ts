@@ -1,7 +1,7 @@
 /**
  * TRA 实时资源映射器
  * 设计理念：像ORM屏蔽SQL一样，完全屏蔽HTTP/SSE细节
- * 重构：使用组合模式，复用基础CRUD功能
+ * 重构版本：使用组合模式，统一URL构建，职责分离
  */
 
 import type { RealtimeResource, RealtimeConfig } from './types'
@@ -16,13 +16,26 @@ interface Subscriber<T> {
 }
 
 /**
- * SSE连接管理器 - 单一职责原则
+ * SSE连接管理器 - 重构版本，使用UrlBuilder
  */
 class SSEConnectionManager<T> {
   private eventSource: EventSource | null = null
   private subscribers: Subscriber<T>[] = []
+  private baseUrl: string
+  private resourceName: string
   
-  constructor(private sseUrl: string) {}
+  constructor(resourceName: string, config: RealtimeConfig) {
+    this.baseUrl = config.baseUrl || 'http://localhost:3000'
+    this.resourceName = resourceName
+  }
+  
+  /**
+   * 获取SSE端点URL - 直接构建，不依赖UrlBuilder的baseUrl
+   */
+  private getSSEUrl(): string {
+    // 直接构建实时端点: {baseUrl}/api/realtime/{resource}
+    return `${this.baseUrl}/api/realtime/${this.resourceName.toLowerCase()}`
+  }
   
   /**
    * 通知所有订阅者数据
@@ -53,7 +66,7 @@ class SSEConnectionManager<T> {
   }
   
   /**
-   * 设置事件监听器
+   * 设置事件监听器 - 改进错误处理
    */
   private setupEventListeners(): void {
     if (!this.eventSource) return
@@ -63,27 +76,35 @@ class SSEConnectionManager<T> {
         const data = JSON.parse(event.data) as T
         this.notifySubscribers(data)
       } catch (error) {
-        this.notifyError(error instanceof Error ? error : new Error('解析SSE数据失败'))
+        this.notifyError(new Error(`解析SSE数据失败: ${error instanceof Error ? error.message : '未知错误'}`))
       }
     })
     
-    this.eventSource.addEventListener('error', () => {
-      this.notifyError(new Error('SSE连接错误'))
+    this.eventSource.addEventListener('error', (event) => {
+      const errorMsg = this.eventSource?.readyState === EventSource.CLOSED 
+        ? 'SSE连接已关闭' 
+        : 'SSE连接发生错误'
+      this.notifyError(new Error(errorMsg))
+    })
+    
+    this.eventSource.addEventListener('open', () => {
+      console.log('SSE连接已建立')
     })
   }
   
   /**
-   * 确保连接活跃
+   * 确保连接活跃 - 改进连接管理
    */
   ensureConnection(): void {
     if (!this.eventSource || this.eventSource.readyState === EventSource.CLOSED) {
-      this.eventSource = new EventSource(this.sseUrl)
+      const sseUrl = this.getSSEUrl()
+      this.eventSource = new EventSource(sseUrl)
       this.setupEventListeners()
     }
   }
   
   /**
-   * 添加订阅者
+   * 添加订阅者 - 改进资源管理
    */
   addSubscriber(subscriber: Subscriber<T>): () => void {
     this.ensureConnection()
@@ -91,7 +112,11 @@ class SSEConnectionManager<T> {
     
     // 返回取消订阅函数
     return () => {
-      this.subscribers = this.subscribers.filter(s => s !== subscriber)
+      // 移除订阅者
+      const index = this.subscribers.indexOf(subscriber)
+      if (index > -1) {
+        this.subscribers.splice(index, 1)
+      }
       
       // 如果没有订阅者了，关闭连接
       if (this.subscribers.length === 0 && this.eventSource) {
@@ -100,47 +125,65 @@ class SSEConnectionManager<T> {
       }
     }
   }
+  
+  /**
+   * 手动关闭连接 - 新增方法，便于资源清理
+   */
+  disconnect(): void {
+    if (this.eventSource) {
+      this.eventSource.close()
+      this.eventSource = null
+    }
+    this.subscribers = []
+  }
 }
 
 /**
- * 创建实时资源代理 - 完全屏蔽HTTP层实现
- * 用户只需要处理业务对象，不需要知道SSE的存在
+ * 实时资源工厂 - 新增工厂类，职责分离
+ */
+class RealtimeResourceFactory<T> {
+  private baseResource: any
+  private connectionManager: SSEConnectionManager<T>
+  
+  constructor(resourceName: string, config: RealtimeConfig) {
+    // 🔄 重用基础CRUD功能 - 组合模式
+    this.baseResource = createResourceProxy(resourceName, config)
+    
+    // 🔧 使用专门的连接管理器 - 职责分离
+    this.connectionManager = new SSEConnectionManager<T>(resourceName, config)
+  }
+  
+  /**
+   * 创建实时资源代理
+   */
+  createProxy(): RealtimeResource<T> {
+    return {
+      // 🔄 委托给基础Resource - 消除重复代码，包含所有CRUD + 分页功能
+      findAll: this.baseResource.findAll,
+      findById: this.baseResource.findById,
+      findAllPaged: this.baseResource.findAllPaged,
+      create: this.baseResource.create,
+      update: this.baseResource.update,
+      patch: this.baseResource.patch,
+      deleteById: this.baseResource.deleteById,
+      
+      // ✨ 实时订阅功能 - 核心新增特性
+      subscribe: (callback: (item: T) => void, errorCallback?: (error: Error) => void) => {
+        return this.connectionManager.addSubscriber({ callback, errorCallback })
+      }
+    }
+  }
+}
+
+/**
+ * 创建实时资源代理 - 重构版本，使用工厂模式
+ * 完全屏蔽HTTP层实现，用户只需要处理业务对象
  */
 export function createRealtimeResourceProxy<T extends Record<string, any>>(
   resourceName: string,
   config: RealtimeConfig = {}
 ): RealtimeResource<T> {
-  
-  // 🔄 重用基础CRUD功能 - 组合模式
-  const baseResource = createResourceProxy(resourceName, config)
-  
-  // 构建SSE端点URL
-  const baseUrl = config.baseUrl || 'http://localhost:3000'
-  const sseUrl = `${baseUrl}/api/realtime/${resourceName.toLowerCase()}`
-  
-  // 🔧 使用专门的连接管理器 - 职责分离
-  const connectionManager = new SSEConnectionManager<T>(sseUrl)
-  
-  /**
-   * 实时资源代理对象 - 组合基础Resource + 实时功能
-   */
-  const realtimeProxy: RealtimeResource<T> = {
-    // 🔄 委托给基础Resource - 消除重复代码
-    findAll: baseResource.findAll,
-    findById: baseResource.findById,
-    create: baseResource.create,
-    update: baseResource.update,
-    patch: baseResource.patch,
-    deleteById: baseResource.deleteById,
-    
-    // ✨ 实时订阅功能 - 核心新增特性
-    subscribe(
-      callback: (item: T) => void,
-      errorCallback?: (error: Error) => void
-    ): () => void {
-      return connectionManager.addSubscriber({ callback, errorCallback })
-    }
-  }
-  
-  return realtimeProxy
+  // 🔧 使用工厂模式创建实时资源代理 - 更好的职责分离
+  const factory = new RealtimeResourceFactory<T>(resourceName, config)
+  return factory.createProxy()
 } 

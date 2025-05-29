@@ -42,6 +42,50 @@ export class TRAError extends Error {
 }
 
 /**
+ * 排序方向
+ */
+export type SortDirection = 'ASC' | 'DESC'
+
+/**
+ * 排序字段配置
+ */
+export interface SortField {
+  field: string
+  direction: SortDirection
+}
+
+/**
+ * 排序配置 - 相当于Spring Data的Sort
+ */
+export interface Sort {
+  fields: SortField[]
+}
+
+/**
+ * 分页请求参数 - 相当于Spring Data的Pageable
+ */
+export interface Pageable {
+  page: number      // 页码，从0开始
+  size: number      // 每页大小
+  sort?: Sort       // 排序配置（可选）
+}
+
+/**
+ * 分页响应结果 - 相当于Spring Data的Page<T>
+ */
+export interface Page<T> {
+  content: T[]              // 当前页的数据
+  totalElements: number     // 总记录数
+  totalPages: number        // 总页数
+  size: number              // 每页大小
+  number: number            // 当前页码（从0开始）
+  numberOfElements: number  // 当前页实际记录数
+  first: boolean            // 是否第一页
+  last: boolean             // 是否最后一页
+  empty: boolean            // 是否为空页
+}
+
+/**
  * 基础Resource接口 - 相当于Spring Data JPA的CrudRepository<T, ID>
  * 明确区分：update=全量更新，patch=部分更新，都不包含id
  */
@@ -49,6 +93,9 @@ export interface Resource<T> {
   // 查询操作
   findAll(): Promise<T[]>
   findById(id: string): Promise<T | null>
+  
+  // 🆕 分页查询操作 - 参考Spring Data JPA的PagingAndSortingRepository
+  findAllPaged(pageable: Pageable): Promise<Page<T>>
   
   // 创建操作 - Omit<T, 'id'> 表示排除id字段的T类型
   create(entity: Omit<T, 'id'>): Promise<T>
@@ -70,22 +117,19 @@ export interface RealtimeConfig extends ResourceConfig {
 }
 
 /**
- * 实时资源接口 - 完全屏蔽HTTP层的高级抽象
- * 设计理念：像ORM屏蔽SQL一样，完全屏蔽HTTP/SSE细节
+ * 实时资源接口 - 继承基础Resource + 实时订阅功能
+ * 完全屏蔽HTTP/SSE实现细节，用户只需处理业务对象
  */
 export interface RealtimeResource<T> extends Resource<T> {
   /**
-   * 订阅资源变更 - 完全屏蔽底层实现
-   * 用户只需要处理业务对象，不需要知道HTTP/SSE的存在
-   */
-  subscribe(callback: (item: T) => void): () => void
-  
-  /**
-   * 订阅资源变更，支持错误处理
+   * 订阅实时数据变化
+   * @param callback 数据变化回调 - 直接接收业务对象
+   * @param errorCallback 错误处理回调（可选）
+   * @returns 取消订阅函数
    */
   subscribe(
     callback: (item: T) => void,
-    errorCallback: (error: Error) => void
+    errorCallback?: (error: Error) => void
   ): () => void
 }
 
