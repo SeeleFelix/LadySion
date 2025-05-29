@@ -63,6 +63,7 @@ docs/
 |----------|------|------|
 | LangGraph指南 | LangGraph框架使用指南 | [langgraph-guide.md](technical/langgraph-guide.md) |
 | OpenRouter指南 | OpenRouter集成和配置指南 | [openrouter-guide.md](technical/openrouter-guide.md) |
+| TRA配置管理指南 | TypeScript Resource API配置系统指南 | [tra-configuration-guide.md](technical/tra-configuration-guide.md) |
 | 索引文件指南 | 项目文件索引和导航指南 | [index-files-guide.md](technical/index-files-guide.md) |
 
 ## 📖 操作指南 (Guides)

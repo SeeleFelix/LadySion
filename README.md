@@ -51,6 +51,7 @@ npm run dev
 ### 🔧 技术指南
 - **[OpenRouter集成](./docs/technical/openrouter-guide.md)** - LLM API集成和配置
 - **[LangGraph指南](./docs/technical/langgraph-guide.md)** - AI工作流编排
+- **[TRA配置管理](./docs/technical/tra-configuration-guide.md)** - TypeScript Resource API配置系统
 - **[文件组织](./docs/technical/index-files-guide.md)** - 项目模块化结构
 
 ### 💭 设计哲学
