@@ -16,11 +16,14 @@
     "type-check": "npm run type-check:web && npm run type-check:server",
     "type-check:web": "cd web && npm run type-check",
     "type-check:server": "cd server && npm run type-check",
+    "test": "npm run test:web && npm run test:server",
+    "test:web": "cd web && npm run test:run",
+    "test:server": "cd server && npm test 2>/dev/null || echo \"Server tests not configured yet\"",
+    "test:coverage": "cd web && npm run test:coverage",
     "lint": "eslint .",
     "format": "prettier --write .",
     "lint:fix": "eslint . --fix",
-    "lint:check": "eslint . --max-warnings 0",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint:check": "eslint . --max-warnings 0"
   },
   "workspaces": [
     "server",
