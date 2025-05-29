@@ -1,25 +1,36 @@
 /**
  * TRA URL构建工具
  * 负责构建RESTful API的URL和查询参数
+ * 使用Vite官方配置管理，返回相对路径供HttpClient使用
  */
 
-import type { Pageable } from '../types'
+import type { Pageable, ResourceConfig, SortField } from '../types'
+import { buildResourcePath } from '../config'
 
 /**
  * URL路径构建器 - 统一管理所有URL构建逻辑
+ * ⚠️ 重要：此类返回相对路径，由HttpClient负责拼接baseUrl
  */
 export class UrlBuilder {
-  constructor(private baseUrl: string, private resourceName: string) {}
+  private resourceName: string
+  private config?: Partial<ResourceConfig>
   
-  /**
-   * 构建基础资源路径
-   */
-  getBasePath(): string {
-    return `${this.baseUrl}/api/resources/${this.resourceName}`
+  constructor(resourceName: string, config?: Partial<ResourceConfig>) {
+    this.resourceName = resourceName
+    this.config = config
   }
   
   /**
-   * 构建单个资源路径
+   * 构建基础资源路径 - 返回相对路径
+   * 返回: /api/resources/ResourceName
+   */
+  getBasePath(): string {
+    return buildResourcePath(this.resourceName, this.config)
+  }
+  
+  /**
+   * 构建单个资源路径 - 返回相对路径
+   * 返回: /api/resources/ResourceName/id
    */
   getResourcePath(id: string): string {
     return `${this.getBasePath()}/${id}`
@@ -46,7 +57,7 @@ export class UrlBuilder {
     
     // 添加排序参数 - 可选参数
     if (pageable.sort?.fields && pageable.sort.fields.length > 0) {
-      pageable.sort.fields.forEach(sortField => {
+      pageable.sort.fields.forEach((sortField: SortField) => {
         // 验证排序字段参数
         if (sortField.field && sortField.direction) {
           params.push(`sort=${sortField.field},${sortField.direction}`)

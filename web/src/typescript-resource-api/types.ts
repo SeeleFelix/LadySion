@@ -4,6 +4,14 @@
  */
 
 /**
+ * API路径配置
+ */
+export interface ApiPaths {
+  resources: string    // 资源API路径前缀
+  realtime: string     // 实时API路径前缀
+}
+
+/**
  * 基础配置接口
  */
 export interface ResourceConfig {
@@ -13,6 +21,8 @@ export interface ResourceConfig {
   // 扩展配置选项
   retries?: number
   retryDelay?: number
+  // API路径配置
+  apiPaths?: Partial<ApiPaths>
 }
 
 /**
@@ -117,19 +127,22 @@ export interface RealtimeConfig extends ResourceConfig {
 }
 
 /**
- * 实时资源接口 - 继承基础Resource + 实时订阅功能
- * 完全屏蔽HTTP/SSE实现细节，用户只需处理业务对象
+ * 实时资源接口 - 完全屏蔽HTTP层的高级抽象
+ * 设计理念：像ORM屏蔽SQL一样，完全屏蔽HTTP/SSE细节
  */
 export interface RealtimeResource<T> extends Resource<T> {
   /**
-   * 订阅实时数据变化
-   * @param callback 数据变化回调 - 直接接收业务对象
-   * @param errorCallback 错误处理回调（可选）
-   * @returns 取消订阅函数
+   * 订阅资源变更 - 完全屏蔽底层实现
+   * 用户只需要处理业务对象，不需要知道HTTP/SSE的存在
+   */
+  subscribe(callback: (item: T) => void): () => void
+  
+  /**
+   * 订阅资源变更，支持错误处理
    */
   subscribe(
     callback: (item: T) => void,
-    errorCallback?: (error: Error) => void
+    errorCallback: (error: Error) => void
   ): () => void
 }
 

@@ -4,6 +4,7 @@
  */
 
 import { RequestOptions, TRAError, ResourceConfig } from './types'
+import { getResourceConfig } from './config'
 
 /**
  * 统一的HTTP客户端类
@@ -11,17 +12,9 @@ import { RequestOptions, TRAError, ResourceConfig } from './types'
 export class HttpClient {
   private config: Required<ResourceConfig>
 
-  constructor(config: ResourceConfig = {}) {
-    this.config = {
-      baseUrl: '',
-      timeout: 30000,
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      retries: 0,
-      retryDelay: 1000,
-      ...config
-    }
+  constructor(userConfig?: Partial<ResourceConfig>) {
+    // 使用配置管理获取完整配置
+    this.config = getResourceConfig(userConfig)
   }
 
   /**
@@ -127,9 +120,14 @@ export class HttpClient {
   }
 
   /**
-   * 构建完整URL
+   * 构建完整URL - 修正：支持相对路径
    */
   private buildUrl(path: string): string {
+    // 如果baseUrl为空，直接返回相对路径
+    if (!this.config.baseUrl) {
+      return path
+    }
+    // 如果配置了baseUrl，则拼接完整URL（用于跨域场景）
     return `${this.config.baseUrl}${path}`
   }
 } 

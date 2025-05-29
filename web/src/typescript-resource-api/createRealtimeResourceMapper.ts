@@ -1,11 +1,12 @@
 /**
  * TRA 实时资源映射器
  * 设计理念：像ORM屏蔽SQL一样，完全屏蔽HTTP/SSE细节
- * 重构版本：使用组合模式，统一URL构建，职责分离
+ * 重构版本：使用Vite官方配置管理，消除硬编码
  */
 
 import type { RealtimeResource, RealtimeConfig } from './types'
 import { createResourceProxy } from './createResourceMapper'
+import { buildRealtimeUrl, getRealtimeConfig } from './config'
 
 /**
  * 订阅者类型定义
@@ -16,25 +17,24 @@ interface Subscriber<T> {
 }
 
 /**
- * SSE连接管理器 - 重构版本，使用UrlBuilder
+ * SSE连接管理器 - 使用配置管理系统
  */
 class SSEConnectionManager<T> {
   private eventSource: EventSource | null = null
   private subscribers: Subscriber<T>[] = []
-  private baseUrl: string
   private resourceName: string
+  private config: Required<RealtimeConfig>
   
-  constructor(resourceName: string, config: RealtimeConfig) {
-    this.baseUrl = config.baseUrl || 'http://localhost:3000'
+  constructor(resourceName: string, config?: RealtimeConfig) {
     this.resourceName = resourceName
+    this.config = getRealtimeConfig(config)
   }
   
   /**
-   * 获取SSE端点URL - 直接构建，不依赖UrlBuilder的baseUrl
+   * 获取SSE端点URL - 使用配置管理构建完整URL
    */
   private getSSEUrl(): string {
-    // 直接构建实时端点: {baseUrl}/api/realtime/{resource}
-    return `${this.baseUrl}/api/realtime/${this.resourceName.toLowerCase()}`
+    return buildRealtimeUrl(this.resourceName, this.config)
   }
   
   /**
@@ -139,13 +139,13 @@ class SSEConnectionManager<T> {
 }
 
 /**
- * 实时资源工厂 - 新增工厂类，职责分离
+ * 实时资源工厂 - 使用配置管理系统
  */
 class RealtimeResourceFactory<T> {
   private baseResource: any
   private connectionManager: SSEConnectionManager<T>
   
-  constructor(resourceName: string, config: RealtimeConfig) {
+  constructor(resourceName: string, config?: RealtimeConfig) {
     // 🔄 重用基础CRUD功能 - 组合模式
     this.baseResource = createResourceProxy(resourceName, config)
     
@@ -176,7 +176,7 @@ class RealtimeResourceFactory<T> {
 }
 
 /**
- * 创建实时资源代理 - 重构版本，使用工厂模式
+ * 创建实时资源代理 - 使用Vite官方配置管理
  * 完全屏蔽HTTP层实现，用户只需要处理业务对象
  */
 export function createRealtimeResourceProxy<T extends Record<string, any>>(

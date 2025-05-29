@@ -2,7 +2,7 @@
  * TypeScript Resource API (TRA) - Spring Data JPA风格实现
  * 参考Spring Data JPA的 JpaRepository<T, ID> 模式
  * 提供RESTful CRUD操作：create、update、patch、delete
- * 重构版本：职责分离，使用URL构建器
+ * 重构版本：使用Vite官方配置管理，消除硬编码
  */
 
 import { Resource, ResourceConfig, CreateResourceProxy, Pageable, Page } from './types'
@@ -18,7 +18,7 @@ class ResourceProxyFactory<T> {
   
   constructor(resourceName: string, config?: ResourceConfig) {
     this.httpClient = new HttpClient(config)
-    this.urlBuilder = new UrlBuilder('', resourceName)
+    this.urlBuilder = new UrlBuilder(resourceName, config)
   }
   
   /**
@@ -55,7 +55,7 @@ class ResourceProxyFactory<T> {
 
 /**
  * 为继承Resource的接口创建动态代理 - 相当于Spring的@Repository动态代理
- * 重构版本：使用工厂模式，消除any类型，职责更清晰
+ * 重构版本：使用Vite官方配置管理，消除硬编码
  */
 export const createResourceProxy: CreateResourceProxy = <TResource extends Resource<any>>(
   resourceName: string,
