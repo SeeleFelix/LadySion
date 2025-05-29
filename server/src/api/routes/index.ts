@@ -1,1 +1,0 @@
-// 路由定义已迁移到 infrastructure/adapters/web 
