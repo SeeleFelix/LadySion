@@ -6,9 +6,12 @@
 // 类型导出
 export type {
   Resource,
+  RealtimeResource,
   ResourceConfig,
+  RealtimeConfig,
   RequestOptions,
-  CreateResourceProxy
+  CreateResourceProxy,
+  CreateRealtimeResourceProxy
 } from './types'
 
 // 错误类导出
@@ -16,6 +19,7 @@ export { TRAError } from './types'
 
 // 主要功能导出
 export { createResourceProxy } from './createResourceMapper'
+export { createRealtimeResourceProxy } from './createRealtimeResourceMapper'
 
 // HTTP客户端导出（高级用法）
 export { HttpClient } from './httpClient'

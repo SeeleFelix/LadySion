@@ -62,9 +62,45 @@ export interface Resource<T> {
 }
 
 /**
+ * 实时资源配置
+ */
+export interface RealtimeConfig extends ResourceConfig {
+  reconnect?: boolean
+  reconnectDelay?: number
+}
+
+/**
+ * 实时资源接口 - 完全屏蔽HTTP层的高级抽象
+ * 设计理念：像ORM屏蔽SQL一样，完全屏蔽HTTP/SSE细节
+ */
+export interface RealtimeResource<T> extends Resource<T> {
+  /**
+   * 订阅资源变更 - 完全屏蔽底层实现
+   * 用户只需要处理业务对象，不需要知道HTTP/SSE的存在
+   */
+  subscribe(callback: (item: T) => void): () => void
+  
+  /**
+   * 订阅资源变更，支持错误处理
+   */
+  subscribe(
+    callback: (item: T) => void,
+    errorCallback: (error: Error) => void
+  ): () => void
+}
+
+/**
  * 资源代理创建函数类型
  */
 export type CreateResourceProxy = <TResource extends Resource<any>>(
   resourceName: string,
   config?: ResourceConfig
+) => TResource
+
+/**
+ * 实时资源代理创建函数类型
+ */
+export type CreateRealtimeResourceProxy = <TResource extends RealtimeResource<any>>(
+  resourceName: string,
+  config?: RealtimeConfig
 ) => TResource 

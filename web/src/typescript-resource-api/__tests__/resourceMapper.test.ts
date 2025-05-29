@@ -1,6 +1,4 @@
 /**
- * TypeScript Resource API (TRA) 功能测试
- * TDD方式：测试继承Resource的接口自动获得RESTful能力
  * 参考Spring Data JPA的 JpaRepository<T, ID> 模式
  * CRUD操作：create、update、patch、delete
  */
