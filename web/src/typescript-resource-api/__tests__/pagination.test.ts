@@ -3,8 +3,10 @@
  * 验证Pageable和Page的完整功能
  */
 
+/// <reference lib="deno.ns" />
+
 import { assert, assertEquals } from "std/assert/mod.ts";
-import type { Page, Pageable, Resource, Sort } from "../types";
+import type { Page, Pageable, Resource, Sort } from "../types.ts";
 
 // 用户业务对象
 type User = {
@@ -15,8 +17,28 @@ type User = {
   createdAt: string;
 };
 
+function setupMockFetch() {
+  const mockFetch = {
+    mock: {
+      calls: [] as any[],
+    },
+    mockResolvedValue: function(value: any) {
+      this.mockValue = value;
+      return this;
+    },
+    mockValue: undefined as any,
+  };
+  
+  globalThis.fetch = ((...args: any[]) => {
+    mockFetch.mock.calls.push(args);
+    return Promise.resolve(mockFetch.mockValue);
+  }) as any;
+  
+  return mockFetch;
+}
+
 Deno.test("分页-第一页查询", async () => {
-  const { createResourceProxy } = await import("../index");
+  const { createResourceProxy } = await import("../index.ts");
   const UserResource: Resource<User> = createResourceProxy("User");
   const mockPageResponse: Page<User> = {
     content: [
@@ -44,19 +66,18 @@ Deno.test("分页-第一页查询", async () => {
     last: false,
     empty: false,
   };
-  const mockFetch = Deno.fn();
-  Deno.stubGlobal("fetch", mockFetch);
+  const mockFetch = setupMockFetch();
   const pageable: Pageable = { page: 0, size: 10 };
   mockFetch.mockResolvedValue({ ok: true, json: async () => mockPageResponse });
   const result = await UserResource.findAllPaged(pageable);
+  
   assert(mockFetch.mock.calls[0][0] === "/api/whisper/User/findAllPaged");
   assert(mockFetch.mock.calls[0][1].method === "POST");
   assert(
     mockFetch.mock.calls[0][1].headers["Content-Type"] === "application/json",
   );
   assert(
-    JSON.stringify(mockFetch.mock.calls[0][1].body) ===
-      JSON.stringify({ args: [pageable] }),
+    mockFetch.mock.calls[0][1].body === JSON.stringify({ args: [pageable] }),
   );
   assert(result.content.length === 2);
   assert(result.first === true);
@@ -64,7 +85,7 @@ Deno.test("分页-第一页查询", async () => {
 });
 
 Deno.test("分页-第二页查询", async () => {
-  const { createResourceProxy } = await import("../index");
+  const { createResourceProxy } = await import("../index.ts");
   const UserResource: Resource<User> = createResourceProxy("User");
   const mockPageResponse: Page<User> = {
     content: [
@@ -85,8 +106,7 @@ Deno.test("分页-第二页查询", async () => {
     last: false,
     empty: false,
   };
-  const mockFetch = Deno.fn();
-  Deno.stubGlobal("fetch", mockFetch);
+  const mockFetch = setupMockFetch();
   const pageable: Pageable = { page: 1, size: 10 };
   mockFetch.mockResolvedValue({ ok: true, json: async () => mockPageResponse });
   const result = await UserResource.findAllPaged(pageable);
@@ -96,15 +116,14 @@ Deno.test("分页-第二页查询", async () => {
     mockFetch.mock.calls[0][1].headers["Content-Type"] === "application/json",
   );
   assert(
-    JSON.stringify(mockFetch.mock.calls[0][1].body) ===
-      JSON.stringify({ args: [pageable] }),
+    mockFetch.mock.calls[0][1].body === JSON.stringify({ args: [pageable] }),
   );
   assert(result.number === 1);
   assert(result.first === false);
 });
 
 Deno.test("排序-单字段升序", async () => {
-  const { createResourceProxy } = await import("../index");
+  const { createResourceProxy } = await import("../index.ts");
   const UserResource: Resource<User> = createResourceProxy("User");
   const mockPageResponse: Page<User> = {
     content: [
@@ -132,8 +151,7 @@ Deno.test("排序-单字段升序", async () => {
     last: true,
     empty: false,
   };
-  const mockFetch = Deno.fn();
-  Deno.stubGlobal("fetch", mockFetch);
+  const mockFetch = setupMockFetch();
   const sort: Sort = { fields: [{ field: "name", direction: "ASC" }] };
   const pageable: Pageable = { page: 0, size: 10, sort };
   mockFetch.mockResolvedValue({ ok: true, json: async () => mockPageResponse });
@@ -144,18 +162,16 @@ Deno.test("排序-单字段升序", async () => {
     mockFetch.mock.calls[0][1].headers["Content-Type"] === "application/json",
   );
   assert(
-    JSON.stringify(mockFetch.mock.calls[0][1].body) ===
-      JSON.stringify({ args: [pageable] }),
+    mockFetch.mock.calls[0][1].body === JSON.stringify({ args: [pageable] }),
   );
   assert(result.content[0].name === "Alice");
   assert(result.content[1].name === "Bob");
 });
 
 Deno.test("排序-多字段", async () => {
-  const { createResourceProxy } = await import("../index");
+  const { createResourceProxy } = await import("../index.ts");
   const UserResource: Resource<User> = createResourceProxy("User");
-  const mockFetch = Deno.fn();
-  Deno.stubGlobal("fetch", mockFetch);
+  const mockFetch = setupMockFetch();
   const sort: Sort = {
     fields: [
       { field: "age", direction: "DESC" },
@@ -184,16 +200,14 @@ Deno.test("排序-多字段", async () => {
     mockFetch.mock.calls[0][1].headers["Content-Type"] === "application/json",
   );
   assert(
-    JSON.stringify(mockFetch.mock.calls[0][1].body) ===
-      JSON.stringify({ args: [pageable] }),
+    mockFetch.mock.calls[0][1].body === JSON.stringify({ args: [pageable] }),
   );
 });
 
 Deno.test("边界-空页面", async () => {
-  const { createResourceProxy } = await import("../index");
+  const { createResourceProxy } = await import("../index.ts");
   const UserResource: Resource<User> = createResourceProxy("User");
-  const mockFetch = Deno.fn();
-  Deno.stubGlobal("fetch", mockFetch);
+  const mockFetch = setupMockFetch();
   const mockPageResponse: Page<User> = {
     content: [],
     totalElements: 0,
@@ -214,10 +228,9 @@ Deno.test("边界-空页面", async () => {
 });
 
 Deno.test("边界-大页面尺寸", async () => {
-  const { createResourceProxy } = await import("../index");
+  const { createResourceProxy } = await import("../index.ts");
   const UserResource: Resource<User> = createResourceProxy("User");
-  const mockFetch = Deno.fn();
-  Deno.stubGlobal("fetch", mockFetch);
+  const mockFetch = setupMockFetch();
   const mockPageResponse: Page<User> = {
     content: new Array(100).fill(null).map((_, i) => ({
       id: `${i}`,
@@ -244,18 +257,16 @@ Deno.test("边界-大页面尺寸", async () => {
     mockFetch.mock.calls[0][1].headers["Content-Type"] === "application/json",
   );
   assert(
-    JSON.stringify(mockFetch.mock.calls[0][1].body) ===
-      JSON.stringify({ args: [pageable] }),
+    mockFetch.mock.calls[0][1].body === JSON.stringify({ args: [pageable] }),
   );
   assert(result.content.length === 100);
   assert(result.size === 100);
 });
 
 Deno.test("集成-用户列表分页", async () => {
-  const { createResourceProxy } = await import("../index");
+  const { createResourceProxy } = await import("../index.ts");
   const UserResource: Resource<User> = createResourceProxy("User");
-  const mockFetch = Deno.fn();
-  Deno.stubGlobal("fetch", mockFetch);
+  const mockFetch = setupMockFetch();
   const mockUsers: User[] = [
     {
       id: "1",
@@ -307,7 +318,6 @@ Deno.test("集成-用户列表分页", async () => {
     mockFetch.mock.calls[0][1].headers["Content-Type"] === "application/json",
   );
   assert(
-    JSON.stringify(mockFetch.mock.calls[0][1].body) ===
-      JSON.stringify({ args: [pageable] }),
+    mockFetch.mock.calls[0][1].body === JSON.stringify({ args: [pageable] }),
   );
 });

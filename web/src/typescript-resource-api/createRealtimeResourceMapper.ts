@@ -4,9 +4,9 @@
  * 重构版本：使用Vite官方配置管理，消除硬编码
  */
 
-import type { RealtimeConfig, RealtimeResource } from "./types";
-import { createResourceProxy } from "./createResourceMapper";
-import { buildRealtimeUrl, getRealtimeConfig } from "./config";
+import type { RealtimeConfig, RealtimeResource } from "./types.ts";
+import { createResourceProxy } from "./createResourceMapper.ts";
+import { buildRealtimeUrl, getRealtimeConfig } from "./config.ts";
 
 /**
  * 订阅者类型定义

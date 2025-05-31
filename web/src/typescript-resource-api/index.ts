@@ -19,17 +19,17 @@ export type {
   Sort,
   SortDirection,
   SortField,
-} from "./types";
+} from "./types.ts";
 
 // 错误类导出
-export { TRAError } from "./types";
+export { TRAError } from "./types.ts";
 
 // 主要功能导出
-export { createResourceProxy } from "./createResourceMapper";
-export { createRealtimeResourceProxy } from "./createRealtimeResourceMapper";
+export { createResourceProxy } from "./createResourceMapper.ts";
+export { createRealtimeResourceProxy } from "./createRealtimeResourceMapper.ts";
 
 // HTTP客户端导出（高级用法）
-export { HttpClient } from "./httpClient";
+export { HttpClient } from "./httpClient.ts";
 
 // 🆕 配置管理导出 - Vite官方方案
 export {
@@ -40,7 +40,7 @@ export {
   debugConfig,
   getRealtimeConfig,
   getResourceConfig,
-} from "./config";
+} from "./config.ts";
 
 // 默认导出主要功能
-export { createResourceProxy as default } from "./createResourceMapper";
+export { createResourceProxy as default } from "./createResourceMapper.ts";

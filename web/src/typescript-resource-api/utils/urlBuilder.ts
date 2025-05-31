@@ -4,8 +4,8 @@
  * 使用Vite官方配置管理，返回相对路径供HttpClient使用
  */
 
-import type { Pageable, ResourceConfig, SortField } from "../types";
-import { buildResourcePath } from "../config";
+import type { Pageable, ResourceConfig, SortField } from "../types.ts";
+import { buildResourcePath } from "../config.ts";
 
 /**
  * URL路径构建器 - 统一管理所有URL构建逻辑

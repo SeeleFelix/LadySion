@@ -4,6 +4,7 @@
  */
 
 import { assert, assertEquals } from "std/assert/mod.ts";
+import { RealtimeResource } from "@web/typescript-resource-api/types.ts";
 
 // 聊天业务对象
 interface ChatMessage {
@@ -19,7 +20,7 @@ Deno.test("TRA 聊天实时功能 - HTTP层完全屏蔽", () => {
 
   Deno.test("聊天消息实时订阅 - 用户期待的使用方式", () => {
     Deno.test("ChatResource.subscribe() - 持续接收Chat对象", async () => {
-      const { createRealtimeResourceProxy } = await import("../index");
+      const { createRealtimeResourceProxy } = await import("../index.ts");
 
       // 创建Chat资源 - 用户不需要知道这是HTTP操作
       const ChatResource: RealtimeResource<ChatMessage> =
@@ -67,7 +68,7 @@ Deno.test("TRA 聊天实时功能 - HTTP层完全屏蔽", () => {
     });
 
     Deno.test("支持错误处理 - 但用户不需要处理HTTP错误", async () => {
-      const { createRealtimeResourceProxy } = await import("../index");
+      const { createRealtimeResourceProxy } = await import("../index.ts");
       const ChatResource: RealtimeResource<ChatMessage> =
         createRealtimeResourceProxy("ChatMessage");
 
@@ -90,7 +91,7 @@ Deno.test("TRA 聊天实时功能 - HTTP层完全屏蔽", () => {
 
   Deno.test("实际使用场景演示", () => {
     Deno.test("聊天室场景 - 用户只关心聊天逻辑", async () => {
-      const { createRealtimeResourceProxy } = await import("../index");
+      const { createRealtimeResourceProxy } = await import("../index.ts");
 
       // 用户视角：我要订阅聊天消息
       const ChatResource = createRealtimeResourceProxy<ChatMessage>(
@@ -132,7 +133,7 @@ Deno.test("TRA 聊天实时功能 - HTTP层完全屏蔽", () => {
     });
 
     Deno.test("多个资源同时订阅 - 各自独立", async () => {
-      const { createRealtimeResourceProxy } = await import("../index");
+      const { createRealtimeResourceProxy } = await import("../index.ts");
 
       // 同时订阅消息和用户状态
       const ChatResource = createRealtimeResourceProxy<ChatMessage>(

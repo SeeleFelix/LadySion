@@ -11,8 +11,9 @@ import {
   Pageable,
   Resource,
   ResourceConfig,
-} from "./types";
-import { HttpClient } from "./httpClient";
+} from "./types.ts";
+import { HttpClient } from "./httpClient.ts";
+import { isValidQueryMethod, parseQueryMethodName } from "./utils/queryMethodParser.ts";
 
 /**
  * 资源代理工厂 - 负责创建资源代理实例
@@ -36,10 +37,10 @@ class ResourceProxyFactory<T> {
   }
 
   /**
-   * 创建资源代理对象 - 使用工厂模式，职责更清晰
+   * 创建资源代理对象 - 使用Proxy拦截动态方法调用
    */
   createProxy(): Resource<T> {
-    return {
+    const baseResource = {
       // 查询操作
       findAll: () => this.whisperCall<T[]>("findAll"),
 
@@ -63,6 +64,34 @@ class ResourceProxyFactory<T> {
       // 删除操作
       deleteById: (id: string) => this.whisperCall<void>("deleteById", [id]),
     };
+
+    // 🔥 使用Proxy拦截动态方法调用 - Spring Data JPA风格
+    return new Proxy(baseResource, {
+      get: (target: any, prop: string | symbol) => {
+        // 如果属性存在于基础对象中，直接返回
+        if (prop in target) {
+          return target[prop];
+        }
+
+        // 如果是字符串属性且符合查询方法模式，创建动态方法
+        if (typeof prop === 'string' && isValidQueryMethod(prop)) {
+          return (...args: any[]) => {
+            // 解析方法名获取查询信息
+            const queryInfo = parseQueryMethodName(prop);
+            
+            if (!queryInfo.isValid) {
+              throw new Error(`不支持的查询方法: ${prop}`);
+            }
+
+            // 使用whisper API调用动态方法
+            return this.whisperCall(prop, args);
+          };
+        }
+
+        // 其他情况返回undefined（会导致"is not a function"错误）
+        return undefined;
+      },
+    });
   }
 }
 

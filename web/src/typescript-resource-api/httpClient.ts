@@ -3,8 +3,8 @@
  * 提供统一的HTTP请求处理，消除重复代码
  */
 
-import { RequestOptions, ResourceConfig, TRAError } from "./types";
-import { getResourceConfig } from "./config";
+import { RequestOptions, ResourceConfig, TRAError } from "./types.ts";
+import { getResourceConfig } from "./config.ts";
 
 /**
  * 统一的HTTP客户端类
