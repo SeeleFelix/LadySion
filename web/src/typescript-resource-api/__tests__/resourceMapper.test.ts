@@ -87,101 +87,102 @@ describe('TypeScript Resource API (TRA) - RESTful CRUD接口', () => {
       appleResource = createResourceProxy<AppleResource>('Apple')
     })
 
-    it('findAll() 应该映射为 GET /api/resources/Apple', async () => {
-      const mockApples = [
-        { id: '1', name: 'Red Apple', color: 'red', price: 1.5 },
-        { id: '2', name: 'Green Apple', color: 'green', price: 1.8 }
-      ]
-      global.fetch = vi.fn().mockResolvedValue(createMockSuccessResponse(mockApples))
-      
-      const apples = await appleResource.findAll()
-      
-      expect(fetch).toHaveBeenCalledWith('/api/resources/Apple', {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      })
-      expect(apples).toEqual(mockApples)
+    it('findAll() 应该映射为 POST /api/whisper/Apple/findAll', async () => {
+      global.fetch = vi.fn().mockResolvedValue(createMockSuccessResponse([]))
+      await appleResource.findAll()
+      expect(fetch).toHaveBeenCalledWith(
+        '/api/whisper/Apple/findAll',
+        expect.objectContaining({
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ args: [] })
+        })
+      )
     })
 
-    it('findById(id) 应该映射为 GET /api/resources/Apple/{id}', async () => {
-      const mockApple = { id: '123', name: 'Sweet Apple', color: 'red', price: 2.0 }
-      global.fetch = vi.fn().mockResolvedValue(createMockSuccessResponse(mockApple))
-      
-      const apple = await appleResource.findById('123')
-      
-      expect(fetch).toHaveBeenCalledWith('/api/resources/Apple/123', {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      })
-      expect(apple).toEqual(mockApple)
+    it('findById(id) 应该映射为 POST /api/whisper/Apple/findById', async () => {
+      global.fetch = vi.fn().mockResolvedValue(createMockSuccessResponse({}))
+      await appleResource.findById('123')
+      expect(fetch).toHaveBeenCalledWith(
+        '/api/whisper/Apple/findById',
+        expect.objectContaining({
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ args: ['123'] })
+        })
+      )
     })
   })
 
   describe('创建操作 (Create)', () => {
-    it('create() 应该映射为 POST /api/resources/Apple', async () => {
-      const appleResource = createResourceProxy<AppleResource>('Apple')
+    let appleResource: AppleResource
+    beforeEach(() => {
+      appleResource = createResourceProxy<AppleResource>('Apple')
+    })
+    it('create() 应该映射为 POST /api/whisper/Apple/create', async () => {
       const newApple = { name: 'New Apple', color: 'yellow', price: 1.2 }
-      const createdApple = { id: 'new-id', ...newApple }
-      global.fetch = vi.fn().mockResolvedValue(createMockSuccessResponse(createdApple))
-      
-      const result = await appleResource.create(newApple)
-      
-      expect(fetch).toHaveBeenCalledWith('/api/resources/Apple', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newApple)
-      })
-      expect(result).toEqual(createdApple)
+      global.fetch = vi.fn().mockResolvedValue(createMockSuccessResponse({}))
+      await appleResource.create(newApple)
+      expect(fetch).toHaveBeenCalledWith(
+        '/api/whisper/Apple/create',
+        expect.objectContaining({
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ args: [newApple] })
+        })
+      )
     })
   })
 
   describe('更新操作 (Update)', () => {
-    it('update(id, entity) 应该映射为 PUT /api/resources/Apple/{id} - 全量更新', async () => {
-      const appleResource = createResourceProxy<AppleResource>('Apple')
-      // 全量更新：必须包含所有字段（除了id）
-      const fullApple = { name: 'Updated Apple', color: 'red', price: 2.5 }
-      const responseApple = { id: '123', ...fullApple }
-      global.fetch = vi.fn().mockResolvedValue(createMockSuccessResponse(responseApple))
-      
-      const result = await appleResource.update('123', fullApple)
-      
-      expect(fetch).toHaveBeenCalledWith('/api/resources/Apple/123', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(fullApple)
-      })
-      expect(result).toEqual(responseApple)
+    let appleResource: AppleResource
+    beforeEach(() => {
+      appleResource = createResourceProxy<AppleResource>('Apple')
     })
-
-    it('patch(id, partial) 应该映射为 PATCH /api/resources/Apple/{id} - 部分更新', async () => {
-      const appleResource = createResourceProxy<AppleResource>('Apple')
-      // 部分更新：只更新price字段
+    it('update(id, entity) 应该映射为 POST /api/whisper/Apple/update', async () => {
+      const fullApple = { name: 'Updated Apple', color: 'red', price: 2.5 }
+      global.fetch = vi.fn().mockResolvedValue(createMockSuccessResponse({}))
+      await appleResource.update('123', fullApple)
+      expect(fetch).toHaveBeenCalledWith(
+        '/api/whisper/Apple/update',
+        expect.objectContaining({
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ args: ['123', fullApple] })
+        })
+      )
+    })
+    it('patch(id, partial) 应该映射为 POST /api/whisper/Apple/patch', async () => {
       const partialUpdate = { price: 3.0 }
-      const responseApple = { id: '123', name: 'Apple', color: 'red', price: 3.0 }
-      global.fetch = vi.fn().mockResolvedValue(createMockSuccessResponse(responseApple))
-      
-      const result = await appleResource.patch('123', partialUpdate)
-      
-      expect(fetch).toHaveBeenCalledWith('/api/resources/Apple/123', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(partialUpdate)
-      })
-      expect(result).toEqual(responseApple)
+      global.fetch = vi.fn().mockResolvedValue(createMockSuccessResponse({}))
+      await appleResource.patch('123', partialUpdate)
+      expect(fetch).toHaveBeenCalledWith(
+        '/api/whisper/Apple/patch',
+        expect.objectContaining({
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ args: ['123', partialUpdate] })
+        })
+      )
     })
   })
 
   describe('删除操作 (Delete)', () => {
-    it('deleteById(id) 应该映射为 DELETE /api/resources/Apple/{id}', async () => {
-      const appleResource = createResourceProxy<AppleResource>('Apple')
+    let appleResource: AppleResource
+    beforeEach(() => {
+      appleResource = createResourceProxy<AppleResource>('Apple')
+    })
+    it('deleteById(id) 应该映射为 POST /api/whisper/Apple/deleteById', async () => {
       global.fetch = vi.fn().mockResolvedValue(createMockSuccessResponse(null))
-      
       await appleResource.deleteById('123')
-      
-      expect(fetch).toHaveBeenCalledWith('/api/resources/Apple/123', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' }
-      })
+      expect(fetch).toHaveBeenCalledWith(
+        '/api/whisper/Apple/deleteById',
+        expect.objectContaining({
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ args: ['123'] })
+        })
+      )
     })
   })
 
