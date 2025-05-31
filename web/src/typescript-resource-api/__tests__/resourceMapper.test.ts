@@ -190,16 +190,16 @@ describe('TypeScript Resource API (TRA) - RESTful CRUD接口', () => {
     it('UserResource应该映射到正确的URL路径', async () => {
       const userResource = createResourceProxy<UserResource>('User')
       const newUser = { username: 'john', email: 'john@test.com', age: 25 }
-      const createdUser = { id: '1', ...newUser }
-      global.fetch = vi.fn().mockResolvedValue(createMockSuccessResponse(createdUser))
-      
+      global.fetch = vi.fn().mockResolvedValue(createMockSuccessResponse({ id: '1', ...newUser }))
       await userResource.create(newUser)
-      
-      expect(fetch).toHaveBeenCalledWith('/api/resources/User', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newUser)
-      })
+      expect(fetch).toHaveBeenCalledWith(
+        '/api/whisper/User/create',
+        expect.objectContaining({
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ args: [newUser] })
+        })
+      )
     })
   })
 
@@ -226,18 +226,18 @@ describe('TypeScript Resource API (TRA) - RESTful CRUD接口', () => {
         baseUrl: 'https://custom.api.com',
         headers: { 'Authorization': 'Bearer token123' }
       })
-      
       const mockApples = [{ id: '1', name: 'Apple', color: 'red', price: 1.0 }]
       global.fetch = vi.fn().mockResolvedValue(createMockSuccessResponse(mockApples))
-      
       await appleResource.findAll()
-      
       expect(fetch).toHaveBeenCalledWith(
-        'https://custom.api.com/api/resources/Apple',
+        '/api/whisper/Apple/findAll',
         expect.objectContaining({
+          method: 'POST',
           headers: expect.objectContaining({
-            'Authorization': 'Bearer token123'
-          })
+            'Authorization': 'Bearer token123',
+            'Content-Type': 'application/json'
+          }),
+          body: JSON.stringify({ args: [] })
         })
       )
     })

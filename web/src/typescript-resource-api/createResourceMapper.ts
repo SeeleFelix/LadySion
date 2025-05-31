@@ -7,48 +7,56 @@
 
 import { Resource, ResourceConfig, CreateResourceProxy, Pageable, Page } from './types'
 import { HttpClient } from './httpClient'
-import { UrlBuilder } from './utils/urlBuilder'
 
 /**
  * 资源代理工厂 - 负责创建资源代理实例
  */
 class ResourceProxyFactory<T> {
   private httpClient: HttpClient
-  private urlBuilder: UrlBuilder
-  
+  private resourceName: string
+
   constructor(resourceName: string, config?: ResourceConfig) {
     this.httpClient = new HttpClient(config)
-    this.urlBuilder = new UrlBuilder(resourceName, config)
+    this.resourceName = resourceName
   }
-  
+
+  private whisperCall<R>(method: string, args: any[] = []): Promise<R> {
+    return this.httpClient.request<R>({
+      method: 'POST',
+      url: `/api/whisper/${this.resourceName}/${method}`,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ args })
+    })
+  }
+
   /**
    * 创建资源代理对象 - 使用工厂模式，职责更清晰
    */
   createProxy(): Resource<T> {
     return {
       // 查询操作
-      findAll: () => this.httpClient.get<T[]>(this.urlBuilder.getBasePath()),
+      findAll: () => this.whisperCall<T[]>('findAll'),
       
-      findById: (id: string) => this.httpClient.get<T | null>(this.urlBuilder.getResourcePath(id)),
+      findById: (id: string) => this.whisperCall<T | null>('findById', [id]),
       
       // 🆕 分页查询操作 - 使用专用URL构建器
       findAllPaged: (pageable: Pageable) => 
-        this.httpClient.get<Page<T>>(this.urlBuilder.getPagedUrl(pageable)),
+        this.whisperCall<Page<T>>('findAllPaged', [pageable]),
       
       // 创建操作
       create: (entity: Omit<T, 'id'>) => 
-        this.httpClient.post<T>(this.urlBuilder.getBasePath(), entity),
+        this.whisperCall<T>('create', [entity]),
       
       // 更新操作 - 明确类型约束
       update: (id: string, entity: Omit<T, 'id'>) => 
-        this.httpClient.put<T>(this.urlBuilder.getResourcePath(id), entity),
+        this.whisperCall<T>('update', [id, entity]),
       
       patch: (id: string, partial: Partial<Omit<T, 'id'>>) => 
-        this.httpClient.patch<T>(this.urlBuilder.getResourcePath(id), partial),
+        this.whisperCall<T>('patch', [id, partial]),
       
       // 删除操作
       deleteById: (id: string) => 
-        this.httpClient.delete(this.urlBuilder.getResourcePath(id))
+        this.whisperCall<void>('deleteById', [id])
     }
   }
 }
