@@ -96,26 +96,61 @@ export interface Page<T> {
 }
 
 /**
- * 基础Resource接口 - 相当于Spring Data JPA的CrudRepository<T, ID>
- * 明确区分：update=全量更新，patch=部分更新，都不包含id
+ * 🚀 完全动态化的Resource接口
+ * 设计理念：约定大于配置，支持任意方法名
+ * 
+ * 特性：
+ * 1. 包含标准CRUD方法的类型定义（IDE支持）
+ * 2. 通过索引签名支持任意动态方法
+ * 3. 无需预定义方法，完全运行时动态
  */
 export interface Resource<T> {
+  // ==========================================
+  // 标准CRUD方法 - 提供类型安全和IDE支持
+  // ==========================================
+  
   // 查询操作
   findAll(): Promise<T[]>;
   findById(id: string): Promise<T | null>;
-
-  // 🆕 分页查询操作 - 参考Spring Data JPA的PagingAndSortingRepository
   findAllPaged(pageable: Pageable): Promise<Page<T>>;
 
-  // 创建操作 - Omit<T, 'id'> 表示排除id字段的T类型
+  // 创建操作
   create(entity: Omit<T, "id">): Promise<T>;
 
   // 更新操作
-  update(id: string, entity: Omit<T, "id">): Promise<T>; // 全量更新，不包含id
-  patch(id: string, partial: Partial<Omit<T, "id">>): Promise<T>; // 部分更新，排除id后所有字段可选
+  update(id: string, entity: Omit<T, "id">): Promise<T>;
+  patch(id: string, partial: Partial<Omit<T, "id">>): Promise<T>;
 
   // 删除操作
   deleteById(id: string): Promise<void>;
+
+  // ==========================================
+  // 🔥 动态方法支持 - 约定大于配置
+  // ==========================================
+  
+  /**
+   * 索引签名：支持任意方法名的动态调用
+   * 
+   * 使用示例：
+   * - JPA风格查询：findByUsername(username: string)
+   * - 自定义方法：getActiveUsers(), countByStatus(status: string)
+   * - 任意方法：customMethod(...args: any[])
+   * 
+   * 约定：所有动态方法都会转换为 POST /api/whisper/{model}/{methodName}
+   */
+  [methodName: string]: (...args: any[]) => Promise<any>;
+}
+
+/**
+ * 🎯 简化的Resource类型 - 纯动态化
+ * 如果你不需要标准CRUD方法的类型提示，可以使用这个更简洁的版本
+ */
+export interface DynamicResource<T = any> {
+  /**
+   * 支持任意方法名的动态调用
+   * 约定：methodName(...args) => POST /api/whisper/{model}/{methodName}
+   */
+  [methodName: string]: (...args: any[]) => Promise<any>;
 }
 
 /**
@@ -127,32 +162,53 @@ export interface RealtimeConfig extends ResourceConfig {
 }
 
 /**
- * 实时资源接口 - 完全屏蔽HTTP层的高级抽象
- * 设计理念：像ORM屏蔽SQL一样，完全屏蔽HTTP/SSE细节
+ * 实时资源接口 - 基于DynamicResource，特殊处理subscribe方法
  */
-export interface RealtimeResource<T> extends Resource<T> {
-  /**
-   * 订阅资源变更 - 完全屏蔽底层实现
-   * 用户只需要处理业务对象，不需要知道HTTP/SSE的存在
-   */
-  subscribe(callback: (item: T) => void): () => void;
+export interface RealtimeResource<T> extends DynamicResource<T> {
+  // 标准CRUD方法 - 明确声明
+  findAll(): Promise<T[]>;
+  findById(id: string): Promise<T | null>;
+  findAllPaged(pageable: Pageable): Promise<Page<T>>;
+  create(entity: Omit<T, "id">): Promise<T>;
+  update(id: string, entity: Omit<T, "id">): Promise<T>;
+  patch(id: string, partial: Partial<Omit<T, "id">>): Promise<T>;
+  deleteById(id: string): Promise<void>;
 
   /**
-   * 订阅资源变更，支持错误处理
+   * 订阅资源变更 - 完全屏蔽底层实现
+   * 注意：subscribe方法返回取消函数，不是Promise
    */
+  subscribe(callback: (item: T) => void): Promise<() => void>;
   subscribe(
     callback: (item: T) => void,
     errorCallback: (error: Error) => void,
-  ): () => void;
+  ): Promise<() => void>;
 }
 
 /**
- * 资源代理创建函数类型
+ * 资源代理创建函数类型 - 支持灵活的类型参数和JPA字段验证
  */
-export type CreateResourceProxy = <TResource extends Resource<any>>(
-  resourceName: string,
-  config?: ResourceConfig,
-) => TResource;
+export type CreateResourceProxy = {
+  // 带字段验证的JPA风格资源
+  <TResource extends Resource<any>>(
+    resourceName: string,
+    entityFields: string[],
+    config?: ResourceConfig,
+  ): TResource;
+  
+  // 向后兼容：不带字段验证的资源（仅支持标准CRUD）
+  <TResource extends Resource<any>>(
+    resourceName: string,
+    config?: ResourceConfig,
+  ): TResource;
+  
+  // 纯动态Resource接口（不推荐，仅向后兼容）
+  <T = any>(
+    resourceName: string,
+    entityFields: string[],
+    config?: ResourceConfig,
+  ): DynamicResource<T>;
+};
 
 /**
  * 实时资源代理创建函数类型

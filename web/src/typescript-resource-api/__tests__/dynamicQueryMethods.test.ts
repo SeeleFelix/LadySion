@@ -360,12 +360,26 @@ Deno.test("findByCreatedAtBetween - 应该解析为BETWEEN查询", async () => {
   assertEquals(result.length, 1);
 });
 
-Deno.test("无效方法名应该返回undefined", async () => {
+Deno.test("完全动态化 - 任意方法名都会创建函数", async () => {
   setupMockFetch();
   userResource = createResourceProxy<UserResource>("User");
 
-  // 访问不存在且不符合JPA模式的方法应该返回undefined
-  // @ts-expect-error 故意调用不存在的方法
-  const invalidMethod = userResource.invalidMethodName;
-  assertEquals(invalidMethod, undefined);
+  // 🚀 新的设计理念：约定大于配置
+  // 任意方法名都会创建函数，无论是否"有效"
+  const anyMethod = (userResource as any).customMethodName;
+  
+  // 验证：任意方法名都会返回函数
+  assert(typeof anyMethod === "function");
+  
+  // 验证：函数调用会转换为whisper API调用
+  mockFetch.mockResolvedValue(createMockResponse({ result: "custom result" }));
+  
+  const result = await (userResource as any).customMethodName("arg1", "arg2");
+  
+  // 验证whisper API调用
+  assert(mockFetch.mock.calls[0][0] === "/api/whisper/User/customMethodName");
+  const args = JSON.parse(mockFetch.mock.calls[0][1].body).args;
+  assertEquals(args[0], "arg1");
+  assertEquals(args[1], "arg2");
+  assertEquals(result.result, "custom result");
 }); 
