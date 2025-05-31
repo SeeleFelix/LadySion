@@ -1,255 +1,160 @@
-import express from 'express'
-import cors from 'cors'
-import dotenv from 'dotenv'
-import path from 'path'
+import { Application, Router } from "oak/mod.ts";
+// @deno-types="https://deno.land/std@0.203.0/path/mod.ts"
+import { join } from "std/path/mod.ts";
 
-// 基础设施层
-import { DIContainer } from './infrastructure/config/DIContainer'
-import { OpenRouterAdapter } from './infrastructure/adapters/OpenRouterAdapter'
-import { SQLiteChatRepository } from './infrastructure/repositories/SQLiteChatRepository'
-import { SQLitePresetRepository } from './infrastructure/repositories/SQLitePresetRepository'
-import { createDefaultPresets } from './infrastructure/config/DefaultPresets'
+// 声明Deno为全局对象（Deno项目下自动可用）
+// @ts-ignore
+declare const Deno: typeof globalThis.Deno;
 
-// 领域层
-import { ChatOrchestrationService } from './domain/services/ChatOrchestrationService'
-import { MacroSystem } from './domain/services/MacroSystem'
+import { DIContainer } from "@/infrastructure/config/DIContainer.ts";
+import { OpenRouterAdapter } from "@/infrastructure/adapters/OpenRouterAdapter.ts";
+import { SQLiteChatRepository } from "@/infrastructure/repositories/SQLiteChatRepository.ts";
+import { SQLitePresetRepository } from "@/infrastructure/repositories/SQLitePresetRepository.ts";
+import { createDefaultPresets } from "@/infrastructure/config/DefaultPresets.ts";
+import { ChatOrchestrationService } from "@/domain/services/ChatOrchestrationService.ts";
+import { MacroSystem } from "@/domain/services/MacroSystem.ts";
+import { SendMessageUseCase } from "@/application/usecases/SendMessageUseCase.ts";
+import { ChatApplicationService } from "@/application/services/ChatApplicationService.ts";
+import { PresetUseCases } from "@/application/usecases/PresetUseCases.ts";
+import { PresetApplicationService } from "@/application/services/PresetApplicationService.ts";
+import { ChatController } from "@/presentation/controllers/ChatController.ts";
+import { PresetController } from "@/presentation/controllers/PresetController.ts";
+import { createPresetRoutes } from "@/presentation/routes/presetRoutes.ts";
+import { errorHandlingMiddleware } from "@/presentation/middleware/errorHandling.ts";
+import { validationMiddleware } from "@/presentation/middleware/validation.ts";
 
-// 应用层
-import { SendMessageUseCase } from './application/usecases/SendMessageUseCase'
-import { ChatApplicationService } from './application/services/ChatApplicationService'
-import { PresetUseCases } from './application/usecases/PresetUseCases'
-import { PresetApplicationService } from './application/services/PresetApplicationService'
+async function main() {
+  const app = new Application();
+  const router = new Router();
+  const container = DIContainer.getInstance();
 
-// 表现层
-import { ChatController } from './presentation/controllers/ChatController'
-import { PresetController } from './presentation/controllers/PresetController'
-import { createPresetRoutes } from './presentation/routes/presetRoutes'
+  // 依赖注册（环境变量用Deno.env.get）
+  const openRouterAdapter = new OpenRouterAdapter(
+    Deno.env.get("OPENROUTER_API_KEY") ?? "dummy-key",
+    "https://openrouter.ai/api/v1",
+    Deno.env.get("OPENROUTER_MODEL") ?? "meta-llama/llama-3.1-8b-instruct:free",
+  );
+  await openRouterAdapter.initialize();
+  container.registerInstance("LLMAdapter", openRouterAdapter);
 
-// 中间件
-import { errorHandlingMiddleware } from './presentation/middleware/errorHandling'
-import { validationMiddleware } from './presentation/middleware/validation'
+  const chatRepository = new SQLiteChatRepository(
+    join(Deno.cwd(), "data", "chats.db"),
+  );
+  await chatRepository.initialize();
+  container.registerInstance("ChatRepository", chatRepository);
 
-// 加载环境变量
-dotenv.config()
+  const presetRepository = new SQLitePresetRepository(
+    join(Deno.cwd(), "data", "presets.db"),
+  );
+  await presetRepository.initialize();
+  container.registerInstance("PresetRepository", presetRepository);
 
-/**
- * 应用程序主类
- */
-class Application {
-  private app: express.Application
-  private container: DIContainer
+  container.registerInstance("CharacterRepository", {
+    findById: async () => null,
+    findByName: async () => null,
+    findAll: async () => [],
+    save: async () => {},
+    delete: async () => false,
+    exists: async () => false,
+  });
 
-  constructor() {
-    this.app = express()
-    this.container = DIContainer.getInstance()
-  }
+  container.registerSingleton(
+    "ChatOrchestrationService",
+    () => new ChatOrchestrationService(),
+  );
+  const macroSystem = new MacroSystem();
+  container.registerInstance("MacroSystem", macroSystem);
 
-  /**
-   * 初始化应用程序
-   */
-  async initialize(): Promise<void> {
-    // 配置基础中间件
-    this.configureBasicMiddleware()
-    
-    // 注册依赖
-    await this.registerDependencies()
-    
-    // 配置路由
-    this.configureRoutes()
-    
-    // 配置错误处理
-    this.configureErrorHandling()
-  }
-
-  /**
-   * 配置基础中间件
-   */
-  private configureBasicMiddleware(): void {
-    this.app.use(cors())
-    this.app.use(express.json())
-    this.app.use(validationMiddleware)
-  }
-
-  /**
-   * 注册依赖
-   */
-  private async registerDependencies(): Promise<void> {
-    // 基础设施层 - LLM适配器
-    const openRouterAdapter = new OpenRouterAdapter(
-      process.env.OPENROUTER_API_KEY || 'dummy-key',
-      'https://openrouter.ai/api/v1',
-      process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.1-8b-instruct:free'
-    )
-    await openRouterAdapter.initialize()
-    this.container.registerInstance('LLMAdapter', openRouterAdapter)
-
-    // 基础设施层 - 聊天存储库
-    const chatRepository = new SQLiteChatRepository(
-      path.join(process.cwd(), 'data', 'chats.db')
-    )
-    await chatRepository.initialize()
-    this.container.registerInstance('ChatRepository', chatRepository)
-
-    // 基础设施层 - 预设存储库
-    const presetRepository = new SQLitePresetRepository(
-      path.join(process.cwd(), 'data', 'presets.db')
-    )
-    await presetRepository.initialize()
-    this.container.registerInstance('PresetRepository', presetRepository)
-
-    // 角色存储库占位符 - 需要实现
-    this.container.registerInstance('CharacterRepository', {
-      findById: async () => null,
-      findByName: async () => null,
-      findAll: async () => [],
-      save: async () => {},
-      delete: async () => false,
-      exists: async () => false
-    })
-
-    // 领域服务
-    this.container.registerSingleton('ChatOrchestrationService', () => 
-      new ChatOrchestrationService()
-    )
-
-    const macroSystem = new MacroSystem()
-    this.container.registerInstance('MacroSystem', macroSystem)
-
-    // 应用层用例
-    this.container.registerSingleton('SendMessageUseCase', () => 
+  container.registerSingleton(
+    "SendMessageUseCase",
+    () =>
       new SendMessageUseCase(
-        this.container.resolve('ChatRepository'),
-        this.container.resolve('CharacterRepository'),
-        this.container.resolve('ChatOrchestrationService'),
-        this.container.resolve('LLMAdapter')
-      )
-    )
-
-    this.container.registerSingleton('PresetUseCases', () => 
-      new PresetUseCases(this.container.resolve('PresetRepository'))
-    )
-
-    // 应用层服务
-    this.container.registerSingleton('ChatApplicationService', () => 
+        container.resolve("ChatRepository"),
+        container.resolve("CharacterRepository"),
+        container.resolve("ChatOrchestrationService"),
+        container.resolve("LLMAdapter"),
+      ),
+  );
+  container.registerSingleton(
+    "PresetUseCases",
+    () => new PresetUseCases(container.resolve("PresetRepository")),
+  );
+  container.registerSingleton(
+    "ChatApplicationService",
+    () =>
       new ChatApplicationService(
-        this.container.resolve('SendMessageUseCase'),
-        this.container.resolve('ChatRepository'),
-        this.container.resolve('CharacterRepository'),
-        this.container.resolve('ChatOrchestrationService')
-      )
-    )
-
-    this.container.registerSingleton('PresetApplicationService', () => 
+        container.resolve("SendMessageUseCase"),
+        container.resolve("ChatRepository"),
+        container.resolve("CharacterRepository"),
+        container.resolve("ChatOrchestrationService"),
+      ),
+  );
+  container.registerSingleton(
+    "PresetApplicationService",
+    () =>
       new PresetApplicationService(
-        this.container.resolve('PresetUseCases'),
-        this.container.resolve('MacroSystem')
-      )
-    )
+        container.resolve("PresetUseCases"),
+        container.resolve("MacroSystem"),
+      ),
+  );
+  container.registerSingleton(
+    "ChatController",
+    () => new ChatController(container.resolve("ChatApplicationService")),
+  );
+  container.registerSingleton(
+    "PresetController",
+    () => new PresetController(container.resolve("PresetApplicationService")),
+  );
+  await createDefaultPresets(container.resolve("PresetUseCases"));
 
-    // 表现层控制器
-    this.container.registerSingleton('ChatController', () => 
-      new ChatController(this.container.resolve('ChatApplicationService'))
-    )
+  const chatController = container.resolve<ChatController>("ChatController");
+  const presetController = container.resolve<PresetController>(
+    "PresetController",
+  );
 
-    this.container.registerSingleton('PresetController', () => 
-      new PresetController(this.container.resolve('PresetApplicationService'))
-    )
+  // 全局中间件和预设路由挂载
+  app.use(errorHandlingMiddleware);
+  app.use(validationMiddleware);
+  const presetRouter = createPresetRoutes(presetController);
+  router.use("/api/v1", presetRouter.routes(), presetRouter.allowedMethods());
 
-    // 初始化默认预设
-    await this.initializeDefaultPresets()
-  }
+  // 聊天相关路由
+  router.post("/api/v1/conversations", (ctx) => chatController.createChat(ctx));
+  router.get("/api/v1/conversations", (ctx) => chatController.getChats(ctx));
+  router.post(
+    "/api/v1/conversations/:id/messages",
+    (ctx) => chatController.sendMessage(ctx),
+  );
+  router.get(
+    "/api/v1/conversations/:id/messages",
+    (ctx) => chatController.getChatHistory(ctx),
+  );
+  router.delete(
+    "/api/v1/conversations/:id",
+    (ctx) => chatController.deleteChat(ctx),
+  );
 
-  /**
-   * 初始化默认预设
-   */
-  private async initializeDefaultPresets(): Promise<void> {
-    try {
-      const presetUseCases = this.container.resolve<PresetUseCases>('PresetUseCases')
-      await createDefaultPresets(presetUseCases)
-      console.log('默认预设初始化完成')
-    } catch (error) {
-      console.error('默认预设初始化失败:', error)
-    }
-  }
+  // 健康检查
+  router.get("/api/v1/health", (ctx) => {
+    ctx.response.body = {
+      status: "ok",
+      timestamp: new Date().toISOString(),
+      version: "2.0.0",
+    };
+  });
 
-  /**
-   * 配置路由
-   */
-  private configureRoutes(): void {
-    const chatController = this.container.resolve<ChatController>('ChatController')
-    const presetController = this.container.resolve<PresetController>('PresetController')
+  app.use(router.routes());
+  app.use(router.allowedMethods());
 
-    // 聊天相关路由
-    this.app.post('/api/v1/conversations', (req, res) => 
-      chatController.createChat(req, res)
-    )
-    this.app.get('/api/v1/conversations', (req, res) => 
-      chatController.getChats(req, res)
-    )
-    this.app.post('/api/v1/conversations/:id/messages', (req, res) => 
-      chatController.sendMessage(req, res)
-    )
-    this.app.get('/api/v1/conversations/:id/messages', (req, res) => 
-      chatController.getChatHistory(req, res)
-    )
-    this.app.delete('/api/v1/conversations/:id', (req, res) => 
-      chatController.deleteChat(req, res)
-    )
-
-    // 预设相关路由
-    this.app.use('/api/v1', createPresetRoutes(presetController))
-
-    // 健康检查
-    this.app.get('/api/v1/health', (req, res) => { 
-      res.json({ 
-        status: 'ok', 
-        timestamp: new Date().toISOString(),
-        version: '2.0.0'
-      })
-    })
-
-    // 兼容旧API路径
-    this.app.use('/api', createPresetRoutes(presetController))
-  }
-
-  /**
-   * 配置错误处理
-   */
-  private configureErrorHandling(): void {
-    this.app.use(errorHandlingMiddleware)
-  }
-
-  /**
-   * 启动应用程序
-   */
-  start(): void {
-    const PORT = process.env.PORT || 3000
-    
-    this.app.listen(PORT, () => {
-      console.log(`Lady Sion 服务器已启动，端口: ${PORT}`)
-      console.log(`健康检查: http://localhost:${PORT}/api/v1/health`)
-      console.log('新架构迁移完成 ✅')
-    })
-  }
+  const port = Number(Deno.env.get("PORT") ?? 3000);
+  console.log(`Lady Sion 服务器已启动，端口: ${port}`);
+  console.log(`健康检查: http://localhost:${port}/api/v1/health`);
+  console.log("新架构迁移完成 ✅");
+  await app.listen({ port });
 }
 
-/**
- * 启动应用程序
- */
-async function startApplication(): Promise<void> {
-  try {
-    const app = new Application()
-    await app.initialize()
-    app.start()
-  } catch (error) {
-    console.error('应用程序启动失败:', error)
-    process.exit(1)
-  }
+// Deno和import.meta.main类型兼容性修正
+// @ts-ignore
+if ((import.meta as any).main) {
+  main();
 }
-
-// 启动应用
-if (require.main === module) {
-  startApplication()
-}
-
-export { Application } 

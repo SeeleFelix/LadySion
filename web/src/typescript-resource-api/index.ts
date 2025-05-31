@@ -6,41 +6,41 @@
 
 // 类型导出
 export type {
-  Resource,
-  RealtimeResource,
-  ResourceConfig,
-  RealtimeConfig,
-  RequestOptions,
-  CreateResourceProxy,
-  CreateRealtimeResourceProxy,
   ApiPaths,
-  Pageable,
+  CreateRealtimeResourceProxy,
+  CreateResourceProxy,
   Page,
+  Pageable,
+  RealtimeConfig,
+  RealtimeResource,
+  RequestOptions,
+  Resource,
+  ResourceConfig,
   Sort,
+  SortDirection,
   SortField,
-  SortDirection
-} from './types'
+} from "./types";
 
 // 错误类导出
-export { TRAError } from './types'
+export { TRAError } from "./types";
 
 // 主要功能导出
-export { createResourceProxy } from './createResourceMapper'
-export { createRealtimeResourceProxy } from './createRealtimeResourceMapper'
+export { createResourceProxy } from "./createResourceMapper";
+export { createRealtimeResourceProxy } from "./createRealtimeResourceMapper";
 
 // HTTP客户端导出（高级用法）
-export { HttpClient } from './httpClient'
+export { HttpClient } from "./httpClient";
 
 // 🆕 配置管理导出 - Vite官方方案
 export {
-  getResourceConfig,
-  getRealtimeConfig,
-  buildResourcePath,
-  buildRealtimePath,
   buildApiUrl,
+  buildRealtimePath,
   buildRealtimeUrl,
-  debugConfig
-} from './config'
+  buildResourcePath,
+  debugConfig,
+  getRealtimeConfig,
+  getResourceConfig,
+} from "./config";
 
 // 默认导出主要功能
-export { createResourceProxy as default } from './createResourceMapper' 
+export { createResourceProxy as default } from "./createResourceMapper";

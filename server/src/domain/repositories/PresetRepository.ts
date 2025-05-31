@@ -1,4 +1,4 @@
-import { Preset, PresetType, MasterPreset } from '@/domain/entities/Preset';
+import { MasterPreset, Preset, PresetType } from "@/domain/entities/Preset.ts";
 
 /**
  * 预设存储库接口
@@ -53,4 +53,4 @@ export interface PresetRepository {
    * 关闭连接
    */
   close(): Promise<void>;
-} 
+}

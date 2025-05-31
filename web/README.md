@@ -31,7 +31,8 @@ npm run preview
 
 详细的架构设计、开发规范和使用指南请查看：
 
-- **[前端架构文档](../docs/architecture/frontend.md)** - 完整的架构设计和最佳实践
+- **[前端架构文档](../docs/architecture/frontend.md)** -
+  完整的架构设计和最佳实践
 - **[UI设计系统](../docs/design/ui-design.md)** - Lady Sion设计系统和组件库
 - **[开发指南](../docs/guides/)** - 开发环境配置和代码规范
 - **[文档中心](../docs/README.md)** - 所有文档的导航和索引
@@ -65,4 +66,4 @@ web/src/
 
 ---
 
-💡 **提示**: 更多详细信息请查看 [项目完整文档](../docs/README.md) 
+💡 **提示**: 更多详细信息请查看 [项目完整文档](../docs/README.md)

@@ -1,5 +1,13 @@
-import { Preset, PresetType, MasterPreset, InstructPreset, ContextPreset, SystemPromptPreset, PostHistoryInstructionsPreset } from '@/domain/entities/Preset';
-import { PresetRepository } from '@/domain/repositories/PresetRepository';
+import {
+  ContextPreset,
+  InstructPreset,
+  MasterPreset,
+  PostHistoryInstructionsPreset,
+  Preset,
+  PresetType,
+  SystemPromptPreset,
+} from "@/domain/entities/Preset.ts";
+import { PresetRepository } from "@/domain/repositories/PresetRepository.ts";
 
 /**
  * 预设用例
@@ -29,7 +37,10 @@ export class PresetUseCases {
    * @param type 预设类型
    * @param name 预设名称
    */
-  async getPresetByName(type: PresetType, name: string): Promise<Preset | null> {
+  async getPresetByName(
+    type: PresetType,
+    name: string,
+  ): Promise<Preset | null> {
     return this.presetRepository.getByName(type, name);
   }
 
@@ -65,21 +76,21 @@ export class PresetUseCases {
    */
   async importMasterPreset(masterPreset: MasterPreset): Promise<void> {
     const now = new Date();
-    
+
     if (masterPreset.instruct) {
       const instructPreset = masterPreset.instruct;
       instructPreset.createdAt = now;
       instructPreset.updatedAt = now;
       await this.savePreset(PresetType.INSTRUCT, instructPreset);
     }
-    
+
     if (masterPreset.context) {
       const contextPreset = masterPreset.context;
       contextPreset.createdAt = now;
       contextPreset.updatedAt = now;
       await this.savePreset(PresetType.CONTEXT, contextPreset);
     }
-    
+
     if (masterPreset.systemPrompt) {
       const systemPromptPreset = masterPreset.systemPrompt;
       systemPromptPreset.createdAt = now;
@@ -91,7 +102,10 @@ export class PresetUseCases {
       const postHistoryPreset = masterPreset.postHistoryInstructions;
       postHistoryPreset.createdAt = now;
       postHistoryPreset.updatedAt = now;
-      await this.savePreset(PresetType.POST_HISTORY_INSTRUCTIONS, postHistoryPreset);
+      await this.savePreset(
+        PresetType.POST_HISTORY_INSTRUCTIONS,
+        postHistoryPreset,
+      );
     }
   }
 
@@ -108,38 +122,50 @@ export class PresetUseCases {
     instructId?: string,
     contextId?: string,
     systemPromptId?: string,
-    postHistoryId?: string
+    postHistoryId?: string,
   ): Promise<MasterPreset> {
     const masterPreset: MasterPreset = { name };
-    
+
     if (instructId) {
-      const instructPreset = await this.getPresetById(PresetType.INSTRUCT, instructId) as InstructPreset;
+      const instructPreset = await this.getPresetById(
+        PresetType.INSTRUCT,
+        instructId,
+      ) as InstructPreset;
       if (instructPreset) {
         masterPreset.instruct = instructPreset;
       }
     }
-    
+
     if (contextId) {
-      const contextPreset = await this.getPresetById(PresetType.CONTEXT, contextId) as ContextPreset;
+      const contextPreset = await this.getPresetById(
+        PresetType.CONTEXT,
+        contextId,
+      ) as ContextPreset;
       if (contextPreset) {
         masterPreset.context = contextPreset;
       }
     }
-    
+
     if (systemPromptId) {
-      const systemPromptPreset = await this.getPresetById(PresetType.SYSTEM_PROMPT, systemPromptId) as SystemPromptPreset;
+      const systemPromptPreset = await this.getPresetById(
+        PresetType.SYSTEM_PROMPT,
+        systemPromptId,
+      ) as SystemPromptPreset;
       if (systemPromptPreset) {
         masterPreset.systemPrompt = systemPromptPreset;
       }
     }
 
     if (postHistoryId) {
-      const postHistoryPreset = await this.getPresetById(PresetType.POST_HISTORY_INSTRUCTIONS, postHistoryId) as PostHistoryInstructionsPreset;
+      const postHistoryPreset = await this.getPresetById(
+        PresetType.POST_HISTORY_INSTRUCTIONS,
+        postHistoryId,
+      ) as PostHistoryInstructionsPreset;
       if (postHistoryPreset) {
         masterPreset.postHistoryInstructions = postHistoryPreset;
       }
     }
-    
+
     return masterPreset;
   }
 
@@ -156,4 +182,4 @@ export class PresetUseCases {
   async saveConfiguration(key: string, value: any): Promise<void> {
     return this.presetRepository.saveConfiguration(key, value);
   }
-} 
+}

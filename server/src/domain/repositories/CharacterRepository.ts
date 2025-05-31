@@ -1,4 +1,4 @@
-import { Character } from '../entities/Character';
+import { Character } from "@/domain/entities/Character.ts";
 
 /**
  * 角色存储库接口

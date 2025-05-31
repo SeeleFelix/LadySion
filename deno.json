@@ -1,0 +1,36 @@
+{
+  "importMap": "./import_map.json",
+  "nodeModulesDir": "auto",
+  "check": { "ignore": ["server/src/presentation/routes/**/*.ts"] },
+  "tasks": {
+    "start": "deno run -A server/src/main.ts",
+    "start:backend": "deno run -A server/src/main.ts",
+    "start:frontend": "cd web && deno task dev",
+    "dev": "deno task start:backend & deno task start:frontend",
+    "build": "cd web && deno task build",
+    "test": "deno test",
+    "test:backend": "deno test server/",
+    "test:frontend": "cd web && deno task test",
+    "fmt": "deno fmt && cd web && deno fmt",
+    "lint": "deno lint && cd web && deno lint",
+    "setup": "cd web && deno install"
+  },
+  "workspace": ["./web"],
+  "lint": {
+    "rules": {
+      "exclude": [
+        "no-explicit-any",
+        "require-await",
+        "no-unused-vars",
+        "ban-ts-comment"
+      ]
+    },
+    "files": { "include": ["server/", "shared/", "web/src/"] }
+  },
+  "fmt": {
+    "files": {
+      "include": ["server/", "shared/", "web/src/"]
+    }
+  },
+  "todo_lint_exclusions": "临时排除 no-explicit-any、require-await、no-unused-vars、ban-ts-comment，后续需逐步恢复并修复"
+}

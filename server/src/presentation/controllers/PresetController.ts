@@ -1,294 +1,268 @@
-import { Request, Response } from 'express';
-import { PresetApplicationService } from '@/application/services/PresetApplicationService';
-import { Preset, PresetType } from '@/domain/entities/Preset';
+import { Context, RouterContext } from "oak/mod.ts";
+import { PresetApplicationService } from "@/application/services/PresetApplicationService.ts";
+import { Preset, PresetType } from "@/domain/entities/Preset.ts";
+import { BaseController } from "@/presentation/controllers/BaseController.ts";
 
 /**
  * 预设控制器
  * 处理预设相关的HTTP请求
  */
-export class PresetController {
-  constructor(private presetApplicationService: PresetApplicationService) {}
+export class PresetController extends BaseController {
+  constructor(private presetApplicationService: PresetApplicationService) {
+    super();
+  }
 
   /**
    * 获取所有预设（所有类型）
    */
-  getAllPresetsWithoutType = async (req: Request, res: Response): Promise<void> => {
-    try {
+  getAllPresetsWithoutType = async (ctx: any): Promise<void> => {
+    await this.handleRequest(async () => {
       const allPresets: Preset[] = [];
-      
+
       // 获取所有类型的预设
       for (const presetType of Object.values(PresetType)) {
-        const presets = await this.presetApplicationService.getAllPresets(presetType);
+        const presets = await this.presetApplicationService.getAllPresets(
+          presetType,
+        );
         // 给每个预设添加类型信息
-        const presetsWithType = presets.map(preset => ({
+        const presetsWithType = presets.map((preset) => ({
           ...preset,
-          type: presetType
+          type: presetType,
         }));
         allPresets.push(...presetsWithType);
       }
-      
-      res.json(allPresets);
-    } catch (error) {
-      console.error('获取所有预设失败:', error);
-      res.status(500).json({ error: '获取所有预设失败' });
-    }
+
+      return { presets: allPresets };
+    }, ctx);
   };
 
   /**
    * 获取指定类型的所有预设
    */
-  getAllPresets = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const { type } = req.params;
+  getAllPresets = async (ctx: any): Promise<void> => {
+    await this.handleRequest(async () => {
+      const { type } = ctx.params;
       const presetType = type as PresetType;
-      
+
       if (!Object.values(PresetType).includes(presetType)) {
-        res.status(400).json({ error: '无效的预设类型' });
-        return;
+        return { error: "无效的预设类型" };
       }
-      
-      const presets = await this.presetApplicationService.getAllPresets(presetType);
-      res.json(presets);
-    } catch (error) {
-      console.error('获取预设列表失败:', error);
-      res.status(500).json({ error: '获取预设列表失败' });
-    }
+
+      const presets = await this.presetApplicationService.getAllPresets(
+        presetType,
+      );
+      return { presets };
+    }, ctx);
   };
 
   /**
    * 根据ID获取预设
    */
-  getPreset = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const { type, id } = req.params;
+  getPreset = async (ctx: any): Promise<void> => {
+    await this.handleRequest(async () => {
+      const { type, id } = ctx.params;
       const presetType = type as PresetType;
-      
+
       if (!Object.values(PresetType).includes(presetType)) {
-        res.status(400).json({ error: '无效的预设类型' });
-        return;
+        return { error: "无效的预设类型" };
       }
-      
-      const preset = await this.presetApplicationService.getPresetById(presetType, id);
-      
+
+      const preset = await this.presetApplicationService.getPresetById(
+        presetType,
+        id!,
+      );
+
       if (!preset) {
-        res.status(404).json({ error: '预设不存在' });
-        return;
+        return { error: "预设不存在" };
       }
-      
-      res.json(preset);
-    } catch (error) {
-      console.error('获取预设失败:', error);
-      res.status(500).json({ error: '获取预设失败' });
-    }
+
+      return { preset };
+    }, ctx);
   };
 
   /**
    * 保存预设
    */
-  savePreset = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const { type } = req.params;
+  savePreset = async (ctx: any): Promise<void> => {
+    await this.handleRequest(async () => {
+      const { type } = ctx.params;
       const presetType = type as PresetType;
-      
+
       if (!Object.values(PresetType).includes(presetType)) {
-        res.status(400).json({ error: '无效的预设类型' });
-        return;
+        return { error: "无效的预设类型" };
       }
-      
-      const preset = req.body as Preset;
-      
+
+      const preset = await ctx.request.body.json() as Preset;
+
       if (!preset.name) {
-        res.status(400).json({ error: '预设名称是必需的' });
-        return;
+        return { error: "预设名称是必需的" };
       }
-      
-      const savedPreset = await this.presetApplicationService.savePreset(presetType, preset);
-      res.status(200).json(savedPreset);
-    } catch (error) {
-      console.error('保存预设失败:', error);
-      res.status(500).json({ error: '保存预设失败' });
-    }
+
+      const savedPreset = await this.presetApplicationService.savePreset(
+        presetType,
+        preset,
+      );
+      return { message: "Preset saved", savedPreset };
+    }, ctx);
   };
 
   /**
    * 删除预设
    */
-  deletePreset = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const { type, id } = req.params;
+  deletePreset = async (ctx: any): Promise<void> => {
+    await this.handleRequest(async () => {
+      const { type, id } = ctx.params;
       const presetType = type as PresetType;
-      
+
       if (!Object.values(PresetType).includes(presetType)) {
-        res.status(400).json({ error: '无效的预设类型' });
-        return;
+        return { error: "无效的预设类型" };
       }
-      
-      await this.presetApplicationService.deletePreset(presetType, id);
-      res.status(204).end();
-    } catch (error) {
-      console.error('删除预设失败:', error);
-      res.status(500).json({ error: '删除预设失败' });
-    }
+
+      await this.presetApplicationService.deletePreset(presetType, id!);
+      return { message: "Preset deleted" };
+    }, ctx);
   };
 
   /**
    * 导入主预设
    */
-  importMasterPreset = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const masterPreset = req.body;
-      
+  importMasterPreset = async (ctx: any): Promise<void> => {
+    await this.handleRequest(async () => {
+      const masterPreset = await ctx.request.body.json();
+
       if (!masterPreset.name) {
-        res.status(400).json({ error: '预设名称是必需的' });
-        return;
+        return { error: "预设名称是必需的" };
       }
-      
+
       await this.presetApplicationService.importMasterPreset(masterPreset);
-      res.status(200).json({ message: '主预设导入成功' });
-    } catch (error) {
-      console.error('导入主预设失败:', error);
-      res.status(500).json({ error: '导入主预设失败' });
-    }
+      return { message: "主预设导入成功" };
+    }, ctx);
   };
 
   /**
    * 导出主预设
    */
-  exportMasterPreset = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const { name, instructId, contextId, systemPromptId, postHistoryId } = req.query;
-      
+  exportMasterPreset = async (ctx: any): Promise<void> => {
+    await this.handleRequest(async () => {
+      const url = ctx.request.url;
+      const name = url.searchParams.get("name")!;
+      const instructId = url.searchParams.get("instructId")!;
+      const contextId = url.searchParams.get("contextId")!;
+      const systemPromptId = url.searchParams.get("systemPromptId")!;
+      const postHistoryId = url.searchParams.get("postHistoryId")!;
+
       if (!name) {
-        res.status(400).json({ error: '预设名称是必需的' });
-        return;
+        return { error: "预设名称是必需的" };
       }
-      
-      const masterPreset = await this.presetApplicationService.exportMasterPreset(
-        name as string,
-        instructId as string,
-        contextId as string,
-        systemPromptId as string,
-        postHistoryId as string
-      );
-      
-      res.status(200).json(masterPreset);
-    } catch (error) {
-      console.error('导出主预设失败:', error);
-      res.status(500).json({ error: '导出主预设失败' });
-    }
+
+      const masterPreset = await this.presetApplicationService
+        .exportMasterPreset(
+          name,
+          instructId,
+          contextId,
+          systemPromptId,
+          postHistoryId,
+        );
+
+      return { masterPreset };
+    }, ctx);
   };
 
   /**
    * 获取配置
    */
-  getConfiguration = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const { key } = req.params;
-      
+  getConfiguration = async (ctx: any): Promise<void> => {
+    await this.handleRequest(async () => {
+      const key = ctx.params.key!;
+
       if (!key) {
-        res.status(400).json({ error: '配置键是必需的' });
-        return;
+        return { error: "配置键是必需的" };
       }
-      
-      const configuration = await this.presetApplicationService.getConfiguration(key);
-      res.json(configuration);
-    } catch (error) {
-      console.error('获取配置失败:', error);
-      res.status(500).json({ error: '获取配置失败' });
-    }
+
+      const configuration = await this.presetApplicationService
+        .getConfiguration(key);
+      return { configuration };
+    }, ctx);
   };
 
   /**
    * 保存配置
    */
-  saveConfiguration = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const { key } = req.params;
-      const configuration = req.body;
-      
+  saveConfiguration = async (ctx: any): Promise<void> => {
+    await this.handleRequest(async () => {
+      const key = ctx.params.key!;
+      const configuration = await ctx.request.body.json();
+
       if (!key) {
-        res.status(400).json({ error: '配置键是必需的' });
-        return;
+        return { error: "配置键是必需的" };
       }
-      
+
       await this.presetApplicationService.saveConfiguration(key, configuration);
-      res.status(200).json({ message: '配置保存成功' });
-    } catch (error) {
-      console.error('保存配置失败:', error);
-      res.status(500).json({ error: '保存配置失败' });
-    }
+      return { message: "配置保存成功" };
+    }, ctx);
   };
 
   /**
    * 获取宏描述列表
    */
-  getMacroDescriptions = async (req: Request, res: Response): Promise<void> => {
-    try {
+  getMacroDescriptions = async (ctx: any): Promise<void> => {
+    await this.handleRequest(async () => {
       const descriptions = this.presetApplicationService.getMacroDescriptions();
-      res.json(descriptions);
-    } catch (error) {
-      console.error('获取宏描述失败:', error);
-      res.status(500).json({ error: '获取宏描述失败' });
-    }
+      return { descriptions };
+    }, ctx);
   };
 
   /**
    * 处理宏
    */
-  processMacros = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const { text, context } = req.body;
-      
+  processMacros = async (ctx: any): Promise<void> => {
+    await this.handleRequest(async () => {
+      const body = await ctx.request.body.json();
+      const { text, context } = body;
+
       if (!text) {
-        res.status(400).json({ error: '文本是必需的' });
-        return;
+        return { error: "文本是必需的" };
       }
-      
-      const processedText = this.presetApplicationService.processMacros(text, context);
-      res.json({ processedText });
-    } catch (error) {
-      console.error('处理宏失败:', error);
-      res.status(500).json({ error: '处理宏失败' });
-    }
+
+      const processedText = this.presetApplicationService.processMacros(
+        text,
+        context,
+      );
+      return { processedText };
+    }, ctx);
   };
 
   /**
    * 验证宏语法
    */
-  validateMacroSyntax = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const { text } = req.body;
-      
+  validateMacroSyntax = async (ctx: any): Promise<void> => {
+    await this.handleRequest(async () => {
+      const body = await ctx.request.body.json();
+      const { text } = body;
+
       if (!text) {
-        res.status(400).json({ error: '文本是必需的' });
-        return;
+        return { error: "文本是必需的" };
       }
-      
+
       const result = this.presetApplicationService.validateMacroSyntax(text);
-      res.json(result);
-    } catch (error) {
-      console.error('验证宏语法失败:', error);
-      res.status(500).json({ error: '验证宏语法失败' });
-    }
+      return { result };
+    }, ctx);
   };
 
   /**
    * 获取文本中使用的宏列表
    */
-  getUsedMacros = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const { text } = req.body;
-      
+  getUsedMacros = async (ctx: any): Promise<void> => {
+    await this.handleRequest(async () => {
+      const body = await ctx.request.body.json();
+      const { text } = body;
+
       if (!text) {
-        res.status(400).json({ error: '文本是必需的' });
-        return;
+        return { error: "文本是必需的" };
       }
-      
+
       const usedMacros = this.presetApplicationService.getUsedMacros(text);
-      res.json({ usedMacros });
-    } catch (error) {
-      console.error('获取使用的宏失败:', error);
-      res.status(500).json({ error: '获取使用的宏失败' });
-    }
+      return { usedMacros };
+    }, ctx);
   };
-} 
+}

@@ -3,7 +3,7 @@
  */
 
 // 基础接口
-export * from './BaseService'
+export * from "./BaseService";
 
 // 聊天服务
-export * from './ChatService' 
+export * from "./ChatService";

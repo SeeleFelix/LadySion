@@ -3,22 +3,22 @@
  */
 
 // 从共享类型导入基础定义
-export * from '../../../shared/types/preset';
+export * from "../../../shared/types/preset";
 
 // 重新导出一些常用类型，提供更好的开发体验
 export {
+  type ApiResponse,
+  type ContextPreset,
+  DEFAULT_PRIORITIES,
+  type InstructPreset,
+  type MasterPreset,
+  type Preset,
+  PRESET_TYPE_LABELS,
+  type PresetConfiguration,
   PresetType,
   type PresetTypeString,
-  type Preset,
-  type InstructPreset,
-  type ContextPreset,
   type SystemPromptPreset,
-  type MasterPreset,
-  type PresetConfiguration,
-  type ApiResponse,
-  PRESET_TYPE_LABELS,
-  DEFAULT_PRIORITIES
-} from '../../../shared/types/preset';
+} from "../../../shared/types/preset";
 
 /**
  * 前端扩展的预设接口
@@ -61,13 +61,13 @@ export interface MacroVariable {
  * 宏分类枚举
  */
 export enum MacroCategory {
-  CHARACTER = 'character',
-  CHAT = 'chat',
-  WORLD = 'world',
-  USER = 'user',
-  SYSTEM = 'system',
-  TIME = 'time',
-  FORMATTING = 'formatting'
+  CHARACTER = "character",
+  CHAT = "chat",
+  WORLD = "world",
+  USER = "user",
+  SYSTEM = "system",
+  TIME = "time",
+  FORMATTING = "formatting",
 }
 
 /**
@@ -103,7 +103,7 @@ export interface PresetImportExportOptions {
   /** 压缩输出 */
   compress?: boolean;
   /** 文件格式 */
-  format?: 'json' | 'yaml' | 'toml';
+  format?: "json" | "yaml" | "toml";
 }
 
 /**
@@ -131,7 +131,7 @@ export interface PresetPermissions {
  */
 export type PresetFormData<T extends PresetType> = Omit<
   PresetByType<T>,
-  'id' | 'createdAt' | 'updatedAt'
+  "id" | "createdAt" | "updatedAt"
 >;
 
 /**
@@ -139,7 +139,7 @@ export type PresetFormData<T extends PresetType> = Omit<
  */
 export type PresetListItem = Pick<
   ExtendedPreset,
-  'id' | 'name' | 'description' | 'isDefault' | 'isSelected' | 'usageCount'
+  "id" | "name" | "description" | "isDefault" | "isSelected" | "usageCount"
 >;
 
 /**
@@ -175,4 +175,4 @@ export const PRESET_TYPE_SYSTEM_PROMPT = PresetType.SYSTEM_PROMPT;
 /**
  * @deprecated 请使用 PresetType.MACROS
  */
-export const PRESET_TYPE_MACROS = PresetType.MACROS; 
+export const PRESET_TYPE_MACROS = PresetType.MACROS;

@@ -6,18 +6,18 @@
 
 :root {
   /* ===== SillyTavern 经典配色体系 ===== */
-  
+
   /* Dark Lite 主题色 (默认主题) */
-  --st-main-text: rgba(220, 220, 210, 1);        /* ivory色调主文字 */
-  --st-italics-text: rgba(145, 145, 145, 1);     /* 斜体/次要文字 */
-  --st-underline-text: rgba(188, 231, 207, 1);   /* 下划线/链接色 */
-  --st-quote-text: rgba(225, 138, 36, 1);        /* 引用/强调色 */
-  --st-blur-tint: rgba(23, 23, 23, 1);           /* 主背景色调 */
-  --st-chat-tint: rgba(23, 23, 23, 1);           /* 聊天区背景 */
-  --st-user-mes-blur: rgba(30, 30, 30, 0.9);     /* 用户消息背景 */
-  --st-bot-mes-blur: rgba(30, 30, 30, 0.9);      /* 机器人消息背景 */
-  --st-shadow: rgba(0, 0, 0, 1);                 /* 阴影色 */
-  --st-border: rgba(0, 0, 0, 1);                 /* 边框色 */
+  --st-main-text: rgba(220, 220, 210, 1); /* ivory色调主文字 */
+  --st-italics-text: rgba(145, 145, 145, 1); /* 斜体/次要文字 */
+  --st-underline-text: rgba(188, 231, 207, 1); /* 下划线/链接色 */
+  --st-quote-text: rgba(225, 138, 36, 1); /* 引用/强调色 */
+  --st-blur-tint: rgba(23, 23, 23, 1); /* 主背景色调 */
+  --st-chat-tint: rgba(23, 23, 23, 1); /* 聊天区背景 */
+  --st-user-mes-blur: rgba(30, 30, 30, 0.9); /* 用户消息背景 */
+  --st-bot-mes-blur: rgba(30, 30, 30, 0.9); /* 机器人消息背景 */
+  --st-shadow: rgba(0, 0, 0, 1); /* 阴影色 */
+  --st-border: rgba(0, 0, 0, 1); /* 边框色 */
 
   /* Azure 主题色 (蓝色科幻风) */
   --st-azure-text: rgba(171, 198, 223, 1);
@@ -47,38 +47,38 @@
   --st-cappuccino-border: rgba(80, 80, 80, 0.89);
 
   /* ===== SillyTavern 通用色彩 ===== */
-  --st-ivory: rgb(220, 220, 210);                /* 经典象牙白 */
-  --st-golden: rgb(248, 211, 0);                 /* 金色强调 */
-  --st-crimson: #dc143c;                         /* 深红色 */
-  --st-crimson-hover: rgba(150, 50, 50, 0.5);   /* 深红悬停 */
-  --st-active: rgb(88, 182, 0);                  /* 活跃绿色 */
-  --st-preferred: rgb(244, 67, 54);              /* 首选红色 */
-  --st-warning: rgba(255, 0, 0, 0.9);            /* 警告红色 */
+  --st-ivory: rgb(220, 220, 210); /* 经典象牙白 */
+  --st-golden: rgb(248, 211, 0); /* 金色强调 */
+  --st-crimson: #dc143c; /* 深红色 */
+  --st-crimson-hover: rgba(150, 50, 50, 0.5); /* 深红悬停 */
+  --st-active: rgb(88, 182, 0); /* 活跃绿色 */
+  --st-preferred: rgb(244, 67, 54); /* 首选红色 */
+  --st-warning: rgba(255, 0, 0, 0.9); /* 警告红色 */
 
   /* ===== 主色调系统 (融合SillyTavern) ===== */
-  --primary: #667eea;                            /* 保持科幻蓝紫 */
+  --primary: #667eea; /* 保持科幻蓝紫 */
   --primary-hover: #5a6fd8;
   --primary-rgb: 102, 126, 234;
-  
-  --secondary: var(--st-azure-quote);            /* 使用Azure主题的引用色 */
+
+  --secondary: var(--st-azure-quote); /* 使用Azure主题的引用色 */
   --secondary-hover: rgba(111, 133, 253, 0.8);
   --secondary-rgb: 111, 133, 253;
-  
-  --accent: var(--st-quote-text);                /* 使用经典引用色作为强调色 */
+
+  --accent: var(--st-quote-text); /* 使用经典引用色作为强调色 */
   --accent-hover: rgba(225, 138, 36, 0.8);
   --accent-rgb: 225, 138, 36;
 
   /* ===== 灰度色彩系统 (基于SillyTavern) ===== */
-  --gray-900: var(--st-blur-tint);              /* 使用ST主背景色 */
-  --gray-800: rgba(30, 30, 30, 1);              /* 稍亮的卡片背景 */
-  --gray-700: rgba(45, 45, 45, 1);              /* 边框/分割线 */
-  --gray-600: rgba(75, 75, 75, 1);              /* 禁用状态 */
-  --gray-500: var(--st-italics-text);           /* 次要文字色 */
-  --gray-400: rgba(125, 125, 125, 1);           /* 占位符 */
-  --gray-300: var(--st-main-text);              /* 主要文字色 */
-  --gray-200: rgba(190, 190, 190, 1);           /* 浅色文字 */
-  --gray-100: rgba(220, 220, 220, 1);           /* 最浅背景 */
-  --gray-50: rgba(235, 235, 235, 1);            /* 白色文字 */
+  --gray-900: var(--st-blur-tint); /* 使用ST主背景色 */
+  --gray-800: rgba(30, 30, 30, 1); /* 稍亮的卡片背景 */
+  --gray-700: rgba(45, 45, 45, 1); /* 边框/分割线 */
+  --gray-600: rgba(75, 75, 75, 1); /* 禁用状态 */
+  --gray-500: var(--st-italics-text); /* 次要文字色 */
+  --gray-400: rgba(125, 125, 125, 1); /* 占位符 */
+  --gray-300: var(--st-main-text); /* 主要文字色 */
+  --gray-200: rgba(190, 190, 190, 1); /* 浅色文字 */
+  --gray-100: rgba(220, 220, 220, 1); /* 最浅背景 */
+  --gray-50: rgba(235, 235, 235, 1); /* 白色文字 */
 
   /* ===== 透明度系统 (保持原有) ===== */
   --transparent: rgba(0, 0, 0, 0);
@@ -98,48 +98,48 @@
   --white-100: rgba(255, 255, 255, 1);
 
   /* ===== 玻璃拟态效果 (增强ST风格) ===== */
-  --glass-bg: rgba(255, 255, 255, 0.08);        /* 降低透明度，更接近ST */
+  --glass-bg: rgba(255, 255, 255, 0.08); /* 降低透明度，更接近ST */
   --glass-bg-light: rgba(255, 255, 255, 0.04);
   --glass-bg-medium: rgba(255, 255, 255, 0.12);
   --glass-bg-dark: rgba(0, 0, 0, 0.3);
-  --glass-border: rgba(255, 255, 255, 0.08);    /* 更subtle的边框 */
-  
+  --glass-border: rgba(255, 255, 255, 0.08); /* 更subtle的边框 */
+
   /* ST风格模糊效果 */
-  --st-glass-bg: var(--st-user-mes-blur);       /* 使用ST消息背景 */
-  --st-glass-chat: var(--st-chat-tint);         /* 聊天区玻璃效果 */
-  --st-glass-border: rgba(80, 80, 80, 0.3);     /* ST风格边框 */
-  
+  --st-glass-bg: var(--st-user-mes-blur); /* 使用ST消息背景 */
+  --st-glass-chat: var(--st-chat-tint); /* 聊天区玻璃效果 */
+  --st-glass-border: rgba(80, 80, 80, 0.3); /* ST风格边框 */
+
   /* ===== 文字颜色 (使用ST色彩) ===== */
-  --text-primary: var(--st-main-text);          /* ST主文字色 */
-  --text-secondary: var(--st-italics-text);     /* ST次要文字色 */
-  --text-muted: rgba(125, 125, 125, 0.8);       /* 静音文字 */
-  --text-inverse: var(--gray-800);              /* 反色文字 */
-  --text-white: var(--gray-50);                 /* 白色文字 */
-  --text-link: var(--st-underline-text);        /* 链接色 */
-  --text-quote: var(--st-quote-text);           /* 引用色 */
+  --text-primary: var(--st-main-text); /* ST主文字色 */
+  --text-secondary: var(--st-italics-text); /* ST次要文字色 */
+  --text-muted: rgba(125, 125, 125, 0.8); /* 静音文字 */
+  --text-inverse: var(--gray-800); /* 反色文字 */
+  --text-white: var(--gray-50); /* 白色文字 */
+  --text-link: var(--st-underline-text); /* 链接色 */
+  --text-quote: var(--st-quote-text); /* 引用色 */
 
   /* ===== 语义化颜色 (保持现代化) ===== */
   --success: #10b981;
   --success-hover: #059669;
   --success-light: rgba(16, 185, 129, 0.1);
-  
+
   --warning: #f59e0b;
   --warning-hover: #d97706;
   --warning-light: rgba(245, 158, 11, 0.1);
-  
+
   --error: #ef4444;
   --error-hover: #dc2626;
   --error-light: rgba(239, 68, 68, 0.1);
-  
+
   --info: #3b82f6;
   --info-hover: #2563eb;
   --info-light: rgba(59, 130, 246, 0.1);
 
   /* ===== SillyTavern 特色强调色 ===== */
-  --st-golden: var(--st-golden);                /* 金色 */
-  --st-ivory: var(--st-ivory);                  /* 象牙色 */
-  --st-crimson: var(--st-crimson);              /* 深红色 */
-  --st-crimson-hover: var(--st-crimson-hover);  /* 深红悬停 */
+  --st-golden: var(--st-golden); /* 金色 */
+  --st-ivory: var(--st-ivory); /* 象牙色 */
+  --st-crimson: var(--st-crimson); /* 深红色 */
+  --st-crimson-hover: var(--st-crimson-hover); /* 深红悬停 */
 
   /* ===== 主题切换变量 ===== */
   /* 可以通过修改这些变量来快速切换主题 */
@@ -154,37 +154,37 @@
   --font-scale: 1;
   --font-size-base: calc(var(--font-scale) * 15px);
   --font-family-base: "Noto Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
-  --font-family-mono: 'Noto Sans Mono', 'Courier New', Consolas, monospace;
+  --font-family-mono: "Noto Sans Mono", "Courier New", Consolas, monospace;
 
   /* 字体大小 */
-  --text-xs: 0.75rem;     /* 12px */
-  --text-sm: 0.875rem;    /* 14px */
-  --text-base: 1rem;      /* 16px */
-  --text-lg: 1.125rem;    /* 18px */
-  --text-xl: 1.25rem;     /* 20px */
-  --text-2xl: 1.5rem;     /* 24px */
-  --text-3xl: 1.875rem;   /* 30px */
+  --text-xs: 0.75rem; /* 12px */
+  --text-sm: 0.875rem; /* 14px */
+  --text-base: 1rem; /* 16px */
+  --text-lg: 1.125rem; /* 18px */
+  --text-xl: 1.25rem; /* 20px */
+  --text-2xl: 1.5rem; /* 24px */
+  --text-3xl: 1.875rem; /* 30px */
 
   /* ===== 间距系统 (保持原有) ===== */
   --space-0: 0;
-  --space-1: 0.25rem;     /* 4px */
-  --space-2: 0.5rem;      /* 8px */
-  --space-3: 0.75rem;     /* 12px */
-  --space-4: 1rem;        /* 16px */
-  --space-5: 1.25rem;     /* 20px */
-  --space-6: 1.5rem;      /* 24px */
-  --space-8: 2rem;        /* 32px */
-  --space-10: 2.5rem;     /* 40px */
-  --space-12: 3rem;       /* 48px */
-  --space-16: 4rem;       /* 64px */
+  --space-1: 0.25rem; /* 4px */
+  --space-2: 0.5rem; /* 8px */
+  --space-3: 0.75rem; /* 12px */
+  --space-4: 1rem; /* 16px */
+  --space-5: 1.25rem; /* 20px */
+  --space-6: 1.5rem; /* 24px */
+  --space-8: 2rem; /* 32px */
+  --space-10: 2.5rem; /* 40px */
+  --space-12: 3rem; /* 48px */
+  --space-16: 4rem; /* 64px */
 
   /* ===== 圆角系统 (保持原有) ===== */
   --radius-none: 0;
-  --radius-sm: 0.25rem;   /* 4px */
-  --radius-md: 0.375rem;  /* 6px */
-  --radius-lg: 0.5rem;    /* 8px */
-  --radius-xl: 0.75rem;   /* 12px */
-  --radius-2xl: 1rem;     /* 16px */
+  --radius-sm: 0.25rem; /* 4px */
+  --radius-md: 0.375rem; /* 6px */
+  --radius-lg: 0.5rem; /* 8px */
+  --radius-xl: 0.75rem; /* 12px */
+  --radius-2xl: 1rem; /* 16px */
   --radius-full: 9999px;
 
   /* ===== 阴影系统 (融合ST风格) ===== */
@@ -193,7 +193,7 @@
   --shadow-md: 0 4px 6px -1px var(--shadow-color);
   --shadow-lg: 0 10px 15px -3px var(--shadow-color);
   --shadow-xl: 0 20px 25px -5px var(--shadow-color);
-  
+
   /* ST风格文字阴影 */
   --text-shadow: 0px 0px 2px var(--shadow-color);
   --text-shadow-glow: 0px 0px 4px rgba(255, 255, 255, 0.3);
@@ -202,11 +202,11 @@
   --blur-sm: 4px;
   --blur-md: 8px;
   --blur-lg: 12px;
-  --blur-main: 10px;        /* ST默认模糊强度 */
-  --blur-chat: 5px;         /* 聊天区域模糊 */
+  --blur-main: 10px; /* ST默认模糊强度 */
+  --blur-chat: 5px; /* 聊天区域模糊 */
 
   /* ===== 动画系统 (保持原有) ===== */
-  --duration-fast: 0.125s;   /* ST动画持续时间 */
+  --duration-fast: 0.125s; /* ST动画持续时间 */
   --duration-normal: 0.25s;
   --duration-slow: 0.35s;
   --easing-ease: ease;
@@ -220,9 +220,9 @@
   --container-max-width: 1200px;
 
   /* ===== ST特有效果变量 ===== */
-  --st-blur-strength: 10;        /* ST模糊强度变量 */
-  --st-shadow-width: 2;          /* ST阴影宽度变量 */
-  --st-font-scale: 1;            /* ST字体缩放 */
+  --st-blur-strength: 10; /* ST模糊强度变量 */
+  --st-shadow-width: 2; /* ST阴影宽度变量 */
+  --st-font-scale: 1; /* ST字体缩放 */
 }
 
 /* ===========================
@@ -282,13 +282,13 @@
   --btn-hover-bg: var(--glass-bg-medium);
   --btn-hover-border: var(--white-20);
   --btn-active-bg: var(--glass-bg-dark);
-  
+
   /* ST风格输入框变量 */
   --input-bg: var(--theme-chat-bg);
   --input-border: var(--glass-border);
   --input-focus-border: var(--primary);
   --input-placeholder: var(--text-muted);
-  
+
   /* ST风格卡片变量 */
   --card-bg: var(--theme-user-msg);
   --card-border: var(--glass-border);
@@ -314,4 +314,4 @@
   :root {
     --font-scale: 0.85;
   }
-} 
+}

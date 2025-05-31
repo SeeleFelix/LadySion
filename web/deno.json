@@ -1,0 +1,31 @@
+{
+  "imports": {
+    "@/": "./src/",
+    "@web/": "./src/"
+  },
+  "tasks": {
+    "dev": "deno run -A npm:vite",
+    "build": "deno run -A npm:vue-tsc && deno run -A npm:vite build",
+    "preview": "deno run -A npm:vite preview",
+    "type-check": "deno run -A npm:vue-tsc --noEmit"
+  },
+  "compilerOptions": {
+    "allowJs": true,
+    "lib": ["dom", "dom.iterable", "es6"],
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "moduleResolution": "bundler"
+  },
+  "lint": {
+    "files": {
+      "exclude": ["dist/", "node_modules/"]
+    }
+  },
+  "fmt": {
+    "files": {
+      "exclude": ["dist/", "node_modules/"]
+    }
+  }
+} 

@@ -49,4 +49,4 @@ export interface UpdateCharacterData {
   exampleDialogue?: string;
   tags?: string[];
   isActive?: boolean;
-} 
+}

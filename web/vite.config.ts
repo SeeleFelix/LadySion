@@ -1,46 +1,35 @@
-import { defineConfig } from 'vite';
-import vue from '@vitejs/plugin-vue';
-import { resolve } from 'path';
+import { defineConfig } from "vite";
+import vue from "@vitejs/plugin-vue";
+import { resolve } from "node:path";
 
+// https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [
-    vue({
-      script: {
-        defineModel: true
-      }
-    })
-  ],
+  plugins: [vue()],
   resolve: {
     alias: {
-      '@': resolve(__dirname, 'src'),
-      '@shared': resolve(__dirname, '../shared')
-    }
+      "@": resolve(".", "src"),
+      "@web": resolve(".", "src"),
+    },
   },
   server: {
-    proxy: {
-      '/api': {
-        target: 'http://localhost:3000',
-        changeOrigin: true
-      }
-    }
+    port: 5173,
+    host: true,
   },
   build: {
-    outDir: '../dist/client'
+    outDir: "dist",
+    sourcemap: true,
   },
-  test: {
-    environment: 'happy-dom',
-    globals: true,
-    setupFiles: ['./src/test/setup.ts'],
-    coverage: {
-      provider: 'v8',
-      reporter: ['text', 'json', 'html'],
-      exclude: [
-        'node_modules/',
-        'src/test/',
-        '**/*.d.ts',
-        '**/*.config.*',
-        '**/coverage/**'
-      ]
-    }
-  }
+  optimizeDeps: {
+    include: [
+      "vue",
+      "vue-router", 
+      "pinia",
+      "element-plus",
+      "@element-plus/icons-vue",
+      "@fortawesome/fontawesome-svg-core",
+      "@fortawesome/free-solid-svg-icons", 
+      "@fortawesome/vue-fontawesome",
+      "axios"
+    ],
+  },
 }); 

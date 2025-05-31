@@ -1,10 +1,12 @@
 # Monorepo 共享DTO类型系统最佳实践
 
-本文档说明了Lady Sion项目中Monorepo架构下前后端共享DTO类型系统的设计理念、架构优势以及开发最佳实践。
+本文档说明了Lady
+Sion项目中Monorepo架构下前后端共享DTO类型系统的设计理念、架构优势以及开发最佳实践。
 
 ## 🎯 **为什么选择共享DTO类型系统？**
 
 ### ✅ **Monorepo架构最佳实践**
+
 基于现代全栈开发和大型项目经验，共享DTO类型系统是2024年monorepo的推荐架构：
 
 1. **类型一致性保证**：前后端使用完全相同的类型定义，避免接口不匹配
@@ -14,14 +16,15 @@
 
 ### 📊 **架构对比分析**
 
-| 架构模式 | 优势 | 劣势 |
-|---------|------|------|
-| **共享DTO类型** | ✅ 类型一致<br>✅ 重构安全<br>✅ 开发效率<br>✅ 错误早发现 | ❌ 初期设计复杂 |
-| **分离类型定义** | ✅ 包独立<br>✅ 灵活性高 | ❌ 类型不一致<br>❌ 维护复杂<br>❌ 接口同步困难 |
+| 架构模式         | 优势                                                       | 劣势                                            |
+| ---------------- | ---------------------------------------------------------- | ----------------------------------------------- |
+| **共享DTO类型**  | ✅ 类型一致<br>✅ 重构安全<br>✅ 开发效率<br>✅ 错误早发现 | ❌ 初期设计复杂                                 |
+| **分离类型定义** | ✅ 包独立<br>✅ 灵活性高                                   | ❌ 类型不一致<br>❌ 维护复杂<br>❌ 接口同步困难 |
 
 ## 🏗️ **共享类型系统架构**
 
 ### 目录结构设计
+
 ```
 LadySion/ (monorepo根目录)
 ├── shared/                     # 共享代码包
@@ -42,6 +45,7 @@ LadySion/ (monorepo根目录)
 ```
 
 ### 核心设计原则
+
 ```typescript
 // 1. 基础DTO接口设计
 export interface BaseEntity {
@@ -52,9 +56,9 @@ export interface BaseEntity {
 
 // 2. 枚举优先原则
 export enum EntityType {
-  PRESET = 'preset',
-  CHARACTER = 'character',
-  CONVERSATION = 'conversation'
+  PRESET = "preset",
+  CHARACTER = "character",
+  CONVERSATION = "conversation",
 }
 
 // 3. 继承层次设计
@@ -64,14 +68,15 @@ export interface ActivatableEntity extends BaseEntity {
 }
 
 // 4. 类型安全工具
-export type EntityByType<T extends EntityType> = 
-  T extends EntityType.PRESET ? PresetDTO :
-  T extends EntityType.CHARACTER ? CharacterDTO :
-  T extends EntityType.CONVERSATION ? ConversationDTO :
-  never;
+export type EntityByType<T extends EntityType> = T extends EntityType.PRESET
+  ? PresetDTO
+  : T extends EntityType.CHARACTER ? CharacterDTO
+  : T extends EntityType.CONVERSATION ? ConversationDTO
+  : never;
 ```
 
 ### API响应标准化
+
 ```typescript
 // 统一的API响应格式
 export interface ApiResponse<T = any> {
@@ -105,6 +110,7 @@ export interface OperationResult<T = any> extends ApiResponse<T> {
 ## 🔧 **开发实践规范**
 
 ### 1. **共享类型定义标准**
+
 ```typescript
 // shared/types/preset.ts
 
@@ -113,11 +119,11 @@ export interface OperationResult<T = any> extends ApiResponse<T> {
  */
 export enum PresetType {
   /** 指令模式预设 */
-  INSTRUCT = 'instruct',
+  INSTRUCT = "instruct",
   /** 上下文模板预设 */
-  CONTEXT = 'context',
+  CONTEXT = "context",
   /** 系统提示词预设 */
-  SYSTEM_PROMPT = 'sysprompt'
+  SYSTEM_PROMPT = "sysprompt",
 }
 
 /**
@@ -147,14 +153,16 @@ export interface CreatePresetRequestDTO {
 /**
  * 更新预设请求DTO
  */
-export interface UpdatePresetRequestDTO extends Partial<CreatePresetRequestDTO> {}
+export interface UpdatePresetRequestDTO
+  extends Partial<CreatePresetRequestDTO> {}
 ```
 
 ### 2. **后端领域实体扩展**
+
 ```typescript
 // server/src/domain/entities/Preset.ts
 
-import { PresetDTO, PresetType } from '../../../../shared/types/preset';
+import { PresetDTO, PresetType } from "../../../../shared/types/preset";
 
 /**
  * 后端预设领域实体 - 基于共享DTO扩展
@@ -169,7 +177,7 @@ export class PresetEntity implements PresetDTO {
     public priority: number = 100,
     public description?: string,
     public readonly createdAt?: Date,
-    public readonly updatedAt?: Date
+    public readonly updatedAt?: Date,
   ) {}
 
   // 领域特有方法
@@ -192,7 +200,7 @@ export class PresetEntity implements PresetDTO {
       enabled: this.enabled,
       priority: this.priority,
       createdAt: this.createdAt,
-      updatedAt: this.updatedAt
+      updatedAt: this.updatedAt,
     };
   }
 
@@ -207,18 +215,19 @@ export class PresetEntity implements PresetDTO {
       dto.priority,
       dto.description,
       dto.createdAt,
-      dto.updatedAt
+      dto.updatedAt,
     );
   }
 }
 ```
 
 ### 3. **前端类型扩展和重新导出**
+
 ```typescript
 // web/src/types/preset.ts
 
 // 重新导出共享类型
-export * from '../../../shared/types/preset';
+export * from "../../../shared/types/preset";
 
 // 前端特有的UI状态扩展
 export interface ExtendedPresetDTO extends PresetDTO {
@@ -226,11 +235,11 @@ export interface ExtendedPresetDTO extends PresetDTO {
   isSelected?: boolean;
   loading?: boolean;
   isDirty?: boolean;
-  
+
   // 统计信息
   usageCount?: number;
   lastUsedAt?: Date;
-  
+
   // 权限信息
   permissions?: {
     canEdit: boolean;
@@ -249,36 +258,37 @@ export interface PresetFormState {
 ```
 
 ### 4. **API接口类型约束**
+
 ```typescript
 // server/src/api/routes/preset.ts
 
-import { 
-  PresetDTO, 
-  CreatePresetRequestDTO, 
-  UpdatePresetRequestDTO,
+import {
   ApiResponse,
-  PresetType 
-} from '../../../../shared/types/preset';
+  CreatePresetRequestDTO,
+  PresetDTO,
+  PresetType,
+  UpdatePresetRequestDTO,
+} from "../../../../shared/types/preset";
 
 // 类型安全的API路由定义
 interface PresetRoutes {
-  'GET /api/presets': {
+  "GET /api/presets": {
     query?: { type?: PresetType; enabled?: boolean };
     response: ApiResponse<PresetDTO[]>;
   };
-  
-  'POST /api/presets': {
+
+  "POST /api/presets": {
     body: CreatePresetRequestDTO;
     response: ApiResponse<PresetDTO>;
   };
-  
-  'PUT /api/presets/:id': {
+
+  "PUT /api/presets/:id": {
     params: { id: string };
     body: UpdatePresetRequestDTO;
     response: ApiResponse<PresetDTO>;
   };
-  
-  'DELETE /api/presets/:id': {
+
+  "DELETE /api/presets/:id": {
     params: { id: string };
     response: ApiResponse<{ deleted: boolean }>;
   };
@@ -288,14 +298,15 @@ interface PresetRoutes {
 ## 🚀 **性能优化策略**
 
 ### 1. **类型缓存和预计算**
+
 ```typescript
 // shared/types/constants.ts
 
 // 预计算的类型映射
 export const ENTITY_TYPE_LABELS = {
-  [EntityType.PRESET]: '预设',
-  [EntityType.CHARACTER]: '角色',
-  [EntityType.CONVERSATION]: '对话'
+  [EntityType.PRESET]: "预设",
+  [EntityType.CHARACTER]: "角色",
+  [EntityType.CONVERSATION]: "对话",
 } as const;
 
 // 类型验证缓存
@@ -306,7 +317,7 @@ export function validateEntityType(value: unknown): value is EntityType {
   if (typeValidationCache.has(key)) {
     return typeValidationCache.get(key)!;
   }
-  
+
   const isValid = Object.values(EntityType).includes(value as EntityType);
   typeValidationCache.set(key, isValid);
   return isValid;
@@ -314,28 +325,26 @@ export function validateEntityType(value: unknown): value is EntityType {
 ```
 
 ### 2. **按需导入和代码分割**
+
 ```typescript
 // web/src/types/index.ts
 
 // 按模块重新导出，支持tree-shaking
-export type { 
-  PresetDTO, 
-  PresetType, 
-  CreatePresetRequestDTO 
-} from './preset';
+export type { CreatePresetRequestDTO, PresetDTO, PresetType } from "./preset";
 
-export type { 
-  CharacterDTO, 
-  CharacterType, 
-  CreateCharacterRequestDTO 
-} from './character';
+export type {
+  CharacterDTO,
+  CharacterType,
+  CreateCharacterRequestDTO,
+} from "./character";
 
 // 懒加载类型定义
-export const PresetTypes = () => import('./preset');
-export const CharacterTypes = () => import('./character');
+export const PresetTypes = () => import("./preset");
+export const CharacterTypes = () => import("./character");
 ```
 
 ### 3. **运行时类型验证优化**
+
 ```typescript
 // shared/types/validation.ts
 
@@ -361,6 +370,7 @@ if (process.env.NODE_ENV === 'development') {
 ## 🔍 **开发工具和调试**
 
 ### 1. **类型生成工具**
+
 ```typescript
 // scripts/generate-types.ts
 
@@ -384,6 +394,7 @@ export function validateDTOConsistency(): boolean {
 ```
 
 ### 2. **开发环境类型检查**
+
 ```typescript
 // scripts/type-check.ts
 
@@ -397,12 +408,13 @@ export function checkCrossPackageTypes(): void {
 }
 
 // 在CI/CD中运行
-if (process.env.NODE_ENV === 'ci') {
+if (process.env.NODE_ENV === "ci") {
   checkCrossPackageTypes();
 }
 ```
 
 ### 3. **自动化同步工具**
+
 ```bash
 # package.json scripts
 {
@@ -418,6 +430,7 @@ if (process.env.NODE_ENV === 'ci') {
 ## 🎓 **团队协作标准**
 
 ### 1. **共享类型变更流程**
+
 ```mermaid
 graph TD
     A[提出类型变更需求] --> B[在shared/types中修改]
@@ -433,13 +446,14 @@ graph TD
 ```
 
 ### 2. **版本管理策略**
+
 ```typescript
 // shared/types/version.ts
 
 /**
  * 类型版本信息
  */
-export const TYPE_SYSTEM_VERSION = '2.1.0';
+export const TYPE_SYSTEM_VERSION = "2.1.0";
 
 /**
  * 向后兼容性标记
@@ -456,18 +470,19 @@ export interface TypeVersionInfo {
  */
 export const TYPE_CHANGELOG: TypeVersionInfo[] = [
   {
-    version: '2.1.0',
-    deprecated: ['PresetTypeString'],
-    migration: 'docs/guides/type-migration-v2.1.md'
-  }
+    version: "2.1.0",
+    deprecated: ["PresetTypeString"],
+    migration: "docs/guides/type-migration-v2.1.md",
+  },
 ];
 ```
 
 ### 3. **文档注释规范**
-```typescript
+
+````typescript
 /**
  * 预设数据传输对象
- * 
+ *
  * @description 用于前后端预设数据传输的标准格式
  * @version 2.0.0
  * @since 1.0.0
@@ -486,25 +501,27 @@ export const TYPE_CHANGELOG: TypeVersionInfo[] = [
 export interface PresetDTO extends BaseEntity {
   // ... 接口定义
 }
-```
+````
 
 ## 🔮 **扩展性和未来规划**
 
 ### 1. **多包类型共享**
+
 ```typescript
 // 支持更多包的类型共享
-const packages = ['web', 'server', 'mobile', 'desktop'];
+const packages = ["web", "server", "mobile", "desktop"];
 
 // 自动生成各包的类型导出
-packages.forEach(pkg => {
+packages.forEach((pkg) => {
   generateTypeExports(pkg);
 });
 ```
 
 ### 2. **运行时类型验证集成**
+
 ```typescript
 // 集成Zod等运行时验证库
-import { z } from 'zod';
+import { z } from "zod";
 
 // 从DTO接口生成Zod schema
 export const PresetDTOSchema = z.object({
@@ -513,7 +530,7 @@ export const PresetDTOSchema = z.object({
   type: z.nativeEnum(PresetType),
   content: z.string(),
   enabled: z.boolean(),
-  priority: z.number()
+  priority: z.number(),
 });
 
 // 类型安全的运行时验证
@@ -523,6 +540,7 @@ export function validatePresetDTO(data: unknown): PresetDTO {
 ```
 
 ### 3. **GraphQL集成**
+
 ```typescript
 // 从共享DTO生成GraphQL schema
 export function generateGraphQLSchema(): string {
@@ -535,16 +553,17 @@ export function generateGraphQLSchema(): string {
 ## 📝 **测试策略**
 
 ### 1. **类型一致性测试**
+
 ```typescript
 // tests/type-consistency.test.ts
 
-describe('前后端类型一致性', () => {
-  it('应该在前后端使用相同的DTO类型', () => {
+describe("前后端类型一致性", () => {
+  it("应该在前后端使用相同的DTO类型", () => {
     // 检查前端类型导入是否正确
     // 检查后端实体是否正确实现DTO接口
   });
 
-  it('应该正确验证类型守卫', () => {
+  it("应该正确验证类型守卫", () => {
     expect(isPresetDTO(validPreset)).toBe(true);
     expect(isPresetDTO(invalidData)).toBe(false);
   });
@@ -552,19 +571,20 @@ describe('前后端类型一致性', () => {
 ```
 
 ### 2. **API契约测试**
+
 ```typescript
 // tests/api-contract.test.ts
 
-describe('API契约测试', () => {
-  it('POST /api/presets 应该接受正确的DTO格式', async () => {
+describe("API契约测试", () => {
+  it("POST /api/presets 应该接受正确的DTO格式", async () => {
     const requestData: CreatePresetRequestDTO = {
-      name: 'Test Preset',
+      name: "Test Preset",
       type: PresetType.INSTRUCT,
-      content: 'Test content'
+      content: "Test content",
     };
 
-    const response = await api.post('/api/presets', requestData);
-    
+    const response = await api.post("/api/presets", requestData);
+
     // 验证响应符合PresetDTO类型
     expect(isPresetDTO(response.data.data)).toBe(true);
   });
@@ -574,19 +594,21 @@ describe('API契约测试', () => {
 ## 📚 **相关资源**
 
 ### 内部文档
+
 - [Monorepo架构文档](../architecture/monorepo.md)
 - [API设计规范](../api/design-standards.md)
 - [前端开发指南](../guides/frontend-development.md)
 - [后端开发指南](../guides/backend-development.md)
 
 ### 外部参考
+
 - [TypeScript Handbook](https://www.typescriptlang.org/docs/)
 - [Monorepo Best Practices](https://monorepo.tools/)
 - [API Design Guidelines](https://github.com/microsoft/api-guidelines)
 
 ---
 
-**📅 最后更新**: 2024年12月  
-**👥 维护者**: Lady Sion 开发团队  
-**🔄 版本**: v2.0.0  
-**🏷️ 标签**: `monorepo` `typescript` `dto` `shared-types` `best-practices` 
+**📅 最后更新**: 2024年12月\
+**👥 维护者**: Lady Sion 开发团队\
+**🔄 版本**: v2.0.0\
+**🏷️ 标签**: `monorepo` `typescript` `dto` `shared-types` `best-practices`

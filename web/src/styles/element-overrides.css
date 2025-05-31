@@ -107,7 +107,11 @@
 }
 
 .el-button--primary:hover {
-  background: linear-gradient(135deg, var(--primary-hover), var(--secondary-hover));
+  background: linear-gradient(
+    135deg,
+    var(--primary-hover),
+    var(--secondary-hover)
+  );
   box-shadow: var(--shadow-glow);
 }
 
@@ -230,7 +234,9 @@
 }
 
 .el-slider__button:hover {
-  box-shadow: var(--shadow-lg), var(--shadow-glow);
+  box-shadow:
+    var(--shadow-lg),
+    var(--shadow-glow);
 }
 
 /* ===== 开关组件覆写 ===== */
@@ -464,13 +470,13 @@
     margin: var(--space-4);
     border-radius: var(--radius-lg);
   }
-  
+
   .el-button {
     padding: var(--space-2) var(--space-3);
     font-size: var(--text-xs);
   }
-  
+
   .el-input__wrapper {
     padding: var(--space-2) var(--space-3);
   }
-} 
+}

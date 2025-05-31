@@ -7,12 +7,15 @@ LangGraph是一个用于构建多代理(multi-agent)和有状态AI应用的框�
 ## 🏗️ 核心概念
 
 ### 图（Graph）
+
 LangGraph的核心是状态图（StateGraph），其中：
+
 - **节点（Nodes）**：执行特定功能的函数
 - **边（Edges）**：连接节点的路径，可以是条件性的
 - **状态（State）**：在整个工作流中持久保存的数据
 
 ### 状态管理
+
 ```python
 from typing import TypedDict, List
 from langgraph.graph import StateGraph
@@ -28,6 +31,7 @@ class GraphState(TypedDict):
 ## 🚀 在Lady Sion中的应用
 
 ### 1. 多轮对话管理
+
 ```python
 # 对话状态定义
 class ConversationState(TypedDict):
@@ -66,6 +70,7 @@ def generate_character_response(state: ConversationState) -> ConversationState:
 ```
 
 ### 2. 角色切换工作流
+
 ```python
 def character_switch_workflow():
     """角色切换工作流"""
@@ -89,6 +94,7 @@ def character_switch_workflow():
 ```
 
 ### 3. 预设应用工作流
+
 ```python
 def preset_application_workflow():
     """预设应用工作流"""
@@ -116,59 +122,61 @@ def preset_application_workflow():
 ## 🔧 集成实现
 
 ### 后端集成
+
 ```typescript
 // src/infrastructure/adapters/langgraph/LangGraphAdapter.ts
 export class LangGraphAdapter {
-    private pythonProcess: ChildProcess;
-    
-    constructor(private config: LangGraphConfig) {
-        this.initializePythonProcess();
-    }
-    
-    async executeWorkflow(
-        workflowName: string, 
-        state: any
-    ): Promise<WorkflowResult> {
-        const request = {
-            workflow: workflowName,
-            state: state,
-            config: this.config
-        };
-        
-        return this.sendToPython('execute_workflow', request);
-    }
-    
-    async createDynamicWorkflow(
-        definition: WorkflowDefinition
-    ): Promise<string> {
-        const request = {
-            definition: definition
-        };
-        
-        const result = await this.sendToPython('create_workflow', request);
-        return result.workflow_id;
-    }
-    
-    private async sendToPython(command: string, data: any): Promise<any> {
-        return new Promise((resolve, reject) => {
-            const message = JSON.stringify({ command, data });
-            
-            this.pythonProcess.stdin?.write(message + '\n');
-            
-            this.pythonProcess.stdout?.once('data', (response) => {
-                try {
-                    const result = JSON.parse(response.toString());
-                    resolve(result);
-                } catch (error) {
-                    reject(error);
-                }
-            });
-        });
-    }
+  private pythonProcess: ChildProcess;
+
+  constructor(private config: LangGraphConfig) {
+    this.initializePythonProcess();
+  }
+
+  async executeWorkflow(
+    workflowName: string,
+    state: any,
+  ): Promise<WorkflowResult> {
+    const request = {
+      workflow: workflowName,
+      state: state,
+      config: this.config,
+    };
+
+    return this.sendToPython("execute_workflow", request);
+  }
+
+  async createDynamicWorkflow(
+    definition: WorkflowDefinition,
+  ): Promise<string> {
+    const request = {
+      definition: definition,
+    };
+
+    const result = await this.sendToPython("create_workflow", request);
+    return result.workflow_id;
+  }
+
+  private async sendToPython(command: string, data: any): Promise<any> {
+    return new Promise((resolve, reject) => {
+      const message = JSON.stringify({ command, data });
+
+      this.pythonProcess.stdin?.write(message + "\n");
+
+      this.pythonProcess.stdout?.once("data", (response) => {
+        try {
+          const result = JSON.parse(response.toString());
+          resolve(result);
+        } catch (error) {
+          reject(error);
+        }
+      });
+    });
+  }
 }
 ```
 
 ### Python工作流服务
+
 ```python
 # workflows/conversation_flow.py
 import sys
@@ -244,6 +252,7 @@ if __name__ == "__main__":
 ## 🎨 高级特性
 
 ### 1. 条件分支
+
 ```python
 def create_adaptive_response_workflow():
     """创建自适应响应工作流"""
@@ -270,6 +279,7 @@ def create_adaptive_response_workflow():
 ```
 
 ### 2. 循环执行
+
 ```python
 def create_iterative_improvement_workflow():
     """创建迭代改进工作流"""
@@ -295,6 +305,7 @@ def create_iterative_improvement_workflow():
 ```
 
 ### 3. 状态持久化
+
 ```python
 # 使用SQLite持久化状态
 from langgraph.checkpoint.sqlite import SqliteSaver
@@ -316,6 +327,7 @@ def create_persistent_workflow():
 ## 📊 性能优化
 
 ### 1. 异步执行
+
 ```python
 import asyncio
 from langgraph.graph import StateGraph
@@ -339,6 +351,7 @@ async def async_node(state):
 ```
 
 ### 2. 缓存机制
+
 ```python
 from functools import lru_cache
 
@@ -352,6 +365,7 @@ def cached_analysis(text: str) -> dict:
 ## 🔍 调试和监控
 
 ### 1. 工作流可视化
+
 ```python
 # 生成工作流图像
 def visualize_workflow(workflow):
@@ -373,6 +387,7 @@ def visualize_workflow(workflow):
 ```
 
 ### 2. 执行追踪
+
 ```python
 def trace_workflow_execution(workflow, state):
     """追踪工作流执行"""
@@ -397,18 +412,22 @@ def trace_workflow_execution(workflow, state):
 ## 🚀 最佳实践
 
 ### 1. 模块化设计
+
 - 将复杂工作流拆分为可复用的子图
 - 使用清晰的状态定义和类型注解
 - 实现错误处理和恢复机制
 
 ### 2. 性能考虑
+
 - 合理使用缓存减少重复计算
 - 实施超时机制避免无限循环
 - 监控内存使用，及时清理不需要的状态
 
 ### 3. 可维护性
+
 - 提供详细的工作流文档
 - 使用版本控制管理工作流定义
 - 实现工作流的测试框架
 
-这个指南提供了LangGraph在Lady Sion项目中的完整集成方案，支持复杂的AI工作流编排和状态管理。 
+这个指南提供了LangGraph在Lady
+Sion项目中的完整集成方案，支持复杂的AI工作流编排和状态管理。

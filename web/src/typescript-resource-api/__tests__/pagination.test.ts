@@ -3,306 +3,311 @@
  * 验证Pageable和Page的完整功能
  */
 
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
-import type { Resource, Pageable, Page, Sort } from '../types'
+import { assert, assertEquals } from "std/assert/mod.ts";
+import type { Page, Pageable, Resource, Sort } from "../types";
 
 // 用户业务对象
-interface User {
-  id: string
-  name: string
-  email: string
-  age: number
-  createdAt: string
-}
+type User = {
+  id: string;
+  name: string;
+  email: string;
+  age: number;
+  createdAt: string;
+};
 
-describe('TRA 分页和排序功能 - Spring Data JPA风格', () => {
-  let mockFetch: any
+Deno.test("分页-第一页查询", async () => {
+  const { createResourceProxy } = await import("../index");
+  const UserResource: Resource<User> = createResourceProxy("User");
+  const mockPageResponse: Page<User> = {
+    content: [
+      {
+        id: "1",
+        name: "Alice",
+        email: "alice@test.com",
+        age: 25,
+        createdAt: "2024-01-01",
+      },
+      {
+        id: "2",
+        name: "Bob",
+        email: "bob@test.com",
+        age: 30,
+        createdAt: "2024-01-02",
+      },
+    ],
+    totalElements: 100,
+    totalPages: 10,
+    size: 10,
+    number: 0,
+    numberOfElements: 2,
+    first: true,
+    last: false,
+    empty: false,
+  };
+  const mockFetch = Deno.fn();
+  Deno.stubGlobal("fetch", mockFetch);
+  const pageable: Pageable = { page: 0, size: 10 };
+  mockFetch.mockResolvedValue({ ok: true, json: async () => mockPageResponse });
+  const result = await UserResource.findAllPaged(pageable);
+  assert(mockFetch.mock.calls[0][0] === "/api/whisper/User/findAllPaged");
+  assert(mockFetch.mock.calls[0][1].method === "POST");
+  assert(
+    mockFetch.mock.calls[0][1].headers["Content-Type"] === "application/json",
+  );
+  assert(
+    JSON.stringify(mockFetch.mock.calls[0][1].body) ===
+      JSON.stringify({ args: [pageable] }),
+  );
+  assert(result.content.length === 2);
+  assert(result.first === true);
+  assert(result.last === false);
+});
 
-  beforeEach(() => {
-    vi.clearAllMocks()
-    
-    // Mock fetch
-    mockFetch = vi.fn()
-    vi.stubGlobal('fetch', mockFetch)
-  })
+Deno.test("分页-第二页查询", async () => {
+  const { createResourceProxy } = await import("../index");
+  const UserResource: Resource<User> = createResourceProxy("User");
+  const mockPageResponse: Page<User> = {
+    content: [
+      {
+        id: "11",
+        name: "Charlie",
+        email: "charlie@test.com",
+        age: 28,
+        createdAt: "2024-01-11",
+      },
+    ],
+    totalElements: 100,
+    totalPages: 10,
+    size: 10,
+    number: 1,
+    numberOfElements: 1,
+    first: false,
+    last: false,
+    empty: false,
+  };
+  const mockFetch = Deno.fn();
+  Deno.stubGlobal("fetch", mockFetch);
+  const pageable: Pageable = { page: 1, size: 10 };
+  mockFetch.mockResolvedValue({ ok: true, json: async () => mockPageResponse });
+  const result = await UserResource.findAllPaged(pageable);
+  assert(mockFetch.mock.calls[0][0] === "/api/whisper/User/findAllPaged");
+  assert(mockFetch.mock.calls[0][1].method === "POST");
+  assert(
+    mockFetch.mock.calls[0][1].headers["Content-Type"] === "application/json",
+  );
+  assert(
+    JSON.stringify(mockFetch.mock.calls[0][1].body) ===
+      JSON.stringify({ args: [pageable] }),
+  );
+  assert(result.number === 1);
+  assert(result.first === false);
+});
 
-  afterEach(() => {
-    vi.unstubAllGlobals()
-  })
+Deno.test("排序-单字段升序", async () => {
+  const { createResourceProxy } = await import("../index");
+  const UserResource: Resource<User> = createResourceProxy("User");
+  const mockPageResponse: Page<User> = {
+    content: [
+      {
+        id: "2",
+        name: "Alice",
+        email: "alice@test.com",
+        age: 25,
+        createdAt: "2024-01-02",
+      },
+      {
+        id: "1",
+        name: "Bob",
+        email: "bob@test.com",
+        age: 30,
+        createdAt: "2024-01-01",
+      },
+    ],
+    totalElements: 2,
+    totalPages: 1,
+    size: 10,
+    number: 0,
+    numberOfElements: 2,
+    first: true,
+    last: true,
+    empty: false,
+  };
+  const mockFetch = Deno.fn();
+  Deno.stubGlobal("fetch", mockFetch);
+  const sort: Sort = { fields: [{ field: "name", direction: "ASC" }] };
+  const pageable: Pageable = { page: 0, size: 10, sort };
+  mockFetch.mockResolvedValue({ ok: true, json: async () => mockPageResponse });
+  const result = await UserResource.findAllPaged(pageable);
+  assert(mockFetch.mock.calls[0][0] === "/api/whisper/User/findAllPaged");
+  assert(mockFetch.mock.calls[0][1].method === "POST");
+  assert(
+    mockFetch.mock.calls[0][1].headers["Content-Type"] === "application/json",
+  );
+  assert(
+    JSON.stringify(mockFetch.mock.calls[0][1].body) ===
+      JSON.stringify({ args: [pageable] }),
+  );
+  assert(result.content[0].name === "Alice");
+  assert(result.content[1].name === "Bob");
+});
 
-  describe('基础分页功能', () => {
-    it('findAllPaged() - 第一页查询', async () => {
-      const { createResourceProxy } = await import('../index')
-      const UserResource: Resource<User> = createResourceProxy('User')
-      const mockPageResponse: Page<User> = {
-        content: [
-          { id: '1', name: 'Alice', email: 'alice@test.com', age: 25, createdAt: '2024-01-01' },
-          { id: '2', name: 'Bob', email: 'bob@test.com', age: 30, createdAt: '2024-01-02' }
-        ],
-        totalElements: 100,
-        totalPages: 10,
-        size: 10,
-        number: 0,
-        numberOfElements: 2,
-        first: true,
-        last: false,
-        empty: false
-      }
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: async () => mockPageResponse
-      })
-      const pageable: Pageable = { page: 0, size: 10 }
-      const result = await UserResource.findAllPaged(pageable)
-      expect(mockFetch).toHaveBeenCalledWith(
-        '/api/whisper/User/findAllPaged',
-        expect.objectContaining({
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ args: [pageable] })
-        })
-      )
-      expect(result).toEqual(mockPageResponse)
-      expect(result.content).toHaveLength(2)
-      expect(result.first).toBe(true)
-      expect(result.last).toBe(false)
-    })
+Deno.test("排序-多字段", async () => {
+  const { createResourceProxy } = await import("../index");
+  const UserResource: Resource<User> = createResourceProxy("User");
+  const mockFetch = Deno.fn();
+  Deno.stubGlobal("fetch", mockFetch);
+  const sort: Sort = {
+    fields: [
+      { field: "age", direction: "DESC" },
+      { field: "name", direction: "ASC" },
+    ],
+  };
+  const pageable: Pageable = { page: 0, size: 10, sort };
+  mockFetch.mockResolvedValue({
+    ok: true,
+    json: async () => ({
+      content: [],
+      totalElements: 0,
+      totalPages: 0,
+      size: 10,
+      number: 0,
+      numberOfElements: 0,
+      first: true,
+      last: true,
+      empty: true,
+    }),
+  });
+  const result = await UserResource.findAllPaged(pageable);
+  assert(mockFetch.mock.calls[0][0] === "/api/whisper/User/findAllPaged");
+  assert(mockFetch.mock.calls[0][1].method === "POST");
+  assert(
+    mockFetch.mock.calls[0][1].headers["Content-Type"] === "application/json",
+  );
+  assert(
+    JSON.stringify(mockFetch.mock.calls[0][1].body) ===
+      JSON.stringify({ args: [pageable] }),
+  );
+});
 
-    it('findAllPaged() - 第二页查询', async () => {
-      const { createResourceProxy } = await import('../index')
-      const UserResource: Resource<User> = createResourceProxy('User')
-      const mockPageResponse: Page<User> = {
-        content: [
-          { id: '11', name: 'Charlie', email: 'charlie@test.com', age: 28, createdAt: '2024-01-11' }
-        ],
-        totalElements: 100,
-        totalPages: 10,
-        size: 10,
-        number: 1,
-        numberOfElements: 1,
-        first: false,
-        last: false,
-        empty: false
-      }
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: async () => mockPageResponse
-      })
-      const pageable: Pageable = { page: 1, size: 10 }
-      const result = await UserResource.findAllPaged(pageable)
-      expect(mockFetch).toHaveBeenCalledWith(
-        '/api/whisper/User/findAllPaged',
-        expect.objectContaining({
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ args: [pageable] })
-        })
-      )
-      expect(result.number).toBe(1)
-      expect(result.first).toBe(false)
-    })
-  })
+Deno.test("边界-空页面", async () => {
+  const { createResourceProxy } = await import("../index");
+  const UserResource: Resource<User> = createResourceProxy("User");
+  const mockFetch = Deno.fn();
+  Deno.stubGlobal("fetch", mockFetch);
+  const mockPageResponse: Page<User> = {
+    content: [],
+    totalElements: 0,
+    totalPages: 0,
+    size: 10,
+    number: 0,
+    numberOfElements: 0,
+    first: true,
+    last: true,
+    empty: true,
+  };
+  const pageable: Pageable = { page: 0, size: 10 };
+  mockFetch.mockResolvedValue({ ok: true, json: async () => mockPageResponse });
+  const result = await UserResource.findAllPaged(pageable);
+  assert(result.empty === true);
+  assert(result.content.length === 0);
+  assert(result.totalElements === 0);
+});
 
-  describe('排序功能', () => {
-    it('findAllPaged() - 单字段升序排序', async () => {
-      const { createResourceProxy } = await import('../index')
-      const UserResource: Resource<User> = createResourceProxy('User')
-      const mockPageResponse: Page<User> = {
-        content: [
-          { id: '2', name: 'Alice', email: 'alice@test.com', age: 25, createdAt: '2024-01-02' },
-          { id: '1', name: 'Bob', email: 'bob@test.com', age: 30, createdAt: '2024-01-01' }
-        ],
-        totalElements: 2,
-        totalPages: 1,
-        size: 10,
-        number: 0,
-        numberOfElements: 2,
-        first: true,
-        last: true,
-        empty: false
-      }
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: async () => mockPageResponse
-      })
-      const sort: Sort = {
-        fields: [{ field: 'name', direction: 'ASC' }]
-      }
-      const pageable: Pageable = { page: 0, size: 10, sort }
-      const result = await UserResource.findAllPaged(pageable)
-      expect(mockFetch).toHaveBeenCalledWith(
-        '/api/whisper/User/findAllPaged',
-        expect.objectContaining({
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ args: [pageable] })
-        })
-      )
-      expect(result.content[0].name).toBe('Alice')
-      expect(result.content[1].name).toBe('Bob')
-    })
+Deno.test("边界-大页面尺寸", async () => {
+  const { createResourceProxy } = await import("../index");
+  const UserResource: Resource<User> = createResourceProxy("User");
+  const mockFetch = Deno.fn();
+  Deno.stubGlobal("fetch", mockFetch);
+  const mockPageResponse: Page<User> = {
+    content: new Array(100).fill(null).map((_, i) => ({
+      id: `${i}`,
+      name: `User${i}`,
+      email: `user${i}@test.com`,
+      age: 20 + i,
+      createdAt: `2024-01-${(i % 30) + 1}`,
+    })),
+    totalElements: 1000,
+    totalPages: 10,
+    size: 100,
+    number: 0,
+    numberOfElements: 100,
+    first: true,
+    last: false,
+    empty: false,
+  };
+  const pageable: Pageable = { page: 0, size: 100 };
+  mockFetch.mockResolvedValue({ ok: true, json: async () => mockPageResponse });
+  const result = await UserResource.findAllPaged(pageable);
+  assert(mockFetch.mock.calls[0][0] === "/api/whisper/User/findAllPaged");
+  assert(mockFetch.mock.calls[0][1].method === "POST");
+  assert(
+    mockFetch.mock.calls[0][1].headers["Content-Type"] === "application/json",
+  );
+  assert(
+    JSON.stringify(mockFetch.mock.calls[0][1].body) ===
+      JSON.stringify({ args: [pageable] }),
+  );
+  assert(result.content.length === 100);
+  assert(result.size === 100);
+});
 
-    it('findAllPaged() - 多字段排序', async () => {
-      const { createResourceProxy } = await import('../index')
-      const UserResource: Resource<User> = createResourceProxy('User')
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          content: [],
-          totalElements: 0,
-          totalPages: 0,
-          size: 10,
-          number: 0,
-          numberOfElements: 0,
-          first: true,
-          last: true,
-          empty: true
-        })
-      })
-      const sort: Sort = {
-        fields: [
-          { field: 'age', direction: 'DESC' },
-          { field: 'name', direction: 'ASC' }
-        ]
-      }
-      const pageable: Pageable = { page: 0, size: 10, sort }
-      await UserResource.findAllPaged(pageable)
-      expect(mockFetch).toHaveBeenCalledWith(
-        '/api/whisper/User/findAllPaged',
-        expect.objectContaining({
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ args: [pageable] })
-        })
-      )
-    })
-  })
-
-  describe('边界情况处理', () => {
-    it('findAllPaged() - 空页面', async () => {
-      const { createResourceProxy } = await import('../index')
-      const UserResource: Resource<User> = createResourceProxy('User')
-      
-      const emptyPageResponse: Page<User> = {
-        content: [],
-        totalElements: 0,
-        totalPages: 0,
-        size: 10,
-        number: 0,
-        numberOfElements: 0,
-        first: true,
-        last: true,
-        empty: true
-      }
-
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: async () => emptyPageResponse
-      })
-
-      const pageable: Pageable = { page: 0, size: 10 }
-      const result = await UserResource.findAllPaged(pageable)
-      
-      expect(result.empty).toBe(true)
-      expect(result.content).toHaveLength(0)
-      expect(result.totalElements).toBe(0)
-    })
-
-    it('findAllPaged() - 大页面尺寸', async () => {
-      const { createResourceProxy } = await import('../index')
-      const UserResource: Resource<User> = createResourceProxy('User')
-      
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          content: new Array(100).fill(null).map((_, i) => ({
-            id: `${i}`,
-            name: `User${i}`,
-            email: `user${i}@test.com`,
-            age: 20 + i,
-            createdAt: `2024-01-${(i % 30) + 1}`
-          })),
-          totalElements: 1000,
-          totalPages: 10,
-          size: 100,
-          number: 0,
-          numberOfElements: 100,
-          first: true,
-          last: false,
-          empty: false
-        })
-      })
-
-      const pageable: Pageable = { page: 0, size: 100 }
-      const result = await UserResource.findAllPaged(pageable)
-      
-      expect(mockFetch).toHaveBeenCalledWith(
-        '/api/whisper/User/findAllPaged',
-        expect.objectContaining({
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ args: [pageable] })
-        })
-      )
-      
-      expect(result.content).toHaveLength(100)
-      expect(result.size).toBe(100)
-    })
-  })
-
-  describe('集成测试场景', () => {
-    it('用户列表分页 - 实际业务场景', async () => {
-      const { createResourceProxy } = await import('../index')
-      
-      // 管理员查看用户列表，按创建时间倒序，每页20条
-      const UserResource: Resource<User> = createResourceProxy('User')
-      
-      const mockUsers: User[] = [
-        { id: '1', name: '张三', email: 'zhangsan@example.com', age: 25, createdAt: '2024-01-15' },
-        { id: '2', name: '李四', email: 'lisi@example.com', age: 30, createdAt: '2024-01-14' },
-        { id: '3', name: '王五', email: 'wangwu@example.com', age: 28, createdAt: '2024-01-13' }
-      ]
-
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          content: mockUsers,
-          totalElements: 150,
-          totalPages: 8,
-          size: 20,
-          number: 0,
-          numberOfElements: 3,
-          first: true,
-          last: false,
-          empty: false
-        })
-      })
-
-      const pageable: Pageable = {
-        page: 0,
-        size: 20,
-        sort: {
-          fields: [{ field: 'createdAt', direction: 'DESC' }]
-        }
-      }
-
-      const userPage = await UserResource.findAllPaged(pageable)
-      
-      // 业务验证
-      expect(userPage.content).toHaveLength(3)
-      expect(userPage.content[0].name).toBe('张三')
-      expect(userPage.totalElements).toBe(150)
-      expect(userPage.totalPages).toBe(8)
-      
-      // URL参数验证
-      expect(mockFetch).toHaveBeenCalledWith(
-        '/api/whisper/User/findAllPaged',
-        expect.objectContaining({
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ args: [pageable] })
-        })
-      )
-    })
-  })
-}) 
+Deno.test("集成-用户列表分页", async () => {
+  const { createResourceProxy } = await import("../index");
+  const UserResource: Resource<User> = createResourceProxy("User");
+  const mockFetch = Deno.fn();
+  Deno.stubGlobal("fetch", mockFetch);
+  const mockUsers: User[] = [
+    {
+      id: "1",
+      name: "张三",
+      email: "zhangsan@example.com",
+      age: 25,
+      createdAt: "2024-01-15",
+    },
+    {
+      id: "2",
+      name: "李四",
+      email: "lisi@example.com",
+      age: 30,
+      createdAt: "2024-01-14",
+    },
+    {
+      id: "3",
+      name: "王五",
+      email: "wangwu@example.com",
+      age: 28,
+      createdAt: "2024-01-13",
+    },
+  ];
+  const mockPageResponse: Page<User> = {
+    content: mockUsers,
+    totalElements: 150,
+    totalPages: 8,
+    size: 20,
+    number: 0,
+    numberOfElements: 3,
+    first: true,
+    last: false,
+    empty: false,
+  };
+  const pageable: Pageable = {
+    page: 0,
+    size: 20,
+    sort: { fields: [{ field: "createdAt", direction: "DESC" }] },
+  };
+  mockFetch.mockResolvedValue({ ok: true, json: async () => mockPageResponse });
+  const result = await UserResource.findAllPaged(pageable);
+  assert(result.content.length === 3);
+  assert(result.content[0].name === "张三");
+  assert(result.totalElements === 150);
+  assert(result.totalPages === 8);
+  assert(mockFetch.mock.calls[0][0] === "/api/whisper/User/findAllPaged");
+  assert(mockFetch.mock.calls[0][1].method === "POST");
+  assert(
+    mockFetch.mock.calls[0][1].headers["Content-Type"] === "application/json",
+  );
+  assert(
+    JSON.stringify(mockFetch.mock.calls[0][1].body) ===
+      JSON.stringify({ args: [pageable] }),
+  );
+});

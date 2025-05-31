@@ -62,7 +62,11 @@
 }
 
 .ls-btn--primary:hover {
-  background: linear-gradient(135deg, var(--primary-hover), var(--secondary-hover));
+  background: linear-gradient(
+    135deg,
+    var(--primary-hover),
+    var(--secondary-hover)
+  );
   border-color: var(--primary-hover);
   box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
 }
@@ -136,13 +140,18 @@
 }
 
 .ls-card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+  background: linear-gradient(
+    90deg,
+    var(--primary),
+    var(--secondary),
+    var(--accent)
+  );
   opacity: 0.7;
 }
 
@@ -379,8 +388,12 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .ls-loading__text {
@@ -519,7 +532,7 @@
 }
 
 .ls-progress__bar::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -535,8 +548,12 @@
 }
 
 @keyframes progressShine {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 /* ===== 开关组件 ===== */
@@ -742,18 +759,18 @@
   .ls-card {
     padding: var(--space-4);
   }
-  
+
   .ls-modal__content {
     padding: var(--space-6);
     margin: var(--space-4);
   }
-  
+
   .ls-btn {
     padding: var(--space-3);
   }
-  
+
   .ls-message__bubble {
     margin-left: 0;
     margin-right: 0;
   }
-} 
+}

@@ -3,87 +3,87 @@
  * 配置测试环境、全局模拟和工具函数
  */
 
-import { beforeEach, afterEach, vi } from 'vitest'
-import { enableAutoUnmount } from '@vue/test-utils'
+import { afterEach, beforeEach, vi } from "vitest";
+import { enableAutoUnmount } from "@vue/test-utils";
 
 // 自动卸载组件，避免内存泄漏
-enableAutoUnmount(afterEach)
+enableAutoUnmount(afterEach);
 
 // 全局模拟配置
 beforeEach(() => {
   // 重置所有模拟
-  vi.resetAllMocks()
-  
+  vi.resetAllMocks();
+
   // 模拟fetch API
-  global.fetch = vi.fn()
-  
+  globalThis.fetch = vi.fn();
+
   // 模拟EventSource
-  global.EventSource = vi.fn().mockImplementation(() => ({
+  globalThis.EventSource = vi.fn().mockImplementation(() => ({
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
     close: vi.fn(),
     readyState: 1,
     onmessage: null,
-    onerror: null
-  }))
-  
+    onerror: null,
+  }));
+
   // 模拟localStorage
   const localStorageMock = {
     getItem: vi.fn(),
     setItem: vi.fn(),
     removeItem: vi.fn(),
     clear: vi.fn(),
-  }
-  Object.defineProperty(window, 'localStorage', {
-    value: localStorageMock
-  })
-  
+  };
+  Object.defineProperty(window, "localStorage", {
+    value: localStorageMock,
+  });
+
   // 模拟URL和URLSearchParams
-  global.URL = class URL {
+  globalThis.URL = class URL {
     constructor(url: string, base?: string) {
-      this.href = base ? `${base}/${url}` : url
-      this.searchParams = new URLSearchParams(url.split('?')[1] || '')
+      this.href = base ? `${base}/${url}` : url;
+      this.searchParams = new URLSearchParams(url.split("?")[1] || "");
     }
-    href: string
-    searchParams: URLSearchParams
-  } as any
-  
-  global.URLSearchParams = class URLSearchParams {
-    private params = new Map<string, string>()
-    
+    href: string;
+    searchParams: URLSearchParams;
+  } as any;
+
+  globalThis.URLSearchParams = class URLSearchParams {
+    private params = new Map<string, string>();
+
     constructor(init?: string) {
       if (init) {
-        init.split('&').forEach(pair => {
-          const [key, value] = pair.split('=')
+        init.split("&").forEach((pair) => {
+          const [key, value] = pair.split("=");
           if (key && value) {
-            this.params.set(decodeURIComponent(key), decodeURIComponent(value))
+            this.params.set(decodeURIComponent(key), decodeURIComponent(value));
           }
-        })
+        });
       }
     }
-    
+
     set(key: string, value: string) {
-      this.params.set(key, value)
+      this.params.set(key, value);
     }
-    
+
     get(key: string) {
-      return this.params.get(key) || null
+      return this.params.get(key) || null;
     }
-    
+
     toString() {
-      const pairs: string[] = []
+      const pairs: string[] = [];
       this.params.forEach((value, key) => {
-        pairs.push(`${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
-      })
-      return pairs.join('&')
+        pairs.push(`${encodeURIComponent(key)}=${encodeURIComponent(value)}`);
+      });
+      return pairs.join("&");
     }
-  } as any
-})
+  } as any;
+});
 
 afterEach(() => {
   // 清理计时器
-  vi.clearAllTimers()
-  
+  vi.clearAllTimers();
+
   // 清理DOM
-  document.body.innerHTML = ''
-}) 
+  document.body.innerHTML = "";
+});

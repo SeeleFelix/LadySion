@@ -5,6 +5,7 @@
 ## 🔧 前端（Vue3 + TypeScript）设置
 
 ### 1. 安装依赖
+
 ```bash
 cd web
 npm install --save-dev \
@@ -18,7 +19,9 @@ npm install --save-dev \
 ```
 
 ### 2. 更新package.json脚本
+
 在 `web/package.json` 中添加：
+
 ```json
 {
   "scripts": {
@@ -29,6 +32,7 @@ npm install --save-dev \
 ```
 
 ### 3. 创建.eslintignore
+
 ```bash
 # web/.eslintignore
 dist
@@ -41,6 +45,7 @@ coverage
 ## 🔧 后端（Node.js + TypeScript）设置
 
 ### 1. 安装依赖
+
 ```bash
 cd server
 npm install --save-dev \
@@ -51,7 +56,9 @@ npm install --save-dev \
 ```
 
 ### 2. 更新package.json脚本
+
 在 `server/package.json` 中添加：
+
 ```json
 {
   "scripts": {
@@ -62,6 +69,7 @@ npm install --save-dev \
 ```
 
 ### 3. 创建.eslintignore
+
 ```bash
 # server/.eslintignore
 dist
@@ -75,6 +83,7 @@ data
 ## 🚀 使用方法
 
 ### 检查代码
+
 ```bash
 # 前端
 cd web && npm run lint:check
@@ -84,6 +93,7 @@ cd server && npm run lint:check
 ```
 
 ### 自动修复
+
 ```bash
 # 前端
 cd web && npm run lint
@@ -95,12 +105,15 @@ cd server && npm run lint
 ## 🎯 主要规则说明
 
 ### 1. 防止循环依赖
+
 ```javascript
 'import/no-cycle': 'error'
 ```
+
 这个规则会检测模块之间的循环依赖，这是barrel文件常见的问题。
 
 ### 2. 限制export *
+
 ```javascript
 'no-restricted-syntax': [
   'error',
@@ -110,12 +123,15 @@ cd server && npm run lint
   }
 ]
 ```
+
 这个规则强制使用具名导出而不是`export *`。
 
 ## 🔧 IDE集成
 
 ### VS Code
+
 安装ESLint扩展：
+
 ```json
 // .vscode/extensions.json
 {
@@ -127,6 +143,7 @@ cd server && npm run lint
 ```
 
 ### 设置自动修复：
+
 ```json
 // .vscode/settings.json
 {
@@ -144,7 +161,7 @@ cd server && npm run lint
 ## 📋 检查清单
 
 - [ ] 前端ESLint配置已创建
-- [ ] 后端ESLint配置已创建  
+- [ ] 后端ESLint配置已创建
 - [ ] 依赖已安装
 - [ ] 脚本已添加到package.json
 - [ ] .eslintignore文件已创建
@@ -153,4 +170,4 @@ cd server && npm run lint
 
 ## 🎉 完成！
 
-现在您的项目已经配置了ESLint来防止barrel文件相关问题。这将帮助维护代码质量和性能。 
+现在您的项目已经配置了ESLint来防止barrel文件相关问题。这将帮助维护代码质量和性能。

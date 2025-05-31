@@ -6,15 +6,15 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly VITE_TRA_BASE_URL?: string
-  readonly VITE_TRA_TIMEOUT?: string
-  readonly VITE_TRA_RETRIES?: string
-  readonly VITE_TRA_RETRY_DELAY?: string
-  readonly VITE_TRA_CONTENT_TYPE?: string
-  readonly VITE_TRA_RESOURCES_PATH?: string
-  readonly VITE_TRA_REALTIME_PATH?: string
+  readonly VITE_TRA_BASE_URL?: string;
+  readonly VITE_TRA_TIMEOUT?: string;
+  readonly VITE_TRA_RETRIES?: string;
+  readonly VITE_TRA_RETRY_DELAY?: string;
+  readonly VITE_TRA_CONTENT_TYPE?: string;
+  readonly VITE_TRA_RESOURCES_PATH?: string;
+  readonly VITE_TRA_REALTIME_PATH?: string;
 }
 
 interface ImportMeta {
-  readonly env: ImportMetaEnv
-} 
+  readonly env: ImportMetaEnv;
+}

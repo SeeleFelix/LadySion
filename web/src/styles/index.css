@@ -4,19 +4,19 @@
    =========================== */
 
 /* 1. CSS变量系统 - 必须最先加载 */
-@import './variables.css';
+@import "./variables.css";
 
 /* 2. CSS重置和基础样式 */
-@import './reset.css';
+@import "./reset.css";
 
 /* 3. 工具类系统 */
-@import './utilities.css';
+@import "./utilities.css";
 
 /* 4. 组件样式系统 */
-@import './components.css';
+@import "./components.css";
 
 /* 5. Element Plus主题覆写 - 最后加载以确保优先级 */
-@import './element-overrides.css';
+@import "./element-overrides.css";
 
 /* ===========================
    全局应用样式
@@ -239,11 +239,11 @@
   .app-sidebar {
     width: 240px;
   }
-  
+
   .app-content {
     padding: var(--space-4);
   }
-  
+
   .character-grid {
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
     gap: var(--space-4);
@@ -254,7 +254,7 @@
   .app-container {
     flex-direction: column;
   }
-  
+
   .app-sidebar {
     width: 100%;
     height: auto;
@@ -262,25 +262,25 @@
     border-right: none;
     border-bottom: 1px solid var(--glass-border);
   }
-  
+
   .app-content {
     padding: var(--space-3);
   }
-  
+
   .page-container {
     padding: 0 var(--space-3);
   }
-  
+
   .character-grid {
     grid-template-columns: 1fr;
     gap: var(--space-3);
   }
-  
+
   .content-card {
     padding: var(--space-4);
     border-radius: var(--radius-lg);
   }
-  
+
   .form-container {
     max-width: 100%;
   }
@@ -290,20 +290,20 @@
   .app-header {
     padding: 0 var(--space-4);
   }
-  
+
   .app-content {
     padding: var(--space-2);
   }
-  
+
   .page-title {
     font-size: var(--text-xl);
   }
-  
+
   .content-card {
     padding: var(--space-3);
     margin-bottom: var(--space-4);
   }
-  
+
   .chat-input-area,
   .chat-messages {
     padding: var(--space-3);
@@ -315,4 +315,4 @@
   :root {
     color-scheme: dark;
   }
-} 
+}

@@ -13,7 +13,7 @@ export interface Character {
 // 消息接口
 export interface Message {
   id: string;
-  role: 'user' | 'assistant' | 'system';
+  role: "user" | "assistant" | "system";
   content: string;
   timestamp: number;
 }
@@ -30,28 +30,28 @@ export interface Conversation {
 
 // API响应通用类型
 export interface ApiResponse<T = any> {
-  data: T
-  message?: string
-  success: boolean
+  data: T;
+  message?: string;
+  success: boolean;
 }
 
 // 分页响应类型
 export interface PaginatedResponse<T> {
-  data: T[]
-  total: number
-  page: number
-  pageSize: number
+  data: T[];
+  total: number;
+  page: number;
+  pageSize: number;
 }
 
 // 请求状态类型
-export type RequestStatus = 'idle' | 'loading' | 'success' | 'error'
+export type RequestStatus = "idle" | "loading" | "success" | "error";
 
 // HTTP请求方法
-export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
+export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 
 // API错误类型
 export interface ApiError {
-  code: string
-  message: string
-  details?: any
-} 
+  code: string;
+  message: string;
+  details?: any;
+}

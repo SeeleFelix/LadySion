@@ -1,9 +1,9 @@
 /**
  * LadySion 预设类型定义
- * 
+ *
  * 这个文件定义了前后端共享的预设相关类型
  * 与服务端 domain/entities/Preset.ts 保持同步
- * 
+ *
  * @version 2.0.0
  * @author LadySion Team
  */
@@ -17,22 +17,27 @@
  */
 export enum PresetType {
   /** 指令模式预设 */
-  INSTRUCT = 'instruct',
+  INSTRUCT = "instruct",
   /** 上下文模板预设 */
-  CONTEXT = 'context', 
+  CONTEXT = "context",
   /** 系统提示词预设 */
-  SYSTEM_PROMPT = 'sysprompt',
+  SYSTEM_PROMPT = "sysprompt",
   /** 宏定义预设 */
-  MACROS = 'macros',
+  MACROS = "macros",
   /** 后历史指令预设 */
-  POST_HISTORY_INSTRUCTIONS = 'post-history-instructions'
+  POST_HISTORY_INSTRUCTIONS = "post-history-instructions",
 }
 
 /**
  * 预设类型的字符串字面量类型 - 用于兼容旧代码
  * @deprecated 请使用 PresetType 枚举
  */
-export type PresetTypeString = 'instruct' | 'context' | 'sysprompt' | 'macros' | 'post-history-instructions';
+export type PresetTypeString =
+  | "instruct"
+  | "context"
+  | "sysprompt"
+  | "macros"
+  | "post-history-instructions";
 
 /**
  * 预设优先级类型
@@ -105,7 +110,7 @@ export interface InstructPresetContent extends ActivatablePreset {
   systemSequence: string;
   /** 系统序列后缀 */
   systemSuffix: string;
-  
+
   // 特殊序列配置
   /** 首次输入序列 */
   firstInputSequence: string;
@@ -117,13 +122,13 @@ export interface InstructPresetContent extends ActivatablePreset {
   lastOutputSequence?: string;
   /** 最后系统序列 */
   lastSystemSequence?: string;
-  
+
   // 停止和对齐配置
   /** 停止序列 */
   stopSequence: string;
   /** 用户对齐消息 */
   userAlignmentMessage?: string;
-  
+
   // 行为选项
   /** 是否启用换行 */
   wrap: boolean;
@@ -133,7 +138,7 @@ export interface InstructPresetContent extends ActivatablePreset {
   bindToContext?: boolean;
   /** 是否从模型派生 */
   derivedFromModel?: boolean;
-  
+
   // 系统提示词处理
   /** 系统提示词是否与用户相同 */
   systemSameAsUser?: boolean;
@@ -167,23 +172,24 @@ export interface ExampleDialogue {
 /**
  * 上下文预设内容接口
  */
-export interface ContextPresetContent extends ActivatablePreset, MacroEnabledPreset {
+export interface ContextPresetContent
+  extends ActivatablePreset, MacroEnabledPreset {
   // 核心模板配置
   /** 上下文模板内容 */
   content?: string;
   /** 上下文模板 (alias for content, 保持兼容性) */
   contextTemplate?: string;
-  
+
   // 分隔符和标记配置
   /** 示例分隔符 */
   exampleSeparator?: string;
   /** 对话开始标记 */
   chatStart?: string;
-  
+
   // 示例对话配置
   /** 示例对话列表 */
   exampleDialogues?: ExampleDialogue[];
-  
+
   // 内容使用选项
   /** 是否使用故事字符串 */
   useStoryString?: boolean;
@@ -193,7 +199,7 @@ export interface ContextPresetContent extends ActivatablePreset, MacroEnabledPre
   useScenario?: boolean;
   /** 是否使用系统指令 */
   useSystemInstruction?: boolean;
-  
+
   // 高级配置
   /** 最大上下文长度 */
   maxContextLength?: number;
@@ -201,7 +207,7 @@ export interface ContextPresetContent extends ActivatablePreset, MacroEnabledPre
   tokenBudget?: number;
   /** 插入深度 */
   insertionDepth?: number;
-  
+
   // 兼容性字段
   /** 前缀 (向后兼容) */
   prefix?: string;
@@ -225,20 +231,21 @@ export interface ContextPreset extends BasePreset, ContextPresetContent {}
 /**
  * 系统提示词预设内容接口
  */
-export interface SystemPromptPresetContent extends ActivatablePreset, MacroEnabledPreset {
+export interface SystemPromptPresetContent
+  extends ActivatablePreset, MacroEnabledPreset {
   /** 系统提示词内容 */
   content: string;
-  
+
   // 分类和标签
   /** 预设分类 */
   category?: string;
   /** 标签列表 */
   tags?: string[];
-  
+
   // 状态控制
   /** 是否启用 */
   enabled: boolean;
-  
+
   // 格式化选项
   /** 在上下文前格式化 */
   formatBeforeContext?: boolean;
@@ -249,7 +256,8 @@ export interface SystemPromptPresetContent extends ActivatablePreset, MacroEnabl
 /**
  * 完整的系统提示词预设接口
  */
-export interface SystemPromptPreset extends BasePreset, SystemPromptPresetContent {}
+export interface SystemPromptPreset
+  extends BasePreset, SystemPromptPresetContent {}
 
 // ================================
 // 宏定义相关
@@ -272,17 +280,21 @@ export interface MacroDescription extends BasePreset {
 /**
  * 预设联合类型
  */
-export type Preset = InstructPreset | ContextPreset | SystemPromptPreset | MacroDescription;
+export type Preset =
+  | InstructPreset
+  | ContextPreset
+  | SystemPromptPreset
+  | MacroDescription;
 
 /**
  * 根据预设类型获取对应的预设接口
  */
-export type PresetByType<T extends PresetType> = 
-  T extends PresetType.INSTRUCT ? InstructPreset :
-  T extends PresetType.CONTEXT ? ContextPreset :
-  T extends PresetType.SYSTEM_PROMPT ? SystemPromptPreset :
-  T extends PresetType.MACROS ? MacroDescription :
-  never;
+export type PresetByType<T extends PresetType> = T extends PresetType.INSTRUCT
+  ? InstructPreset
+  : T extends PresetType.CONTEXT ? ContextPreset
+  : T extends PresetType.SYSTEM_PROMPT ? SystemPromptPreset
+  : T extends PresetType.MACROS ? MacroDescription
+  : never;
 
 // ================================
 // API 响应和配置类型
@@ -315,21 +327,21 @@ export interface PresetConfiguration {
     selectedPresetId?: string;
     autoSelect: boolean;
   };
-  
+
   /** 上下文模板配置 */
   contextTemplate?: {
     enabled: boolean;
     selectedPresetId?: string;
     maxTokens?: number;
   };
-  
+
   /** 系统提示词配置 */
   systemPrompt?: {
     enabled: boolean;
     selectedPresetId?: string;
     preferCharacterPrompt?: boolean;
   };
-  
+
   /** 宏配置 */
   macros?: {
     enabled: boolean;
@@ -349,7 +361,7 @@ export interface MasterPreset {
   version?: string;
   /** 作者信息 */
   author?: string;
-  
+
   // 子预设
   /** 指令模式预设 */
   instruct?: InstructPreset;
@@ -357,7 +369,7 @@ export interface MasterPreset {
   context?: ContextPreset;
   /** 系统提示词预设 */
   systemPrompt?: SystemPromptPreset;
-  
+
   // 元数据
   /** 标签列表 */
   tags?: string[];
@@ -365,7 +377,7 @@ export interface MasterPreset {
   category?: string;
   /** 语言 */
   language?: string;
-  
+
   // 时间戳
   /** 导出时间 */
   exportedAt?: Date;
@@ -402,9 +414,9 @@ export interface PresetQueryParams {
   /** 分页偏移 */
   offset?: number;
   /** 排序字段 */
-  sortBy?: 'name' | 'createdAt' | 'updatedAt' | 'priority';
+  sortBy?: "name" | "createdAt" | "updatedAt" | "priority";
   /** 排序方向 */
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: "asc" | "desc";
 }
 
 // ================================
@@ -415,11 +427,11 @@ export interface PresetQueryParams {
  * 预设类型显示名称映射
  */
 export const PRESET_TYPE_LABELS: Record<PresetType, string> = {
-  [PresetType.INSTRUCT]: '指令模式',
-  [PresetType.CONTEXT]: '上下文模板',
-  [PresetType.SYSTEM_PROMPT]: '系统提示词',
-  [PresetType.MACROS]: '宏定义',
-  [PresetType.POST_HISTORY_INSTRUCTIONS]: '后历史指令'
+  [PresetType.INSTRUCT]: "指令模式",
+  [PresetType.CONTEXT]: "上下文模板",
+  [PresetType.SYSTEM_PROMPT]: "系统提示词",
+  [PresetType.MACROS]: "宏定义",
+  [PresetType.POST_HISTORY_INSTRUCTIONS]: "后历史指令",
 } as const;
 
 /**
@@ -430,7 +442,7 @@ export const DEFAULT_PRIORITIES: Record<PresetType, number> = {
   [PresetType.CONTEXT]: 200,
   [PresetType.INSTRUCT]: 300,
   [PresetType.MACROS]: 400,
-  [PresetType.POST_HISTORY_INSTRUCTIONS]: 500
+  [PresetType.POST_HISTORY_INSTRUCTIONS]: 500,
 } as const;
 
 // ================================
@@ -473,6 +485,7 @@ export type PresetTypeOld = PresetTypeString;
 /**
  * @deprecated 请使用 InstructPresetContent
  */
-export interface InstructPresetContentLegacy extends Omit<InstructPresetContent, 'activationRegex'> {
+export interface InstructPresetContentLegacy
+  extends Omit<InstructPresetContent, "activationRegex"> {
   activation_regex?: string;
-} 
+}

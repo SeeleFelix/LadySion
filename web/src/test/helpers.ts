@@ -3,7 +3,7 @@
  * 提供常用的测试工具和模拟数据创建函数
  */
 
-import type { ServiceResponse } from '@shared/contracts'
+import type { ServiceResponse } from "@shared/contracts";
 
 /**
  * 创建模拟的成功响应
@@ -12,8 +12,8 @@ export function createMockSuccessResponse<T>(data: T): ServiceResponse<T> {
   return {
     success: true,
     data,
-    timestamp: new Date()
-  }
+    timestamp: new Date(),
+  };
 }
 
 /**
@@ -23,19 +23,23 @@ export function createMockErrorResponse(error: string): ServiceResponse {
   return {
     success: false,
     error,
-    timestamp: new Date()
-  }
+    timestamp: new Date(),
+  };
 }
 
 /**
  * 创建模拟的fetch响应
  */
-export function createMockFetchResponse<T>(data: T, ok = true, status = 200): Response {
+export function createMockFetchResponse<T>(
+  data: T,
+  ok = true,
+  status = 200,
+): Response {
   return {
     ok,
     status,
-    statusText: ok ? 'OK' : 'Error',
-    headers: new Headers({'Content-Type': 'application/json'}),
+    statusText: ok ? "OK" : "Error",
+    headers: new Headers({ "Content-Type": "application/json" }),
     json: () => Promise.resolve(data),
     text: () => Promise.resolve(JSON.stringify(data)),
     blob: () => Promise.resolve(new Blob()),
@@ -45,16 +49,16 @@ export function createMockFetchResponse<T>(data: T, ok = true, status = 200): Re
     body: null,
     bodyUsed: false,
     redirected: false,
-    type: 'default',
-    url: ''
-  } as Response
+    type: "default",
+    url: "",
+  } as Response;
 }
 
 /**
  * 等待指定时间
  */
 export function waitFor(ms: number) {
-  return new Promise(resolve => setTimeout(resolve, ms))
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
@@ -63,23 +67,26 @@ export function waitFor(ms: number) {
 export function createMockSSEEvent(data: any) {
   return {
     data: JSON.stringify(data),
-    type: 'message'
-  } as MessageEvent
+    type: "message",
+  } as MessageEvent;
 }
 
 /**
  * 延迟Promise执行
  */
 export function delayed<T>(value: T, delay = 100): Promise<T> {
-  return new Promise(resolve => {
-    setTimeout(() => resolve(value), delay)
-  })
+  return new Promise((resolve) => {
+    setTimeout(() => resolve(value), delay);
+  });
 }
 
 /**
  * 模拟网络延迟
  */
-export async function withNetworkDelay<T>(fn: () => Promise<T>, delay = 100): Promise<T> {
-  await waitFor(delay)
-  return fn()
-} 
+export async function withNetworkDelay<T>(
+  fn: () => Promise<T>,
+  delay = 100,
+): Promise<T> {
+  await waitFor(delay);
+  return fn();
+}

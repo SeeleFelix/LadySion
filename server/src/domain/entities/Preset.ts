@@ -2,11 +2,11 @@
  * 预设类型枚举
  */
 export enum PresetType {
-  INSTRUCT = 'instruct',
-  CONTEXT = 'context',
-  SYSTEM_PROMPT = 'sysprompt',
-  MACROS = 'macros',
-  POST_HISTORY_INSTRUCTIONS = 'post-history-instructions'
+  INSTRUCT = "instruct",
+  CONTEXT = "context",
+  SYSTEM_PROMPT = "sysprompt",
+  MACROS = "macros",
+  POST_HISTORY_INSTRUCTIONS = "post-history-instructions",
 }
 
 /**
@@ -31,29 +31,29 @@ export interface InstructPreset extends Preset {
   outputSuffix: string;
   systemSequence: string;
   systemSuffix: string;
-  
+
   // 特殊序列
   firstInputSequence: string;
   firstOutputSequence: string;
   lastInputSequence?: string;
   lastOutputSequence?: string;
   lastSystemSequence?: string;
-  
+
   // 停止和对齐
   stopSequence: string;
   userAlignmentMessage?: string;
-  
+
   // 选项
   wrap: boolean;
   macro: boolean;
   activationRegex: string;
   derivedFromModel?: boolean;
   bindToContext?: boolean;
-  
+
   // 系统提示词处理
   systemSameAsUser?: boolean;
   systemInstruction?: boolean;
-  
+
   // 高级选项
   enabledFor?: string[];
   priority?: number;
@@ -116,7 +116,7 @@ export interface PostHistoryInstructionsPreset extends Preset {
   preferCharacterInstructions?: boolean;
   allowCharacterOverride?: boolean;
   enableMacros?: boolean;
-  insertionPosition?: 'end' | 'before_last' | 'custom';
+  insertionPosition?: "end" | "before_last" | "custom";
   customPosition?: number;
 }
 
@@ -176,4 +176,4 @@ export interface MacroDescription {
   syntax?: string;
   example?: string;
   category?: string;
-} 
+}

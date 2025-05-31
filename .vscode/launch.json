@@ -1,30 +1,44 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-        
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Vitest: 全部测试",
-            "program": "${workspaceFolder}/node_modules/vitest/vitest.mjs",
-            "args": ["run"],
-            "autoAttachChildProcesses": true,
-            "console": "integratedTerminal"
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Vitest: 当前文件",
-            "program": "${workspaceFolder}/node_modules/vitest/vitest.mjs",
-            "args": [
-                "run",
-                "${relativeFile}"
-            ],
-            "autoAttachChildProcesses": true,
-            "console": "integratedTerminal"
-        }
-    ]
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "pwa-node",
+      "request": "launch",
+      "name": "Deno: 启动主服务",
+      "program": "${workspaceFolder}/server/src/main.ts",
+      "runtimeExecutable": "deno",
+      "runtimeArgs": ["run", "-A", "${workspaceFolder}/server/src/main.ts"],
+      "console": "integratedTerminal"
+    },
+    {
+      "type": "pwa-node",
+      "request": "launch",
+      "name": "Deno: 运行全部测试",
+      "program": "${workspaceFolder}/server/main.ts",
+      "runtimeExecutable": "deno",
+      "runtimeArgs": ["test"],
+      "console": "integratedTerminal"
+    },
+    {
+      "type": "pwa-node",
+      "request": "launch",
+      "name": "Deno: 格式化代码",
+      "program": "${workspaceFolder}/server/main.ts",
+      "runtimeExecutable": "deno",
+      "runtimeArgs": ["fmt"],
+      "console": "integratedTerminal"
+    },
+    {
+      "type": "pwa-node",
+      "request": "launch",
+      "name": "Deno: 代码检查",
+      "program": "${workspaceFolder}/server/main.ts",
+      "runtimeExecutable": "deno",
+      "runtimeArgs": ["lint"],
+      "console": "integratedTerminal"
+    }
+  ]
 }

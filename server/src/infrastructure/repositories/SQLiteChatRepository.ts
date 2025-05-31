@@ -1,43 +1,31 @@
-import sqlite3 from 'sqlite3'
-import { open, Database } from 'sqlite'
-import { ChatRepository } from '../../domain/repositories/ChatRepository'
-import { Chat } from '../../domain/entities/Chat'
-import { Message } from '../../domain/entities/Message'
-import { ChatId, CharacterId } from '../../shared/types'
+import { DB } from "sqlite";
+import { ChatRepository } from "@/domain/repositories/ChatRepository.ts";
+import { Chat } from "@/domain/entities/Chat.ts";
+import { Message } from "@/domain/entities/Message.ts";
+import type { CharacterId, ChatId, MessageRole } from "@/shared/types";
 
 /**
- * SQLite聊天存储库实现
+ * SQLite聊天存储库实现（使用 Deno sqlite）
  */
 export class SQLiteChatRepository implements ChatRepository {
-  private db: Database | null = null
+  private db!: DB;
 
   constructor(private readonly dbPath: string) {}
 
   async initialize(): Promise<void> {
-    this.db = await open({
-      filename: this.dbPath,
-      driver: sqlite3.Database
-    })
-
-    await this.createTables()
+    this.db = new DB(this.dbPath);
+    this.createTables();
   }
 
-  private async createTables(): Promise<void> {
-    if (!this.db) throw new Error('数据库未初始化')
-
-    // 创建chats表
-    await this.db.exec(`
+  private createTables(): void {
+    this.db.execute(`
       CREATE TABLE IF NOT EXISTS chats (
         id TEXT PRIMARY KEY,
         title TEXT NOT NULL,
         character_id TEXT,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
-      )
-    `)
-
-    // 创建messages表
-    await this.db.exec(`
+      );
       CREATE TABLE IF NOT EXISTS messages (
         id TEXT PRIMARY KEY,
         chat_id TEXT NOT NULL,
@@ -46,156 +34,132 @@ export class SQLiteChatRepository implements ChatRepository {
         timestamp TEXT NOT NULL,
         metadata TEXT,
         FOREIGN KEY (chat_id) REFERENCES chats (id) ON DELETE CASCADE
-      )
-    `)
-
-    // 创建索引
-    await this.db.exec(`
+      );
       CREATE INDEX IF NOT EXISTS idx_messages_chat_id ON messages(chat_id);
       CREATE INDEX IF NOT EXISTS idx_messages_timestamp ON messages(timestamp);
       CREATE INDEX IF NOT EXISTS idx_chats_character_id ON chats(character_id);
-    `)
+    `);
   }
 
   async save(chat: Chat): Promise<void> {
-    if (!this.db) throw new Error('数据库未初始化')
-
-    const chatData = chat.toData()
-
-    // 开始事务
-    await this.db.exec('BEGIN TRANSACTION')
-
+    this.db.execute("BEGIN");
     try {
-      // 保存或更新chat记录
-      await this.db.run(`
+      const d = chat.toData();
+      this.db.query(
+        `
         INSERT OR REPLACE INTO chats (id, title, character_id, created_at, updated_at)
         VALUES (?, ?, ?, ?, ?)
-      `, [
-        chatData.id,
-        chatData.title,
-        chatData.characterId,
-        chatData.createdAt.toISOString(),
-        chatData.updatedAt.toISOString()
-      ])
-
-      // 删除现有消息
-      await this.db.run('DELETE FROM messages WHERE chat_id = ?', [chatData.id])
-
-      // 插入所有消息
-      for (const messageData of chatData.messages) {
-        await this.db.run(`
+      `,
+        [
+          d.id,
+          d.title,
+          d.characterId,
+          d.createdAt.toISOString(),
+          d.updatedAt.toISOString(),
+        ],
+      );
+      this.db.query("DELETE FROM messages WHERE chat_id = ?", [d.id]);
+      for (const m of d.messages) {
+        this.db.query(
+          `
           INSERT INTO messages (id, chat_id, role, content, timestamp, metadata)
           VALUES (?, ?, ?, ?, ?, ?)
-        `, [
-          messageData.id,
-          chatData.id,
-          messageData.role,
-          messageData.content,
-          messageData.timestamp.toISOString(),
-          messageData.metadata ? JSON.stringify(messageData.metadata) : null
-        ])
+        `,
+          [
+            m.id,
+            d.id,
+            m.role,
+            m.content,
+            m.timestamp.toISOString(),
+            m.metadata ? JSON.stringify(m.metadata) : null,
+          ],
+        );
       }
-
-      await this.db.exec('COMMIT')
-
-    } catch (error) {
-      await this.db.exec('ROLLBACK')
-      throw error
+      this.db.execute("COMMIT");
+    } catch (err) {
+      this.db.execute("ROLLBACK");
+      throw err;
     }
   }
 
   async findById(id: ChatId): Promise<Chat | null> {
-    if (!this.db) throw new Error('数据库未初始化')
+    const rows = this.db.queryEntries(
+      "SELECT id, title, character_id, created_at, updated_at FROM chats WHERE id = ?",
+      [id],
+    );
+    if (rows.length === 0) return null;
+    const row = rows[0];
+    const cid = row.id as string;
+    const title = row.title as string;
+    const characterId = row.character_id as string | null;
+    const ca = row.created_at as string;
+    const ua = row.updated_at as string;
 
-    // 获取chat记录
-    const chatRow = await this.db.get(`
-      SELECT id, title, character_id, created_at, updated_at
-      FROM chats WHERE id = ?
-    `, [id])
-
-    if (!chatRow) return null
-
-    // 获取消息
-    const messageRows = await this.db.all(`
-      SELECT id, role, content, timestamp, metadata
-      FROM messages 
-      WHERE chat_id = ? 
-      ORDER BY timestamp ASC
-    `, [id])
-
-    // 重构消息实体
-    const messages = messageRows.map(row => 
+    const msgs = this.db.queryEntries(
+      "SELECT id, role, content, timestamp, metadata FROM messages WHERE chat_id = ? ORDER BY timestamp ASC",
+      [id],
+    );
+    const messages = msgs.map((msg) =>
       Message.fromData({
-        id: row.id,
-        role: row.role,
-        content: row.content,
-        timestamp: new Date(row.timestamp),
-        metadata: row.metadata ? JSON.parse(row.metadata) : undefined
+        id: msg.id as string,
+        role: msg.role as MessageRole,
+        content: msg.content as string,
+        timestamp: new Date(msg.timestamp as string),
+        metadata: msg.metadata ? JSON.parse(msg.metadata as string) : undefined,
       })
-    )
-
-    // 重构Chat实体
+    );
     return Chat.fromData({
-      id: chatRow.id,
-      title: chatRow.title,
-      characterId: chatRow.character_id || undefined,
+      id: cid,
+      title,
+      characterId: characterId || undefined,
       messages,
-      createdAt: new Date(chatRow.created_at),
-      updatedAt: new Date(chatRow.updated_at)
-    })
+      createdAt: new Date(ca),
+      updatedAt: new Date(ua),
+    });
   }
 
   async findByCharacterId(characterId: CharacterId): Promise<Chat[]> {
-    if (!this.db) throw new Error('数据库未初始化')
-
-    const chatRows = await this.db.all(`
-      SELECT id, title, character_id, created_at, updated_at
-      FROM chats 
-      WHERE character_id = ?
-      ORDER BY updated_at DESC
-    `, [characterId])
-
-    const chats: Chat[] = []
-    for (const row of chatRows) {
-      const chat = await this.findById(row.id)
-      if (chat) chats.push(chat)
+    const rows = this.db.queryEntries(
+      "SELECT id FROM chats WHERE character_id = ? ORDER BY updated_at DESC",
+      [characterId],
+    );
+    const ids = rows.map((row) => row.id as string);
+    const res: Chat[] = [];
+    for (const cid of ids) {
+      const c = await this.findById(cid);
+      if (c) res.push(c);
     }
-
-    return chats
+    return res;
   }
 
   async findAll(): Promise<Chat[]> {
-    if (!this.db) throw new Error('数据库未初始化')
-
-    const chatRows = await this.db.all(`
-      SELECT id, title, character_id, created_at, updated_at
-      FROM chats 
-      ORDER BY updated_at DESC
-    `)
-
-    const chats: Chat[] = []
-    for (const row of chatRows) {
-      const chat = await this.findById(row.id)
-      if (chat) chats.push(chat)
+    const rows = this.db.queryEntries(
+      "SELECT id FROM chats ORDER BY updated_at DESC",
+      [],
+    );
+    const ids = rows.map((row) => row.id as string);
+    const res: Chat[] = [];
+    for (const cid of ids) {
+      const c = await this.findById(cid);
+      if (c) res.push(c);
     }
-
-    return chats
+    return res;
   }
 
   async delete(id: ChatId): Promise<boolean> {
-    if (!this.db) throw new Error('数据库未初始化')
-
-    const result = await this.db.run('DELETE FROM chats WHERE id = ?', [id])
-    return (result.changes || 0) > 0
+    this.db.query("DELETE FROM chats WHERE id = ?", [id]);
+    return true;
   }
 
   async exists(id: ChatId): Promise<boolean> {
-    if (!this.db) throw new Error('数据库未初始化')
-
-    const result = await this.db.get(
-      'SELECT 1 FROM chats WHERE id = ? LIMIT 1',
-      [id]
-    )
-    return !!result
+    const rows = this.db.queryEntries(
+      "SELECT 1 FROM chats WHERE id = ? LIMIT 1",
+      [id],
+    );
+    return rows.length > 0;
   }
-} 
+
+  async close(): Promise<void> {
+    this.db.close();
+  }
+}

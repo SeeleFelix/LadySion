@@ -1,6 +1,14 @@
-import { PresetUseCases } from '@/application/usecases/PresetUseCases';
-import { PresetType, Preset, InstructPreset, ContextPreset, SystemPromptPreset, MasterPreset } from '../../domain/entities/Preset';
-import { MacroSystem, MacroContext } from '../../domain/services/MacroSystem';
+import { PresetUseCases } from "@/application/usecases/PresetUseCases.ts";
+import {
+  ContextPreset,
+  InstructPreset,
+  MasterPreset,
+  Preset,
+  PresetType,
+  SystemPromptPreset,
+} from "@/domain/entities/Preset.ts";
+import type { MacroContext } from "@/domain/services/MacroSystem.ts";
+import { MacroSystem } from "@/domain/services/MacroSystem.ts";
 
 /**
  * 预设应用服务
@@ -9,7 +17,7 @@ import { MacroSystem, MacroContext } from '../../domain/services/MacroSystem';
 export class PresetApplicationService {
   constructor(
     private presetUseCases: PresetUseCases,
-    private macroSystem: MacroSystem
+    private macroSystem: MacroSystem,
   ) {}
 
   /**
@@ -29,7 +37,10 @@ export class PresetApplicationService {
   /**
    * 根据名称获取预设
    */
-  async getPresetByName(type: PresetType, name: string): Promise<Preset | null> {
+  async getPresetByName(
+    type: PresetType,
+    name: string,
+  ): Promise<Preset | null> {
     return this.presetUseCases.getPresetByName(type, name);
   }
 
@@ -69,14 +80,14 @@ export class PresetApplicationService {
     instructId?: string,
     contextId?: string,
     systemPromptId?: string,
-    postHistoryId?: string
+    postHistoryId?: string,
   ): Promise<MasterPreset> {
     return this.presetUseCases.exportMasterPreset(
       name,
       instructId,
       contextId,
       systemPromptId,
-      postHistoryId
+      postHistoryId,
     );
   }
 
@@ -125,14 +136,17 @@ export class PresetApplicationService {
   /**
    * 创建预设
    */
-  async createPreset(type: PresetType, presetData: Partial<Preset>): Promise<Preset> {
+  async createPreset(
+    type: PresetType,
+    presetData: Partial<Preset>,
+  ): Promise<Preset> {
     const preset: Preset = {
       id: presetData.id || this.generateId(),
       name: presetData.name!,
       description: presetData.description,
       createdAt: new Date(),
       updatedAt: new Date(),
-      ...presetData
+      ...presetData,
     } as Preset;
 
     return this.presetUseCases.savePreset(type, preset);
@@ -141,7 +155,11 @@ export class PresetApplicationService {
   /**
    * 更新预设
    */
-  async updatePreset(type: PresetType, id: string, updateData: Partial<Preset>): Promise<Preset> {
+  async updatePreset(
+    type: PresetType,
+    id: string,
+    updateData: Partial<Preset>,
+  ): Promise<Preset> {
     const existingPreset = await this.presetUseCases.getPresetById(type, id);
     if (!existingPreset) {
       throw new Error(`预设不存在: ${id}`);
@@ -150,7 +168,7 @@ export class PresetApplicationService {
     const updatedPreset = {
       ...existingPreset,
       ...updateData,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
     return this.presetUseCases.savePreset(type, updatedPreset);
@@ -159,46 +177,53 @@ export class PresetApplicationService {
   /**
    * 应用指令预设到消息序列
    */
-  async applyInstructPreset(presetId: string, messages: Array<{role: string, content: string}>, context: MacroContext): Promise<Array<{role: string, content: string}>> {
-    const preset = await this.presetUseCases.getPresetById(PresetType.INSTRUCT, presetId) as InstructPreset;
+  async applyInstructPreset(
+    presetId: string,
+    messages: Array<{ role: string; content: string }>,
+    context: MacroContext,
+  ): Promise<Array<{ role: string; content: string }>> {
+    const preset = await this.presetUseCases.getPresetById(
+      PresetType.INSTRUCT,
+      presetId,
+    ) as InstructPreset;
     if (!preset) {
       throw new Error(`指令预设不存在: ${presetId}`);
     }
 
     const formattedMessages = [];
-    
+
     for (let i = 0; i < messages.length; i++) {
       const message = messages[i];
-      
-      if (message.role === 'user') {
+
+      if (message.role === "user") {
         const isFirst = i === 0;
-        const prefix = isFirst ? 
-          this.macroSystem.process(preset.firstInputSequence, context) :
-          this.macroSystem.process(preset.inputSequence, context);
+        const prefix = isFirst
+          ? this.macroSystem.process(preset.firstInputSequence, context)
+          : this.macroSystem.process(preset.inputSequence, context);
         const suffix = this.macroSystem.process(preset.inputSuffix, context);
-        
+
         formattedMessages.push({
           role: message.role,
-          content: `${prefix}${message.content}${suffix}`
+          content: `${prefix}${message.content}${suffix}`,
         });
-      } else if (message.role === 'assistant') {
+      } else if (message.role === "assistant") {
         const isFirst = i === 1; // 第一个assistant消息
-        const prefix = isFirst ?
-          this.macroSystem.process(preset.firstOutputSequence, context) :
-          this.macroSystem.process(preset.outputSequence, context);
+        const prefix = isFirst
+          ? this.macroSystem.process(preset.firstOutputSequence, context)
+          : this.macroSystem.process(preset.outputSequence, context);
         const suffix = this.macroSystem.process(preset.outputSuffix, context);
-        
+
         formattedMessages.push({
           role: message.role,
-          content: `${prefix}${message.content}${suffix}`
+          content: `${prefix}${message.content}${suffix}`,
         });
-      } else if (message.role === 'system') {
+      } else if (message.role === "system") {
         const prefix = this.macroSystem.process(preset.systemSequence, context);
         const suffix = this.macroSystem.process(preset.systemSuffix, context);
-        
+
         formattedMessages.push({
           role: message.role,
-          content: `${prefix}${message.content}${suffix}`
+          content: `${prefix}${message.content}${suffix}`,
         });
       } else {
         formattedMessages.push(message);
@@ -211,14 +236,20 @@ export class PresetApplicationService {
   /**
    * 应用系统提示词预设
    */
-  async applySystemPromptPreset(presetId: string, context: MacroContext): Promise<string> {
-    const preset = await this.presetUseCases.getPresetById(PresetType.SYSTEM_PROMPT, presetId) as SystemPromptPreset;
+  async applySystemPromptPreset(
+    presetId: string,
+    context: MacroContext,
+  ): Promise<string> {
+    const preset = await this.presetUseCases.getPresetById(
+      PresetType.SYSTEM_PROMPT,
+      presetId,
+    ) as SystemPromptPreset;
     if (!preset) {
       throw new Error(`系统提示词预设不存在: ${presetId}`);
     }
 
     if (!preset.enabled) {
-      return '';
+      return "";
     }
 
     return this.macroSystem.process(preset.content, context);
@@ -227,8 +258,14 @@ export class PresetApplicationService {
   /**
    * 应用上下文模板预设
    */
-  async applyContextPreset(presetId: string, context: MacroContext): Promise<string> {
-    const preset = await this.presetUseCases.getPresetById(PresetType.CONTEXT, presetId) as ContextPreset;
+  async applyContextPreset(
+    presetId: string,
+    context: MacroContext,
+  ): Promise<string> {
+    const preset = await this.presetUseCases.getPresetById(
+      PresetType.CONTEXT,
+      presetId,
+    ) as ContextPreset;
     if (!preset) {
       throw new Error(`上下文模板预设不存在: ${presetId}`);
     }
@@ -242,4 +279,4 @@ export class PresetApplicationService {
   private generateId(): string {
     return `preset_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
-} 
+}
