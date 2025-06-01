@@ -252,12 +252,19 @@ Deno.test("⚡ 需求7：框架应该自动处理错误", async () => {
 Deno.test("🔧 需求8：框架应该支持自定义配置", async () => {
   mockBackend();
   
+  // 清除配置缓存，确保使用运行时配置
+  const { clearDoctrineCache } = await import("../core/doctrine.ts");
+  clearDoctrineCache();
+  
   // When: 我创建带自定义配置的seeker
   const userSeeker = createSeeker<UserSeeker>("User", {
     baseUrl: "https://my-api.com",
     timeout: 60000,
+    auth: {
+      type: "bearer",
+      token: "my-token"
+    },
     headers: {
-      "Authorization": "Bearer my-token",
       "X-App": "my-app"
     }
   });

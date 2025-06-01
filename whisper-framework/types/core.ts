@@ -40,14 +40,44 @@ export interface Seeker<T extends Eidolon> {
 
 }
 
-// ⚡ Doctrine（教义）- 框架配置
+// ⚡ Doctrine（教义）- 强大的配置系统
 export interface Doctrine {
+  // 🌐 HTTP配置
   baseUrl?: string;
   timeout?: number;
+  whisperPath?: string;
+  
+  // 🔐 认证与安全
   headers?: Record<string, string>;
+  auth?: {
+    type?: 'bearer' | 'basic' | 'custom';
+    token?: string;
+    username?: string;
+    password?: string;
+    custom?: Record<string, string>;
+  };
+  
+  // 🔄 重试与容错
   retries?: number;
   retryDelay?: number;
-  whisperPath?: string;
+  retryBackoff?: 'linear' | 'exponential';
+  
+  // 🎯 请求配置
+  contentType?: string;
+  responseType?: 'json' | 'text' | 'blob';
+  
+  // 🔧 环境与调试
+  environment?: string;
+  debug?: boolean;
+  logger?: (message: string, data?: any) => void;
+  
+  // 📊 监控与性能
+  enableMetrics?: boolean;
+  requestId?: () => string;
+  
+  // 🛡️ 安全配置
+  validateSSL?: boolean;
+  corsEnabled?: boolean;
 }
 
 // 🎯 createSeeker工厂函数类型

@@ -9,9 +9,10 @@ export { createSeeker } from "./core/seeker.ts";
 // 🔧 配置管理导出
 export { 
   getDoctrine, 
-  setGlobalDoctrine, 
-  getGlobalDoctrine 
-} from "./core/config.ts";
+  getDoctrineSync, 
+  clearDoctrineCache,
+  generateConfigTemplate 
+} from "./core/doctrine.ts";
 
 // 📜 类型定义导出
 export type {

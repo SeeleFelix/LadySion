@@ -13,7 +13,7 @@ import type {
   CreateSeeker
 } from "../types/core.ts";
 import { WrathError, OmenError } from "../types/core.ts";
-import { getDoctrine } from "./config.ts";
+import { getDoctrine } from "./doctrine.ts";
 
 /**
  * 🎯 Grace处理器 - 正确的错误架构
@@ -114,8 +114,6 @@ export const createSeeker: CreateSeeker = <TSeeker extends Seeker<any>>(
   eidolonName: string,
   doctrineOverrides?: Doctrine,
 ): TSeeker => {
-  const doctrine = getDoctrine(doctrineOverrides);
-  
   // 使用Proxy动态为接口方法生成实现
   return new Proxy({} as TSeeker, {
     get(target: any, ritualName: string | symbol) {
@@ -126,6 +124,9 @@ export const createSeeker: CreateSeeker = <TSeeker extends Seeker<any>>(
       
       // 为每个方法调用生成实现，支持多参数
       return async (...args: any[]) => {
+        // 每次调用时获取最新的doctrine配置
+        const doctrine = await getDoctrine(doctrineOverrides);
+        
         const spell = argsToSpell(args);
         
         const whisper: Whisper = {
