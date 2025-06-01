@@ -21,7 +21,7 @@
     "whisperPath": "/api/whisper"
   },
   "production": {
-    "baseUrl": "https://api.ladysion.com",
+    "baseUrl": "https://api.example.com",
     "timeout": 60000,
     "headers": {
       "Content-Type": "application/json",

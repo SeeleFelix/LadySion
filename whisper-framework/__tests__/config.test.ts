@@ -39,7 +39,7 @@ Deno.test("配置管理 - 环境配置切换", () => {
   try {
     const doctrine = getDoctrine();
     
-    assertEquals(doctrine.baseUrl, "https://api.ladysion.com");
+    assertEquals(doctrine.baseUrl, "https://api.example.com");
     assertEquals(doctrine.timeout, 60000);
     assertEquals(doctrine.retries, 5);
     assertEquals(doctrine.headers["X-Environment"], "production");

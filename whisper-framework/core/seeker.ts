@@ -18,7 +18,7 @@ import { getDoctrine } from "./config.ts";
 /**
  * 🎯 Grace处理器 - 自动解包返回eidolon
  */
-function handleGraceResponse<T>(grace: Grace<T>): any {
+function handleGraceResponse<T>(grace: Grace<T>): T | T[] | null {
   if (grace.omen.status === 'error') {
     const error = new WhisperError(grace.omen.message, grace.omen);
     throw error;
@@ -46,7 +46,7 @@ function argsToSpell(args: any[]): Spell {
 async function executeWhisper<T>(
   whisper: Whisper,
   doctrine: Required<Doctrine>
-): Promise<any> {
+): Promise<T | T[] | null> {
   const url = `${doctrine.baseUrl}${doctrine.whisperPath}/${whisper.eidolon}/${whisper.ritual}`;
   
   try {
@@ -70,7 +70,9 @@ async function executeWhisper<T>(
         timestamp: Date.now()
       };
       
-      return handleGraceResponse(errorGrace);
+      // handleGraceResponse会抛出异常，不会返回
+      handleGraceResponse(errorGrace);
+      throw new Error("Unreachable code"); // 永远不会执行
     }
 
     const grace: Grace<T> = await response.json();
@@ -91,7 +93,9 @@ async function executeWhisper<T>(
       timestamp: Date.now()
     };
     
-    return handleGraceResponse(errorGrace);
+    // handleGraceResponse会抛出异常，不会返回
+    handleGraceResponse(errorGrace);
+    throw new Error("Unreachable code"); // 永远不会执行
   }
 }
 

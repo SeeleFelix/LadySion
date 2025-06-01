@@ -116,9 +116,8 @@ const user = await userSeeker.create("name", "email", 25);
 
 ✨ 核心特性：
 - 支持任意多参数：create(name, email, age)
-- 自动参数名推断：{ args: [...], names: [...] }
 - TypeScript类型安全
-- 统一错误处理
+- 统一错误处理  
 - 环境配置管理
 - Whisper协议：POST /whisper/{eidolon}/{ritual}
 
