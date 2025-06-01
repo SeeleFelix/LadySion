@@ -88,7 +88,7 @@ Deno.test("🎯 需求2：框架应该支持多参数函数调用", async () => 
   // When: 我调用多参数方法
   mockResponses.push({
     eidolon: { id: "456", name: "茜", email: "akane@example.com", age: 28 },
-    omen: { code: 201, status: "success", message: "用户创建成功" },
+    omen: { code: 200, status: "success", message: "用户创建成功" },
     timestamp: Date.now()
   });
   
@@ -210,21 +210,42 @@ Deno.test("⚡ 需求7：框架应该自动处理错误", async () => {
   
   const userSeeker = createSeeker<UserSeeker>("User");
   
-  // When: 后端返回错误
+  // When: 后端返回业务错误（HTTP 200 + omen.code 404）
   mockResponses.push({
     eidolon: null,
     omen: { code: 404, status: "error", message: "用户不存在" },
     timestamp: Date.now()
   });
   
-  // Then: 应该抛出异常
+  // Then: 业务错误应该抛出OmenError
   try {
     await userSeeker.findById("nonexistent");
-    assert(false, "应该抛出异常");
+    assert(false, "应该抛出OmenError");
   } catch (error: any) {
-    assertEquals(error.name, "WhisperError");
+    assertEquals(error.name, "OmenError");
     assertEquals(error.message, "用户不存在");
     assertEquals(error.omen.code, 404);
+  }
+  
+  // When: 系统错误（HTTP错误）
+  (globalThis as any).fetch = (url: string, options: any) => {
+    fetchCalls.push({ url, options });
+    return Promise.resolve({
+      ok: false,
+      status: 500,
+      statusText: "Internal Server Error",
+      json: () => Promise.resolve({ error: "服务器内部错误" })
+    });
+  };
+  
+  // Then: 系统错误应该抛出WrathError
+  try {
+    await userSeeker.findById("test");
+    assert(false, "应该抛出WrathError");
+  } catch (error: any) {
+    assertEquals(error.name, "WrathError");
+    assert(error.message.includes("500"));
+    assertEquals(error.omen.signal, "http_error");
   }
 });
 
@@ -291,7 +312,7 @@ Deno.test("🌟 需求10：框架应该让前端代码超级干净", async () =>
     // create响应
     {
       eidolon: { id: "2", name: "茜", email: "akane@example.com", age: 28 },
-      omen: { code: 201, status: "success", message: "创建成功" },
+      omen: { code: 200, status: "success", message: "创建成功" },
       timestamp: Date.now()
     },
     // update响应

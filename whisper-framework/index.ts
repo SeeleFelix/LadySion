@@ -26,4 +26,4 @@ export type {
 } from "./types/core.ts";
 
 // 🚨 异常类导出
-export { WhisperError } from "./types/core.ts"; 
+export { WrathError, OmenError } from "./types/core.ts"; 

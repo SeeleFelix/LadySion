@@ -12,23 +12,22 @@ import type {
   Doctrine, 
   CreateSeeker
 } from "../types/core.ts";
-import { WhisperError } from "../types/core.ts";
+import { WrathError, OmenError } from "../types/core.ts";
 import { getDoctrine } from "./config.ts";
 
 /**
- * 🎯 Grace处理器 - 自动解包返回eidolon
+ * 🎯 Grace处理器 - 正确的错误架构
+ * 只有omen.code === 200才是真正成功，其他都抛OmenError
  */
 function handleGraceResponse<T>(grace: Grace<T>): T | T[] | null {
-  if (grace.omen.status === 'error') {
-    const error = new WhisperError(grace.omen.message, grace.omen);
-    throw error;
+  // 🌟 只有200才是真正成功
+  if (grace.omen.code === 200) {
+    return grace.eidolon;
   }
   
-  if (grace.omen.status === 'warning') {
-    console.warn(`⚠️ Whisper Warning: ${grace.omen.message}`);
-  }
-  
-  return grace.eidolon;
+  // 📋 所有非200的omen.code都是业务错误，抛出OmenError
+  // 业务代码可以catch这些异常并处理
+  throw new OmenError(grace.omen.message, grace.omen);
 }
 
 /**
@@ -58,44 +57,52 @@ async function executeWhisper<T>(
     });
 
     if (!response.ok) {
+      // 🔥 HTTP错误属于Wrath（系统异常），直接抛出WrathError
       const errorData = await response.json().catch(() => ({}));
-      const errorGrace: Grace<null> = {
-        eidolon: null,
-        omen: {
+      const error = new WrathError(
+        errorData.message || `HTTP ${response.status}: ${response.statusText}`,
+        {
           code: response.status,
           status: 'error',
           message: errorData.message || `HTTP ${response.status}: ${response.statusText}`,
-          signal: errorData.signal
-        },
-        timestamp: Date.now()
-      };
-      
-      // handleGraceResponse会抛出异常，不会返回
-      handleGraceResponse(errorGrace);
-      throw new Error("Unreachable code"); // 永远不会执行
+          signal: 'http_error'
+        }
+      );
+      throw error;
     }
 
     const grace: Grace<T> = await response.json();
     return handleGraceResponse(grace);
   } catch (error) {
-    if (error instanceof WhisperError) {
+    if (error instanceof WrathError || error instanceof OmenError) {
       throw error;
     }
     
-    const errorGrace: Grace<null> = {
-      eidolon: null,
-      omen: {
-        code: 0,
-        status: 'error',
-        message: error instanceof Error ? error.message : "Unknown network error",
-        signal: "connection_failed"
-      },
-      timestamp: Date.now()
-    };
+    // 🔥 系统异常都属于Wrath，抛出WrathError
+    let signal = 'unknown_error';
+    let message = 'Unknown error';
     
-    // handleGraceResponse会抛出异常，不会返回
-    handleGraceResponse(errorGrace);
-    throw new Error("Unreachable code"); // 永远不会执行
+    if (error instanceof Error) {
+      message = error.message;
+      
+      // 根据错误类型设置不同的signal
+      if (error.name === 'AbortError' || message.includes('timeout')) {
+        signal = 'timeout_error';
+      } else if (message.includes('JSON') || message.includes('parse')) {
+        signal = 'parse_error';
+      } else if (message.includes('Network') || message.includes('connection') || message.includes('fetch')) {
+        signal = 'network_error';
+      }
+    }
+    
+    const wrathError = new WrathError(message, {
+      code: 0,
+      status: 'error',
+      message: message,
+      signal: signal
+    });
+    
+    throw wrathError;
   }
 }
 

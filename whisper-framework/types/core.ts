@@ -56,14 +56,34 @@ export type CreateSeeker = <TSeeker extends Seeker<any>>(
   doctrine?: Doctrine,
 ) => TSeeker;
 
-// 🚨 框架异常类型
-export class WhisperError extends Error {
+// 🚨 异常类型定义
+
+/**
+ * 🔥 WrathError - 系统异常（Wrath神怒）
+ * HTTP错误、网络错误、JSON解析错误等不可处理的意外
+ */
+export class WrathError extends Error {
   constructor(
     message: string,
     public omen: Omen,
     public details?: any
   ) {
     super(message);
-    this.name = 'WhisperError';
+    this.name = 'WrathError';
+  }
+}
+
+/**
+ * 📋 OmenError - 业务异常（基于Omen神启）
+ * 业务逻辑中可以处理的错误，如用户不存在、权限不足等
+ */
+export class OmenError extends Error {
+  constructor(
+    message: string,
+    public omen: Omen,
+    public details?: any
+  ) {
+    super(message);
+    this.name = 'OmenError';
   }
 } 
