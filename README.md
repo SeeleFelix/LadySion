@@ -125,6 +125,7 @@ deno task lint            # 代码检查
 | 文档 | 状态 | 描述 |
 |------|------|------|
 | [快速开始](./docs/guides/quick-start.md) | ✅ 完成 | 5分钟快速搭建开发环境 |
+| [Whisper框架快速指南](./docs/technical/whisper-quick-start.md) | ✅ 完成 | Whisper框架简明使用指导 |
 | [ESLint配置](./docs/guides/eslint-setup.md) | ✅ 完成 | 代码质量工具配置 |
 
 ### 设计哲学
