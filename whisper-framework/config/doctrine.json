@@ -1,0 +1,34 @@
+{
+  "default": {
+    "baseUrl": "",
+    "timeout": 30000,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "retries": 3,
+    "retryDelay": 1000,
+    "whisperPath": "/whisper"
+  },
+  "development": {
+    "baseUrl": "http://localhost:8000",
+    "timeout": 10000,
+    "headers": {
+      "Content-Type": "application/json",
+      "X-Environment": "development"
+    },
+    "retries": 1,
+    "retryDelay": 500,
+    "whisperPath": "/api/whisper"
+  },
+  "production": {
+    "baseUrl": "https://api.ladysion.com",
+    "timeout": 60000,
+    "headers": {
+      "Content-Type": "application/json",
+      "X-Environment": "production"
+    },
+    "retries": 5,
+    "retryDelay": 2000,
+    "whisperPath": "/api/whisper"
+  }
+} 
