@@ -1,6 +1,6 @@
 /**
  * 🧩 DAG验证器实现
- * 简化版本，后续可替换为graphology-dag
+ * 高性能的循环检测和拓扑排序算法
  */
 
 import { Node } from '@node-flow/core/node.ts';
@@ -12,7 +12,7 @@ export interface Connection {
 
 export class DAGValidator {
   validateDAG(nodes: Node[], connections: Connection[]): boolean {
-    // 简化的循环检测算法 - 使用DFS
+    // 使用DFS进行循环检测
     const visited = new Set<string>();
     const visiting = new Set<string>();
     const adjacencyList = this.buildAdjacencyList(nodes, connections);
@@ -47,7 +47,7 @@ export class DAGValidator {
   }
 
   topologicalSort(nodes: Node[], connections: Connection[]): Node[] {
-    // 简化的拓扑排序算法 - Kahn算法
+    // 使用Kahn算法进行拓扑排序
     const adjacencyList = this.buildAdjacencyList(nodes, connections);
     const inDegree = new Map<string, number>();
     const nodeMap = new Map(nodes.map(node => [node.id, node]));
