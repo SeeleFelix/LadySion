@@ -1,0 +1,23 @@
+{
+  "name": "@ladysion/node-flow",
+  "version": "0.1.0",
+  "imports": {
+    "@/": "./src/",
+    "@std/testing": "jsr:@std/testing@^1.0.0",
+    "graphology": "npm:graphology@^0.25.4",
+    "graphology-dag": "npm:graphology-dag@^0.4.1"
+  },
+  "tasks": {
+    "test": "deno test --allow-all",
+    "test:watch": "deno test --allow-all --watch",
+    "test:cov": "deno test --allow-all --coverage=coverage",
+    "dev": "deno run --allow-all examples/basic.ts"
+  },
+  "compilerOptions": {
+    "strict": true,
+    "lib": ["deno.window", "dom"]
+  },
+  "test": {
+    "include": ["src/**/*.test.ts"]
+  }
+} 
