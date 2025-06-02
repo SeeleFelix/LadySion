@@ -15,7 +15,7 @@
     "lint": "deno lint && cd web && deno lint",
     "setup": "cd web && deno install"
   },
-  "workspace": ["./web"],
+  "workspace": ["./web", "./node-flow"],
   "lint": {
     "rules": {
       "exclude": [
