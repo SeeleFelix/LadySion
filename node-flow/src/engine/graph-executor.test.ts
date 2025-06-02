@@ -8,6 +8,7 @@ import { GraphExecutor } from '@node-flow/engine/graph-executor.ts';
 import { PureNode } from '@node-flow/core/pure-node.ts';
 import { UIInputNode } from '@node-flow/core/ui-input-node.ts';
 import { UIOutputNode } from '@node-flow/core/ui-output-node.ts';
+import { NodeData } from '@node-flow/core/types.ts';
 
 describe('GraphExecutor 图执行引擎', () => {
   describe('当执行简单的线性图时', () => {
@@ -92,8 +93,14 @@ describe('GraphExecutor 图执行引擎', () => {
     it('应该处理节点执行失败', async () => {
       const executor = new GraphExecutor();
       
-      // 创建一个会失败的节点
-      const failingNode = new PureNode('failing', 'Failing Node');
+      // 创建一个自定义的会失败的节点
+      class FailingNode extends PureNode {
+        override async process(_data: NodeData): Promise<NodeData> {
+          throw new Error('节点故意失败');
+        }
+      }
+      
+      const failingNode = new FailingNode('failing', 'Failing Node');
       const normalNode = new PureNode('normal', 'Normal Node');
       
       const nodes = [failingNode, normalNode];
