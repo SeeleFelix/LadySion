@@ -2,8 +2,8 @@
  * 🧩 UI输出节点实现
  */
 
-import { Node } from '@node-flow/core/node.ts';
-import { NodeType, NodeData } from '@node-flow/core/types.ts';
+import { Node } from '@node-flow/internal/core/node.ts';
+import { NodeType, NodeData } from '@node-flow/internal/core/types.ts';
 
 export class UIOutputNode extends Node {
   public readonly hasSideEffects: boolean = true;

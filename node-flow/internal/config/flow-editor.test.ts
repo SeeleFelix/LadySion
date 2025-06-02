@@ -4,11 +4,11 @@
 
 import { describe, it } from '@std/testing/bdd';
 import { assertEquals, assertExists, assertThrows } from '@std/assert';
-import { FlowEditor } from '@node-flow/config/flow-editor.ts';
-import { FlowGraph } from '@node-flow/config/flow-graph.ts';
-import { NodeFactory } from '@node-flow/config/node-factory.ts';
-import { PureNode } from '@node-flow/core/pure-node.ts';
-import { NodeType } from '@node-flow/core/types.ts';
+import { FlowEditor } from '@node-flow/internal/config/flow-editor.ts';
+import { FlowGraph } from '@node-flow/internal/config/flow-graph.ts';
+import { NodeFactory } from '@node-flow/internal/config/node-factory.ts';
+import { PureNode } from '@node-flow/internal/core/pure-node.ts';
+import { NodeType } from '@node-flow/internal/core/types.ts';
 
 describe('FlowEditor 图编辑器', () => {
   describe('节点编辑功能', () => {

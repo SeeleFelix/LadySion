@@ -2,8 +2,8 @@
  * 🧩 工作流图对比器
  */
 
-import { FlowGraph, NodePosition } from '@node-flow/config/flow-graph.ts';
-import { Node } from '@node-flow/core/node.ts';
+import { FlowGraph, NodePosition } from '@node-flow/internal/config/flow-graph.ts';
+import { Node } from '@node-flow/internal/core/node.ts';
 
 export enum ChangeType {
   ADDED = 'added',

@@ -2,10 +2,10 @@
  * 🧩 工作流序列化器
  */
 
-import { FlowGraph, NodePosition, FlowMetadata } from '@node-flow/config/flow-graph.ts';
-import { Node } from '@node-flow/core/node.ts';
-import { NodeConfig } from '@node-flow/core/types.ts';
-import { Connection } from '@node-flow/engine/dag-validator.ts';
+import { FlowGraph, NodePosition, FlowMetadata } from '@node-flow/internal/config/flow-graph.ts';
+import { Node } from '@node-flow/internal/core/node.ts';
+import { NodeConfig } from '@node-flow/internal/core/types.ts';
+import { Connection } from '@node-flow/internal/engine/dag-validator.ts';
 
 export interface SerializedNode {
   id: string;

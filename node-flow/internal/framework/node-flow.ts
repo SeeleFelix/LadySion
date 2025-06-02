@@ -10,14 +10,14 @@ import {
   IFlowSerializer,
   IFlowDeserializer, 
   IFlowComparator,
-  IFlowEditor,
-  ExecutionResult,
-  FlowDiff
+  IFlowEditor
 } from '../../public/interfaces.ts';
+
+import { ExecutionResult, FlowDiff } from '../../public/types.ts';
 
 import { FlowGraph } from '../config/flow-graph.ts';
 import { NodeFactory } from '../config/node-factory.ts';
-import { GraphExecutor } from '../engine/graph-executor.ts';
+import { GraphExecutorAdapter } from './executor-adapter.ts';
 import { FlowSerializer } from '../config/flow-serializer.ts';
 import { FlowDeserializer } from '../config/flow-deserializer.ts';
 import { FlowComparator } from '../config/flow-comparator.ts';
@@ -35,7 +35,7 @@ export class NodeFlow implements INodeFlow {
   }
 
   createExecutor(): IGraphExecutor {
-    return new GraphExecutor();
+    return new GraphExecutorAdapter();
   }
 
   createSerializer(): IFlowSerializer {

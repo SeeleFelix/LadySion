@@ -2,11 +2,11 @@
  * 🧩 工作流图编辑器
  */
 
-import { FlowGraph, NodePosition } from '@node-flow/config/flow-graph.ts';
-import { NodeFactory } from '@node-flow/config/node-factory.ts';
-import { DAGValidator } from '@node-flow/engine/dag-validator.ts';
-import { NodeType } from '@node-flow/core/types.ts';
-import { BaseCommand, BatchCommand, Command } from '@node-flow/config/command.ts';
+import { FlowGraph, NodePosition } from '@node-flow/internal/config/flow-graph.ts';
+import { NodeFactory } from '@node-flow/internal/config/node-factory.ts';
+import { DAGValidator } from '@node-flow/internal/engine/dag-validator.ts';
+import { NodeType } from '@node-flow/internal/core/types.ts';
+import { BaseCommand, BatchCommand, Command } from '@node-flow/internal/config/command.ts';
 
 export class AddNodeCommand extends BaseCommand {
   private nodeAdded = false;

@@ -4,10 +4,10 @@
 
 import { describe, it } from '@std/testing/bdd';
 import { assertEquals, assertExists } from '@std/assert';
-import { FlowComparator, FlowDiff, ChangeType } from '@node-flow/config/flow-comparator.ts';
-import { FlowGraph } from '@node-flow/config/flow-graph.ts';
-import { PureNode } from '@node-flow/core/pure-node.ts';
-import { UIInputNode } from '@node-flow/core/ui-input-node.ts';
+import { FlowComparator, FlowDiff, ChangeType } from '@node-flow/internal/config/flow-comparator.ts';
+import { FlowGraph } from '@node-flow/internal/config/flow-graph.ts';
+import { PureNode } from '@node-flow/internal/core/pure-node.ts';
+import { UIInputNode } from '@node-flow/internal/core/ui-input-node.ts';
 
 describe('FlowComparator 图对比器', () => {
   describe('当对比两个图时', () => {

@@ -2,12 +2,12 @@
  * 🧩 图执行引擎实现
  */
 
-import { Node } from '@node-flow/core/node.ts';
-import { PureNode } from '@node-flow/core/pure-node.ts';
-import { UIInputNode } from '@node-flow/core/ui-input-node.ts';
-import { UIOutputNode } from '@node-flow/core/ui-output-node.ts';
-import { NodeData } from '@node-flow/core/types.ts';
-import { DAGValidator, Connection } from '@node-flow/engine/dag-validator.ts';
+import { Node } from '@node-flow/internal/core/node.ts';
+import { PureNode } from '@node-flow/internal/core/pure-node.ts';
+import { UIInputNode } from '@node-flow/internal/core/ui-input-node.ts';
+import { UIOutputNode } from '@node-flow/internal/core/ui-output-node.ts';
+import { NodeData } from '@node-flow/internal/core/types.ts';
+import { DAGValidator, Connection } from '@node-flow/internal/engine/dag-validator.ts';
 
 export interface ExecutionResult {
   success: boolean;

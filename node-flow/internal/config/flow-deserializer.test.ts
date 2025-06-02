@@ -4,12 +4,12 @@
 
 import { describe, it } from '@std/testing/bdd';
 import { assertEquals, assertExists, assertThrows } from '@std/assert';
-import { FlowDeserializer } from '@node-flow/config/flow-deserializer.ts';
-import { NodeFactory } from '@node-flow/config/node-factory.ts';
-import { PureNode } from '@node-flow/core/pure-node.ts';
-import { UIInputNode } from '@node-flow/core/ui-input-node.ts';
-import { UIOutputNode } from '@node-flow/core/ui-output-node.ts';
-import { NodeType } from '@node-flow/core/types.ts';
+import { FlowDeserializer } from '@node-flow/internal/config/flow-deserializer.ts';
+import { NodeFactory } from '@node-flow/internal/config/node-factory.ts';
+import { PureNode } from '@node-flow/internal/core/pure-node.ts';
+import { UIInputNode } from '@node-flow/internal/core/ui-input-node.ts';
+import { UIOutputNode } from '@node-flow/internal/core/ui-output-node.ts';
+import { NodeType } from '@node-flow/internal/core/types.ts';
 
 describe('FlowDeserializer 图反序列化器', () => {
   describe('当从JSON反序列化图时', () => {

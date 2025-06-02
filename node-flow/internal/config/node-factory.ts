@@ -2,11 +2,11 @@
  * 🧩 节点工厂 - 用于动态创建不同类型的节点
  */
 
-import { Node } from '@node-flow/core/node.ts';
-import { PureNode } from '@node-flow/core/pure-node.ts';
-import { UIInputNode } from '@node-flow/core/ui-input-node.ts';
-import { UIOutputNode } from '@node-flow/core/ui-output-node.ts';
-import { NodeType } from '@node-flow/core/types.ts';
+import { Node } from '@node-flow/internal/core/node.ts';
+import { PureNode } from '@node-flow/internal/core/pure-node.ts';
+import { UIInputNode } from '@node-flow/internal/core/ui-input-node.ts';
+import { UIOutputNode } from '@node-flow/internal/core/ui-output-node.ts';
+import { NodeType } from '@node-flow/internal/core/types.ts';
 
 export class NodeFactory {
   createNode(id: string, name: string, type: NodeType): Node {

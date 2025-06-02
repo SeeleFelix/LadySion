@@ -2,9 +2,9 @@
  * 🧩 工作流反序列化器
  */
 
-import { FlowGraph } from '@node-flow/config/flow-graph.ts';
-import { NodeFactory } from '@node-flow/config/node-factory.ts';
-import { SerializedFlow } from '@node-flow/config/flow-serializer.ts';
+import { FlowGraph } from '@node-flow/internal/config/flow-graph.ts';
+import { NodeFactory } from '@node-flow/internal/config/node-factory.ts';
+import { SerializedFlow } from '@node-flow/internal/config/flow-serializer.ts';
 
 export class FlowDeserializer {
   constructor(private nodeFactory: NodeFactory) {}

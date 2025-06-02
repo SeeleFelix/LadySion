@@ -4,7 +4,7 @@
 
 import { describe, it } from '@std/testing/bdd';
 import { assertEquals, assertExists } from '@std/assert';
-import { Node } from '@node-flow/core/node.ts';
+import { Node } from '@node-flow/internal/core/node.ts';
 
 describe('Node基础功能', () => {
   describe('当创建一个基础节点时', () => {

@@ -4,11 +4,11 @@
 
 import { describe, it } from '@std/testing/bdd';
 import { assertEquals, assertExists } from '@std/assert';
-import { FlowSerializer } from '@node-flow/config/flow-serializer.ts';
-import { PureNode } from '@node-flow/core/pure-node.ts';
-import { UIInputNode } from '@node-flow/core/ui-input-node.ts';
-import { UIOutputNode } from '@node-flow/core/ui-output-node.ts';
-import { FlowGraph } from '@node-flow/config/flow-graph.ts';
+import { FlowSerializer } from '@node-flow/internal/config/flow-serializer.ts';
+import { PureNode } from '@node-flow/internal/core/pure-node.ts';
+import { UIInputNode } from '@node-flow/internal/core/ui-input-node.ts';
+import { UIOutputNode } from '@node-flow/internal/core/ui-output-node.ts';
+import { FlowGraph } from '@node-flow/internal/config/flow-graph.ts';
 
 describe('FlowSerializer 图序列化器', () => {
   describe('当序列化图为JSON时', () => {

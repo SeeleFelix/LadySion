@@ -3,7 +3,7 @@
  * 高性能的循环检测和拓扑排序算法
  */
 
-import { Node } from '@node-flow/core/node.ts';
+import { Node } from '@node-flow/internal/core/node.ts';
 
 export interface Connection {
   from: string;

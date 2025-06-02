@@ -71,7 +71,7 @@ describe('NodeFlow公共API', () => {
       
       assertExists(result);
       assertEquals(result.success, true);
-      assertEquals(result.executedNodes.length, 2);
+      assertEquals(result.executedNodes?.length, 2);
       assertEquals(result.totalNodes, 2);
     });
 

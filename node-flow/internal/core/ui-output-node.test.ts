@@ -4,8 +4,8 @@
 
 import { describe, it } from '@std/testing/bdd';
 import { assertEquals } from '@std/assert';
-import { UIOutputNode } from '@node-flow/core/ui-output-node.ts';
-import { NodeType } from '@node-flow/core/types.ts';
+import { UIOutputNode } from '@node-flow/internal/core/ui-output-node.ts';
+import { NodeType } from '@node-flow/internal/core/types.ts';
 
 describe('UIOutputNode UI输出节点', () => {
   describe('当创建一个UI输出节点时', () => {

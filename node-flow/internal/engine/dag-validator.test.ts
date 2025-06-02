@@ -4,8 +4,8 @@
 
 import { describe, it } from '@std/testing/bdd';
 import { assertEquals, assertThrows } from '@std/assert';
-import { DAGValidator } from '@node-flow/engine/dag-validator.ts';
-import { PureNode } from '@node-flow/core/pure-node.ts';
+import { DAGValidator } from '@node-flow/internal/engine/dag-validator.ts';
+import { PureNode } from '@node-flow/internal/core/pure-node.ts';
 
 describe('DAGValidator DAG验证器', () => {
   describe('当验证一个有效的DAG时', () => {

@@ -4,8 +4,8 @@
 
 import { describe, it } from '@std/testing/bdd';
 import { assertEquals, assertExists } from '@std/assert';
-import { PureNode } from '@node-flow/core/pure-node.ts';
-import { NodeType } from '@node-flow/core/types.ts';
+import { PureNode } from '@node-flow/internal/core/pure-node.ts';
+import { NodeType } from '@node-flow/internal/core/types.ts';
 
 describe('PureNode纯函数节点', () => {
   describe('当创建一个纯函数节点时', () => {

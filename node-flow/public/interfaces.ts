@@ -4,8 +4,7 @@
  * 这是框架对外暴露的所有核心接口
  */
 
-import { NodeType, NodePosition, FlowMetadata, Connection } from './types.ts';
-import type { ExecutionResult, FlowDiff } from './types.ts';
+import { NodeType, NodePosition, FlowMetadata, Connection, ExecutionResult, FlowDiff } from './types.ts';
 
 // 节点接口
 export interface INode {

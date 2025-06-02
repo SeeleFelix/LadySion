@@ -2,8 +2,8 @@
  * 🧩 工作流图管理器
  */
 
-import { Node } from '@node-flow/core/node.ts';
-import { Connection } from '@node-flow/engine/dag-validator.ts';
+import { Node } from '@node-flow/internal/core/node.ts';
+import { Connection } from '@node-flow/internal/engine/dag-validator.ts';
 
 export interface NodePosition {
   x: number;

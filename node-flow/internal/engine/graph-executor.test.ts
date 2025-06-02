@@ -4,11 +4,11 @@
 
 import { describe, it } from '@std/testing/bdd';
 import { assertEquals, assertExists } from '@std/assert';
-import { GraphExecutor } from '@node-flow/engine/graph-executor.ts';
-import { PureNode } from '@node-flow/core/pure-node.ts';
-import { UIInputNode } from '@node-flow/core/ui-input-node.ts';
-import { UIOutputNode } from '@node-flow/core/ui-output-node.ts';
-import { NodeData } from '@node-flow/core/types.ts';
+import { GraphExecutor } from '@node-flow/internal/engine/graph-executor.ts';
+import { PureNode } from '@node-flow/internal/core/pure-node.ts';
+import { UIInputNode } from '@node-flow/internal/core/ui-input-node.ts';
+import { UIOutputNode } from '@node-flow/internal/core/ui-output-node.ts';
+import { NodeData } from '@node-flow/internal/core/types.ts';
 
 describe('GraphExecutor 图执行引擎', () => {
   describe('当执行简单的线性图时', () => {

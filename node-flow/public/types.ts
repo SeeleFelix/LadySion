@@ -42,9 +42,12 @@ export interface Connection {
 // 执行结果接口
 export interface ExecutionResult {
   success: boolean;
-  executedNodes: string[];
-  executionTime: number;
-  totalNodes: number;
+  error?: string;
+  nodeResults?: Map<string, any>;
+  executionTime?: number;
+  // 为了兼容，保留这些字段但标记为可选
+  executedNodes?: string[];
+  totalNodes?: number;
   errors?: Array<{
     nodeId: string;
     error: string;

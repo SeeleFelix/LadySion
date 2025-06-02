@@ -2,7 +2,7 @@
  * 🧩 基础节点类
  */
 
-import { NodeType } from '@node-flow/core/types.ts';
+import { NodeType } from '@node-flow/internal/core/types.ts';
 
 export class Node {
   public readonly id: string;

@@ -4,8 +4,8 @@
 
 import { describe, it } from '@std/testing/bdd';
 import { assertEquals, assertExists } from '@std/assert';
-import { UIInputNode } from '@node-flow/core/ui-input-node.ts';
-import { NodeType } from '@node-flow/core/types.ts';
+import { UIInputNode } from '@node-flow/internal/core/ui-input-node.ts';
+import { NodeType } from '@node-flow/internal/core/types.ts';
 
 describe('UIInputNode UI输入节点', () => {
   describe('当创建一个UI输入节点时', () => {
