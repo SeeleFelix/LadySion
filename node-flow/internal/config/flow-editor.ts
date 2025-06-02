@@ -2,7 +2,8 @@
  * 🧩 工作流图编辑器
  */
 
-import { FlowGraph, NodePosition } from '@node-flow/internal/config/flow-graph.ts';
+import { FlowGraph } from '@node-flow/internal/config/flow-graph.ts';
+import { NodePosition } from '../../public/types.ts';
 import { NodeFactory } from '@node-flow/internal/config/node-factory.ts';
 import { DAGValidator } from '@node-flow/internal/engine/dag-validator.ts';
 import { NodeType } from '@node-flow/internal/core/types.ts';

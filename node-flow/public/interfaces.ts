@@ -4,7 +4,7 @@
  * 这是框架对外暴露的所有核心接口
  */
 
-import { NodeType, NodePosition, FlowMetadata, Connection, ExecutionResult, FlowDiff } from './types.ts';
+import { NodeType, NodePosition, FlowMetadata, Connection, Port, PortConnection, ExecutionResult, FlowDiff } from './types.ts';
 
 // 节点接口
 export interface INode {
@@ -14,6 +14,11 @@ export interface INode {
   process?(data?: any): any;
   getUserInput?(): any;
   displayOutput?(data: any): void;
+  
+  // 端口系统
+  getInputPorts?(): Port[];
+  getOutputPorts?(): Port[];
+  getSubGraph?(): IFlowGraph | undefined;
 }
 
 // 工作流图接口
@@ -28,6 +33,14 @@ export interface IFlowGraph {
   addConnection(from: string, to: string): void;
   removeConnection(from: string, to: string): void;
   getAllConnections(): Connection[];
+  
+  // 端口连接管理
+  addPortConnection(fromNode: string, fromPort: string, toNode: string, toPort: string): void;
+  removePortConnection(fromNode: string, fromPort: string, toNode: string, toPort: string): void;
+  getPortConnections(): PortConnection[];
+  
+  // 节点组管理
+  packNodesAsComposite(nodeIds: string[], compositeId: string, config: any): INode;
 
   // 位置管理
   getNodePosition(nodeId: string): NodePosition | undefined;
@@ -44,6 +57,13 @@ export interface IFlowGraph {
 export interface INodeFactory {
   createNode(id: string, name: string, type: NodeType): INode;
   createNodeFromType(id: string, name: string, typeString: string): INode;
+  
+  // 高级节点创建
+  createAdvancedNode(id: string, name: string, config: any): INode;
+  createCompositeNode(id: string, name: string, config: any): INode;
+  
+  // 自定义节点类型注册
+  registerNodeType(typeName: string, config: any): void;
 }
 
 // 图执行器接口

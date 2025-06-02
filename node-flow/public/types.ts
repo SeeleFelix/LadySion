@@ -33,10 +33,26 @@ export interface FlowMetadata {
   updatedAt?: string;
 }
 
-// 连接接口
+// 连接接口  
 export interface Connection {
   from: string;
   to: string;
+}
+
+// 端口定义接口
+export interface Port {
+  name: string;
+  type: string;
+  optional?: boolean;
+  defaultValue?: any;
+}
+
+// 端口连接接口
+export interface PortConnection {
+  fromNode: string;
+  fromPort: string;
+  toNode: string;
+  toPort: string;
 }
 
 // 执行结果接口

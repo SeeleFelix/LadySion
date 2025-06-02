@@ -2,18 +2,30 @@
  * 🧩 纯函数节点实现
  */
 
-import { Node } from '@node-flow/internal/core/node.ts';
-import { NodeType, NodeData } from '@node-flow/internal/core/types.ts';
+import { INode } from '../../public/interfaces.ts';
+import { NodeType, Port } from '../../public/types.ts';
 
-export class PureNode extends Node {
+export class PureNode implements INode {
+  public readonly id: string;
+  public name: string;
+  public readonly type: NodeType = NodeType.PURE;
   public readonly hasSideEffects: boolean = false;
 
   constructor(id: string, name: string) {
-    super(id, name, NodeType.PURE);
+    this.id = id;
+    this.name = name;
   }
 
-  async process(data: NodeData): Promise<NodeData> {
+  getInputPorts(): Port[] {
+    return [{ name: 'data', type: 'any' }];
+  }
+
+  getOutputPorts(): Port[] {
+    return [{ name: 'result', type: 'any' }];
+  }
+
+  process(data?: any): any {
     // 最简实现：直接返回输入数据
-    return data;
+    return { result: data?.data || data };
   }
 } 

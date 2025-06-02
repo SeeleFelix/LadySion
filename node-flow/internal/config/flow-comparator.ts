@@ -2,7 +2,8 @@
  * 🧩 工作流图对比器
  */
 
-import { FlowGraph, NodePosition } from '@node-flow/internal/config/flow-graph.ts';
+import { FlowGraph } from '@node-flow/internal/config/flow-graph.ts';
+import { NodePosition } from '../../public/types.ts';
 import { Node } from '@node-flow/internal/core/node.ts';
 
 export enum ChangeType {

@@ -1,15 +1,27 @@
 /**
- * 🧩 节点工厂 - 用于动态创建不同类型的节点
+ * 🏭 节点工厂 - 创建各种类型的节点
  */
 
-import { Node } from '@node-flow/internal/core/node.ts';
-import { PureNode } from '@node-flow/internal/core/pure-node.ts';
-import { UIInputNode } from '@node-flow/internal/core/ui-input-node.ts';
-import { UIOutputNode } from '@node-flow/internal/core/ui-output-node.ts';
-import { NodeType } from '@node-flow/internal/core/types.ts';
+import { INode, INodeFactory } from '../../public/interfaces.ts';
+import { NodeType, Port } from '../../public/types.ts';
+import { PureNode } from '../core/pure-node.ts';
+import { UIInputNode } from '../core/ui-input-node.ts';
+import { UIOutputNode } from '../core/ui-output-node.ts';
+import { AdvancedNode, AdvancedNodeConfig } from '../core/advanced-node.ts';
 
-export class NodeFactory {
-  createNode(id: string, name: string, type: NodeType): Node {
+export interface CustomNodeTypeConfig {
+  defaultInputs?: Port[];
+  defaultOutputs?: Port[];
+  extends?: NodeType;
+  additionalInputs?: Port[];
+  additionalOutputs?: Port[];
+  process?: (inputs: any) => any;
+}
+
+export class NodeFactory implements INodeFactory {
+  private customTypes = new Map<string, CustomNodeTypeConfig>();
+
+  createNode(id: string, name: string, type: NodeType): INode {
     switch (type) {
       case NodeType.PURE:
         return new PureNode(id, name);
@@ -18,13 +30,47 @@ export class NodeFactory {
       case NodeType.UI_OUTPUT:
         return new UIOutputNode(id, name);
       case NodeType.COMPOSITE:
-        throw new Error('复合节点类型暂未实现');
+        return new AdvancedNode(id, name, NodeType.COMPOSITE, {});
       default:
         throw new Error(`不支持的节点类型: ${type}`);
     }
   }
 
-  createNodeFromType(id: string, name: string, typeString: string): Node {
+  createNodeFromType(id: string, name: string, typeString: string): INode {
+    // 检查是否为自定义类型
+    if (this.customTypes.has(typeString)) {
+      const config = this.customTypes.get(typeString)!;
+      
+      let inputs = config.defaultInputs || [];
+      let outputs = config.defaultOutputs || [];
+      
+      // 如果是继承类型，合并基础输入输出
+      if (config.extends) {
+        const baseNode = this.createNode('temp', 'temp', config.extends);
+        if (baseNode.getInputPorts) {
+          inputs = [...baseNode.getInputPorts(), ...inputs];
+        }
+        if (baseNode.getOutputPorts) {
+          outputs = [...baseNode.getOutputPorts(), ...outputs];
+        }
+      }
+      
+      // 添加额外的输入输出
+      if (config.additionalInputs) {
+        inputs = [...inputs, ...config.additionalInputs];
+      }
+      if (config.additionalOutputs) {
+        outputs = [...outputs, ...config.additionalOutputs];
+      }
+      
+      return new AdvancedNode(id, name, typeString as NodeType, {
+        inputs,
+        outputs,
+        process: config.process
+      });
+    }
+    
+    // 标准类型
     let nodeType: NodeType;
     
     switch (typeString) {
@@ -45,5 +91,17 @@ export class NodeFactory {
     }
     
     return this.createNode(id, name, nodeType);
+  }
+
+  createAdvancedNode(id: string, name: string, config: AdvancedNodeConfig): INode {
+    return new AdvancedNode(id, name, NodeType.PURE, config);
+  }
+
+  createCompositeNode(id: string, name: string, config: AdvancedNodeConfig): INode {
+    return new AdvancedNode(id, name, NodeType.COMPOSITE, config);
+  }
+
+  registerNodeType(typeName: string, config: CustomNodeTypeConfig): void {
+    this.customTypes.set(typeName, config);
   }
 } 

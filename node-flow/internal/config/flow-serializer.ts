@@ -2,7 +2,8 @@
  * 🧩 工作流序列化器
  */
 
-import { FlowGraph, NodePosition, FlowMetadata } from '@node-flow/internal/config/flow-graph.ts';
+import { FlowGraph } from '@node-flow/internal/config/flow-graph.ts';
+import { NodePosition, FlowMetadata } from '../../public/types.ts';
 import { Node } from '@node-flow/internal/core/node.ts';
 import { NodeConfig } from '@node-flow/internal/core/types.ts';
 import { Connection } from '@node-flow/internal/engine/dag-validator.ts';

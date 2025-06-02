@@ -31,10 +31,10 @@ describe('NodeFlow高级功能', () => {
       });
       
       assertExists(node);
-      assertEquals(node.getInputPorts().length, 2);
-      assertEquals(node.getOutputPorts().length, 2);
-      assertEquals(node.getInputPorts()[0].name, 'input1');
-      assertEquals(node.getOutputPorts()[0].name, 'result');
+      assertEquals(node.getInputPorts!().length, 2);
+      assertEquals(node.getOutputPorts!().length, 2);
+      assertEquals(node.getInputPorts!()[0].name, 'input1');
+      assertEquals(node.getOutputPorts!()[0].name, 'result');
     });
 
     it('应该支持端口到端口的精确连接', () => {
@@ -151,12 +151,12 @@ describe('NodeFlow高级功能', () => {
       });
       
       // 使用自定义类型创建节点
-      const node = factory.createNode('test', 'Test Custom', 'custom-processor' as NodeType);
+      const node = factory.createNodeFromType('test', 'Test Custom', 'custom-processor');
       
       assertExists(node);
       assertEquals(node.type, 'custom-processor');
-      assertEquals(node.getInputPorts().length, 1);
-      assertEquals(node.getOutputPorts().length, 1);
+      assertEquals(node.getInputPorts!().length, 1);
+      assertEquals(node.getOutputPorts!().length, 1);
     });
 
     it('应该支持继承和扩展已有节点类型', () => {
@@ -183,11 +183,11 @@ describe('NodeFlow高级功能', () => {
         }
       });
       
-      const node = factory.createNode('enhanced', 'Enhanced Pure', 'enhanced-pure' as NodeType);
+      const node = factory.createNodeFromType('enhanced', 'Enhanced Pure', 'enhanced-pure');
       
       assertExists(node);
-      assertEquals(node.getInputPorts().length, 2); // data + config
-      assertEquals(node.getOutputPorts().length, 2); // result + logs
+      assertEquals(node.getInputPorts!().length, 2); // data + config
+      assertEquals(node.getOutputPorts!().length, 2); // result + logs
     });
   });
 
@@ -229,9 +229,9 @@ describe('NodeFlow高级功能', () => {
       
       assertExists(compositeNode);
       assertEquals(compositeNode.type, NodeType.COMPOSITE);
-      assertEquals(compositeNode.getInputPorts().length, 1);
-      assertEquals(compositeNode.getOutputPorts().length, 1);
-      assertEquals(compositeNode.getSubGraph(), subGraph);
+      assertEquals(compositeNode.getInputPorts!().length, 1);
+      assertEquals(compositeNode.getOutputPorts!().length, 1);
+      assertEquals(compositeNode.getSubGraph!(), subGraph);
     });
 
     it('应该支持复合节点的递归执行', async () => {

@@ -2,19 +2,32 @@
  * 🧩 UI输入节点实现
  */
 
-import { Node } from '@node-flow/internal/core/node.ts';
-import { NodeType, NodeData } from '@node-flow/internal/core/types.ts';
+import { INode } from '../../public/interfaces.ts';
+import { NodeType, Port } from '../../public/types.ts';
 
-export class UIInputNode extends Node {
-  public readonly hasSideEffects: boolean = true;
-  public readonly canHaveOutputs: boolean = true;
+export class UIInputNode implements INode {
+  public readonly id: string;
+  public name: string;
+  public readonly type: NodeType = NodeType.UI_INPUT;
 
   constructor(id: string, name: string) {
-    super(id, name, NodeType.UI_INPUT);
+    this.id = id;
+    this.name = name;
   }
 
-  async getUserInput(): Promise<NodeData> {
-    // 最简实现：返回模拟输入数据
-    return { userInput: 'mock input data' };
+  getInputPorts(): Port[] {
+    return []; // UI输入节点没有输入端口
+  }
+
+  getOutputPorts(): Port[] {
+    return [{ name: 'data', type: 'any' }];
+  }
+
+  getUserInput(): any {
+    return { data: 'mock-user-input' };
+  }
+
+  process(data?: any): any {
+    return this.getUserInput();
   }
 } 
