@@ -183,7 +183,7 @@ function applyDefaultsAndValidate(config: Partial<Doctrine>): Required<Doctrine>
     auth: undefined as any,
     retries: 3,
     retryDelay: 1000,
-    retryBackoff: 'exponential',
+    retryBackoff: 'exponential' as const,
     contentType: 'application/json',
     responseType: 'json',
     environment: Deno.env.get('NODE_ENV') || 'development',
@@ -260,7 +260,7 @@ export async function getDoctrine(overrides?: Partial<Doctrine>): Promise<Requir
     
     // 4. 合并所有配置
     const finalConfig = deepMergeConfig(
-      frameworkDefaults,
+      frameworkDefaults as Partial<Doctrine>,
       projectConfig,
       envConfig,
       overrides || {}
@@ -309,7 +309,7 @@ export function getDoctrineSync(overrides?: Partial<Doctrine>): Required<Doctrin
   // ... 省略环境变量处理逻辑，与异步版本相同
   
   const finalConfig = deepMergeConfig(
-    frameworkDefaults,
+    frameworkDefaults as Partial<Doctrine>,
     cachedProjectConfig,
     envConfig,
     overrides || {}

@@ -38,6 +38,9 @@ interface ProjectEidolon {
 // ================================
 
 interface TaskSeeker extends Seeker<TaskEidolon> {
+  // 测试辅助方法
+  initTestData(): Promise<void>;
+  
   // 基础 CRUD
   findById(id: string): Promise<TaskEidolon>;
   create(title: string, description: string, priority: "low" | "medium" | "high"): Promise<TaskEidolon>;
@@ -69,6 +72,9 @@ interface TaskSeeker extends Seeker<TaskEidolon> {
 }
 
 interface ProjectSeeker extends Seeker<ProjectEidolon> {
+  // 测试辅助方法
+  initTestData(): Promise<void>;
+  
   findById(id: string): Promise<ProjectEidolon>;
   create(name: string, description: string): Promise<ProjectEidolon>;
   updateStatus(id: string, status: "planning" | "active" | "completed"): Promise<ProjectEidolon>;
@@ -87,7 +93,10 @@ class TaskSeekerService implements TaskSeeker, SeekerImplementation {
     this.initTestData();
   }
 
-  private initTestData() {
+  async initTestData(): Promise<void> {
+    // 清空现有数据
+    this.tasks.clear();
+    this.tagIndex.clear();
     const tasks = [
       {
         id: "1",
@@ -157,7 +166,7 @@ class TaskSeekerService implements TaskSeeker, SeekerImplementation {
       });
     }
 
-    const id = Date.now().toString();
+    const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const now = new Date().toISOString();
     const task: TaskEidolon = {
       id,
@@ -301,7 +310,9 @@ class ProjectSeekerService implements ProjectSeeker, SeekerImplementation {
     this.initTestData();
   }
 
-  private initTestData() {
+  async initTestData(): Promise<void> {
+    // 清空现有数据
+    this.projects.clear();
     const projects = [
       {
         id: "1",
@@ -340,7 +351,7 @@ class ProjectSeekerService implements ProjectSeeker, SeekerImplementation {
   }
 
   async create(name: string, description: string): Promise<ProjectEidolon> {
-    const id = Date.now().toString();
+    const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const project: ProjectEidolon = {
       id,
       name,

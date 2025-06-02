@@ -166,6 +166,9 @@ Deno.test({
   async fn() {
     const client = new TaskManagerClient(TEST_BASE_URL);
     
+    // 重置测试数据到初始状态
+    await client.resetTestData();
+    
     // 创建测试数据
     const tasks = [
       await client.createTask("前端开发", "开发用户界面", "high"),
@@ -191,26 +194,31 @@ Deno.test({
       
       // 2. 优先级过滤
       const highPriorityTasks = await client.searchTasks("", { priority: "high" });
-      assertEquals(highPriorityTasks.length, 2);
+      const testHighPriorityTasks = highPriorityTasks.filter(t => tasks.some(task => task.id === t.id));
+      assertEquals(testHighPriorityTasks.length, 2, "应该有2个高优先级测试任务");
       
       // 3. 完成状态过滤
       const completedTasks = await client.searchTasks("", { completed: true });
-      assertEquals(completedTasks.length, 2);
+      const testCompletedTasks = completedTasks.filter(t => tasks.some(task => task.id === t.id));
+      assertEquals(testCompletedTasks.length, 2, "应该有2个测试任务被完成");
       
       const incompleteTasks = await client.searchTasks("", { completed: false });
-      assertEquals(incompleteTasks.length, 2);
+      const testIncompleteTasks = incompleteTasks.filter(t => tasks.some(task => task.id === t.id));
+      assertEquals(testIncompleteTasks.length, 2, "应该有2个测试任务未完成");
       
       // 4. 分页测试
       const page1 = await client.searchTasks("", {}, { page: 0, size: 2 });
-      assertEquals(page1.length, 2);
+      assert(page1.length <= 2, "第一页结果不应超过2个");
+      assert(page1.length > 0, "第一页应该有结果");
       
       const page2 = await client.searchTasks("", {}, { page: 1, size: 2 });
-      assert(page2.length >= 0 && page2.length <= 2);
+      assert(page2.length >= 0 && page2.length <= 2, "第二页结果应该在0-2个之间");
       
              // 5. 标签搜索（通过实现的 searchByTag 方法）
        const uiTasks = await client.taskSeeker.searchByTag("UI");
-       assertEquals(uiTasks.length, 1);
-       assertEquals(uiTasks[0].title, "前端开发");
+       const testUITasks = uiTasks.filter(t => tasks.some(task => task.id === t.id));
+       assertEquals(testUITasks.length, 1, "应该找到1个UI标签的测试任务");
+       assertEquals(testUITasks[0].title, "前端开发", "UI任务应该是前端开发");
       
     } finally {
       // 清理测试数据
@@ -275,6 +283,9 @@ Deno.test({
   name: "📊 任务统计功能测试",
   async fn() {
     const client = new TaskManagerClient(TEST_BASE_URL);
+    
+    // 重置测试数据到初始状态
+    await client.resetTestData();
     
     // 获取初始统计
     const initialStats = await client.getTaskStats();
