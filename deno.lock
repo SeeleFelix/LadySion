@@ -31,6 +31,7 @@
     "npm:@vitejs/plugin-vue@^5.0.4": "5.2.4_vite@5.4.19__@types+node@22.12.0_vue@3.4.21_@types+node@22.12.0",
     "npm:axios@1.6.7": "1.6.7",
     "npm:element-plus@2.6.1": "2.6.1_vue@3.4.21_@types+lodash-es@4.17.12_lodash@4.17.21_lodash-es@4.17.21",
+    "npm:fast-graph@^1.5.0": "1.5.0",
     "npm:graphology-dag@~0.4.1": "0.4.1_graphology-types@0.24.8",
     "npm:graphology@~0.25.4": "0.25.4_graphology-types@0.24.8",
     "npm:path-to-regexp@6.2.1": "6.2.1",
@@ -723,6 +724,9 @@
     },
     "events@3.3.0": {
       "integrity": "sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q=="
+    },
+    "fast-graph@1.5.0": {
+      "integrity": "sha512-dstiDmXm68dqqYeZv1jPXzkF0rnfMoj7ERkIuNGcsQTsHNjFjJRWhXm23FoGmMzmJiu3dPtBgGs6eAvbvsidFg=="
     },
     "follow-redirects@1.15.9": {
       "integrity": "sha512-gew4GsXizNgdoRyqmyfMHyAmXsZDk6mHkSxZFCzW9gwlbtOW44CDtYavM+y+72qD/Vq2l550kMF52DT8fOLJqQ=="
@@ -1544,8 +1548,7 @@
       "npm:@vitejs/plugin-vue@5.0.4",
       "npm:axios@1.6.7",
       "npm:element-plus@2.6.1",
-      "npm:graphology-dag@~0.4.1",
-      "npm:graphology@~0.25.4",
+      "npm:fast-graph@^1.5.0",
       "npm:pinia@2.1.7",
       "npm:vite@5.1.4",
       "npm:vue-router@4.3.0",
