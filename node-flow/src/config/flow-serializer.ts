@@ -60,15 +60,5 @@ export class FlowSerializer {
     return JSON.stringify(serializedFlow, null, 2);
   }
 
-  deserialize(json: string): FlowGraph {
-    const serializedFlow: SerializedFlow = JSON.parse(json);
-    const graph = new FlowGraph();
-    
-    // 设置元数据
-    graph.metadata = serializedFlow.metadata;
-    
-    // TODO: 这里需要节点工厂来重建节点
-    // 暂时抛出错误，在下个任务中实现
-    throw new Error('反序列化功能尚未实现');
-  }
+
 } 
