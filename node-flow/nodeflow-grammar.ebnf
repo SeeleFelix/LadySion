@@ -1,0 +1,76 @@
+(* NodeFlow DSL 正式语法规范 - EBNF *)
+
+(* ========== 顶层结构 ========== *)
+nodeflow_file = definition_file | graph_file ;
+
+definition_file = import_section? types_section? nodes_section? ;
+graph_file = import_section? graph_section ;
+
+(* ========== Import 部分 ========== *)
+import_section = "--" "import" newline import_list section_end ;
+import_list = import_statement* ;
+import_statement = qualified_name alias_map? newline ;
+alias_map = "{" newline alias_mapping* "}" ;
+alias_mapping = identifier identifier newline ;
+
+(* ========== Types 部分 ========== *)
+types_section = "--" "types" newline type_definition* section_end ;
+type_definition = type_name ("{" newline convertible_types "}")? newline ;
+type_name = qualified_name ;
+convertible_types = (qualified_name newline)* ;
+
+(* ========== Nodes 部分 ========== *)
+nodes_section = "--" "nodes" newline node_definition* section_end ;
+node_definition = identifier "{" newline
+                    mode_declaration?
+                    port_sections 
+                  "}" newline ;
+
+mode_declaration = "mode" concurrent_mode newline ;
+concurrent_mode = "Concurrent" | "Sequential" ;
+
+port_sections = (in_section | out_section)+ ;
+in_section = "in" "{" newline port_list "}" newline ;
+out_section = "out" "{" newline port_list "}" newline ;
+
+port_list = port_definition* ;
+port_definition = identifier qualified_name port_modifiers? newline ;
+port_modifiers = "optional" | activation_mode ;
+activation_mode = "mode=" ("AND" | "OR" | "XOR") ;
+
+(* ========== Graph 部分 ========== *)
+graph_section = "--" "graph" newline graph_body section_end ;
+graph_body = nodes_instance_section? data_connection_section? control_connection_section? ;
+
+nodes_instance_section = "nodes" "{" newline node_instance* "}" newline ;
+node_instance = identifier qualified_name instance_override? newline ;
+instance_override = "{" newline override_declaration* "}" ;
+override_declaration = (mode_override | port_override) newline ;
+mode_override = "mode" concurrent_mode ;
+port_override = identifier activation_mode ;
+
+data_connection_section = "datas" "{" newline connection* "}" newline ;
+control_connection_section = "controls" "{" newline connection* "}" newline ;
+
+connection = connection_source "->" connection_target ";" comment? newline ;
+connection_source = port_reference ;
+connection_target = port_reference ;
+
+port_reference = identifier "." identifier ;
+
+(* ========== 基础类型 ========== *)
+identifier = letter (letter | digit | "_")* ;
+qualified_name = identifier ("." identifier)* ;
+number = ["-"] digit+ ("." digit+)? ;
+string_literal = '"' (character - '"')* '"' ;
+
+letter = "A".."Z" | "a".."z" | "_" ;
+digit = "0".."9" ;
+character = ? any Unicode character ? ;
+
+comment = "//" (character - newline)* ;
+newline = "\n" | "\r\n" ;
+section_end = "--" ;
+
+(* ========== 词法规则 ========== *)
+whitespace = (" " | "\t" | newline)* ; 
