@@ -15,13 +15,13 @@ Deno.test("🔧 Doctrine 配置系统测试", async (t) => {
   await t.step("📋 应该加载默认配置", async () => {
     const doctrine = await getDoctrine();
     
-    // 验证默认值
+    // 验证默认值（会被项目配置覆盖）
     assertEquals(doctrine.baseUrl, "http://localhost:8000");
     assertEquals(doctrine.timeout, 30000);
-    assertEquals(doctrine.whisperPath, "/whisper");
+    assertEquals(doctrine.whisperPath, "/api/whisper"); // 项目配置覆盖
     assertEquals(doctrine.retries, 3);
     assertEquals(doctrine.retryBackoff, "exponential");
-    assertEquals(doctrine.debug, false);
+    assertEquals(doctrine.debug, true); // 项目配置覆盖
   });
 
   await t.step("🔄 应该正确合并配置覆盖", async () => {
@@ -93,7 +93,7 @@ Deno.test("🔧 Doctrine 配置系统测试", async (t) => {
       throw new Error("应该抛出错误");
     } catch (error: unknown) {
       assert(error instanceof WrathError);
-      assertEquals(error.omen.signal, "config_error");
+      assertEquals((error as WrathError).omen.signal, "config_error");
     }
   });
 
@@ -103,7 +103,7 @@ Deno.test("🔧 Doctrine 配置系统测试", async (t) => {
       throw new Error("应该抛出错误");
     } catch (error: unknown) {
       assert(error instanceof WrathError);
-      assertEquals(error.omen.signal, "config_error");
+      assertEquals((error as WrathError).omen.signal, "config_error");
     }
   });
 
@@ -135,7 +135,7 @@ Deno.test("🔧 Doctrine 配置系统测试", async (t) => {
       throw new Error("应该抛出错误");
     } catch (error: unknown) {
       assert(error instanceof WrathError);
-      assertEquals(error.omen.signal, "config_error");
+      assertEquals((error as WrathError).omen.signal, "config_error");
     }
   });
 });

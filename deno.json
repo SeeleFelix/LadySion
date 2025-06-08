@@ -8,14 +8,20 @@
     "start:frontend": "cd web && deno task dev",
     "dev": "deno task start:backend & deno task start:frontend",
     "build": "cd web && deno task build",
-    "test": "deno test",
-    "test:backend": "deno test server/",
+    "test": "deno test --allow-read --allow-write --allow-net --allow-env",
+    "test:unit:core": "deno test --allow-read whisper-framework/backend/__tests__/whisper-backend.test.ts whisper-framework/backend/__tests__/oak-integration.test.ts",
+    "test:unit:full": "deno test --allow-read --allow-env --ignore=whisper-framework/examples/,whisper-framework/backend/__tests__/usage-example.test.ts",
+    "test:integration": "deno test --allow-read --allow-write --allow-net --allow-env whisper-framework/examples/integration-test/",
+    "test:backend": "deno test --allow-read --allow-write --allow-net --allow-env server/",
+    "test:whisper": "deno test --allow-read --allow-write --allow-net --allow-env whisper-framework/",
+    "test:node-flow": "deno test --allow-read --allow-write node-flow/",
     "test:frontend": "cd web && deno task test",
+    "test:all": "deno test --allow-read --allow-write --allow-net --allow-env",
     "fmt": "deno fmt && cd web && deno fmt",
     "lint": "deno lint && cd web && deno lint",
     "setup": "cd web && deno install"
   },
-  "workspace": ["./web"],
+  "workspace": ["./web", "./node-flow"],
   "lint": {
     "rules": {
       "exclude": [

@@ -167,6 +167,9 @@ Deno.test({
   async fn() {
     const client = new TaskManagerClient(TEST_BASE_URL);
     
+    // 重置测试数据到初始状态
+    await client.resetTestData();
+    
     // 获取初始状态
     const initialStats = await client.getTaskStats();
     
@@ -285,6 +288,9 @@ Deno.test({
   name: "📊 任务统计功能测试",
   async fn() {
     const client = new TaskManagerClient(TEST_BASE_URL);
+    
+    // 重置测试数据到初始状态
+    await client.resetTestData();
     
     // 获取初始统计
     const initialStats = await client.getTaskStats();

@@ -35,6 +35,9 @@ interface ProjectEidolon {
 // ================================
 
 interface TaskSeeker extends Seeker<TaskEidolon> {
+  // 测试辅助方法
+  initTestData(): Promise<void>;
+  
   // 基础 CRUD
   findById(id: string): Promise<TaskEidolon>;
   create(title: string, description: string, priority: "low" | "medium" | "high"): Promise<TaskEidolon>;
@@ -66,6 +69,9 @@ interface TaskSeeker extends Seeker<TaskEidolon> {
 }
 
 interface ProjectSeeker extends Seeker<ProjectEidolon> {
+  // 测试辅助方法
+  initTestData(): Promise<void>;
+  
   findById(id: string): Promise<ProjectEidolon>;
   create(name: string, description: string): Promise<ProjectEidolon>;
   updateStatus(id: string, status: "planning" | "active" | "completed"): Promise<ProjectEidolon>;
@@ -110,6 +116,14 @@ export class TaskManagerClient {
     const client = createTestClient(baseUrl);
     this.taskSeeker = client.taskSeeker;
     this.projectSeeker = client.projectSeeker;
+  }
+
+  // 🔄 测试辅助方法
+  async resetTestData(): Promise<void> {
+    console.log(`🔄 重置测试数据...`);
+    await this.taskSeeker.initTestData();
+    await this.projectSeeker.initTestData();
+    console.log(`✅ 测试数据重置成功`);
   }
 
   // 📋 任务管理操作
