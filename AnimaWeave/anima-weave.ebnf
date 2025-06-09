@@ -1,7 +1,7 @@
-(* NodeFlow DSL 正式语法规范 - EBNF *)
+(* AnimaWeave DSL 正式语法规范 - EBNF *)
 
 (* ========== 顶层结构 ========== *)
-nodeflow_file = definition_file | graph_file ;
+AnimaWeave_file = definition_file | graph_file ;
 
 definition_file = import_section? types_section? nodes_section? ;
 graph_file = import_section? graph_section ;

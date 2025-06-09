@@ -1,8 +1,8 @@
-# NodeFlow 控制流与数据流分离设计
+# AnimaWeave 控制流与数据流分离设计
 
 ## 🔍 概述
 
-本文档建立了NodeFlow双流（数据流+控制流）系统的完整数学框架，包括：
+本文档建立了AnimaWeave双流（数据流+控制流）系统的完整数学框架，包括：
 
 - **🔣 数学符号系统** - 统一的符号定义和读音指南
 - **📐 形式化定义** - 系统的严格数学定义  
@@ -39,15 +39,15 @@
   - [定义 8：控制连接集合](#定义-8控制连接集合)
 - [3.4 节点集合](#34-节点集合)
   - [定义 9：节点集合](#定义-9节点集合)
-- [3.5 NodeFlow图](#35-nodeflow图)
-  - [定义 10：NodeFlow图三元组](#定义-10nodeflow图三元组)
+- [3.5 AnimaWeave图](#35-AnimaWeave图)
+  - [定义 10：AnimaWeave图三元组](#定义-10AnimaWeave图三元组)
   - [定义 11：连接有效性约束](#定义-11连接有效性约束)
   - [定义 12：图的边界端口](#定义-12图的边界端口)
   - [定义 13：必选端口DAG约束](#定义-13必选端口dag约束)
   - [定义 14：输出端口不可变性约束](#定义-14输出端口不可变性约束)
   - [定义 15：节点执行唯一性约束](#定义-15节点执行唯一性约束)
-- [3.6 双流NodeFlow系统](#36-双流nodeflow系统)
-  - [定义 16：双流NodeFlow系统六元组](#定义-16双流nodeflow系统六元组)
+- [3.6 双流AnimaWeave系统](#36-双流AnimaWeave系统)
+  - [定义 16：双流AnimaWeave系统六元组](#定义-16双流AnimaWeave系统六元组)
 - [3.7 执行状态空间](#37-执行状态空间)
   - [定义 17：全局执行状态](#定义-17全局执行状态)
 - [3.8 控制信号状态空间与激活模式](#38-控制信号状态空间与激活模式)
@@ -76,13 +76,13 @@
 
 ### 🔬 [图灵完备性证明（寄存器机方法）](#4-🔬-图灵完备性证明寄存器机方法)
 - [4.1 主定理](#41-主定理)
-  - [定理 4.1.1：双流NodeFlow系统的图灵完备性](#定理-411双流nodeflow系统的图灵完备性)
-- [4.2 寄存器机基本指令的NodeFlow实现](#42-寄存器机基本指令的nodeflow实现)
+  - [定理 4.1.1：双流AnimaWeave系统的图灵完备性](#定理-411双流AnimaWeave系统的图灵完备性)
+- [4.2 寄存器机基本指令的AnimaWeave实现](#42-寄存器机基本指令的AnimaWeave实现)
   - [引理 1：寄存器机状态表示](#引理-1寄存器机状态表示)
   - [引理 2：INC(rᵢ) - 寄存器增1节点](#引理-2incrᵢ---寄存器增1节点)
   - [引理 3：DEC(rᵢ) - 寄存器减1节点](#引理-3decrᵢ---寄存器减1节点)
   - [引理 4：JZ(rᵢ, L) - 条件跳转节点](#引理-4jzrᵢ-l---条件跳转节点)
-- [4.3 寄存器机程序的NodeFlow图构造](#43-寄存器机程序的nodeflow图构造)
+- [4.3 寄存器机程序的AnimaWeave图构造](#43-寄存器机程序的AnimaWeave图构造)
   - [引理 5：程序控制流实现](#引理-5程序控制流实现)
   - [引理 6：状态循环连接](#引理-6状态循环连接)
 - [4.4 任意可计算函数的编码](#44-任意可计算函数的编码)
@@ -213,7 +213,7 @@ A × B = {
 }
 ```
 
-#### 🔗 在NodeFlow中的应用
+#### 🔗 在AnimaWeave中的应用
 
 ```typescript
 // 如果节点有输入端口：
@@ -358,11 +358,11 @@ n = (D_in, C_in, D_out, C_out, φ, concurrent_mode, D_optional)
 𝒩 = {n₁, n₂, ..., nₖ | nᵢ 满足定义5}
 ```
 
-### 3.5 NodeFlow图
+### 3.5 AnimaWeave图
 
-#### 定义 10：NodeFlow图三元组
+#### 定义 10：AnimaWeave图三元组
 
-NodeFlow图 `G` 定义为三元组：
+AnimaWeave图 `G` 定义为三元组：
 
 ```mathematica
 G = (𝒩_G, 𝒟_G, ℰ_G)
@@ -417,11 +417,11 @@ OutputImmutability(Ω, Ω') ≡
 NodeExecutionUniqueness(Ω) ≡ ∀n ∈ 𝒩, |{Ω' | Σ_node(n) = running in Ω'}| ≤ 1
 ```
 
-### 3.6 双流NodeFlow系统
+### 3.6 双流AnimaWeave系统
 
-#### 定义 16：双流NodeFlow系统六元组
+#### 定义 16：双流AnimaWeave系统六元组
 
-双流NodeFlow系统 `S` 定义为六元组：
+双流AnimaWeave系统 `S` 定义为六元组：
 
 ```mathematica
 S = (𝒯, 𝒞, 𝒩, 𝒟, ℰ, Γ)
@@ -679,13 +679,13 @@ ControlStateTransition: Ω → Ω'
 
 ### 4.1 主定理
 
-#### 📋 定理 4.1.1：双流NodeFlow系统的图灵完备性
+#### 📋 定理 4.1.1：双流AnimaWeave系统的图灵完备性
 
-**定理**: 双流NodeFlow系统 `S` 是图灵完备的。
+**定理**: 双流AnimaWeave系统 `S` 是图灵完备的。
 
-**证明策略**: 通过构造寄存器机的NodeFlow编码，证明任意可计算函数都可以在NodeFlow中表达。
+**证明策略**: 通过构造寄存器机的AnimaWeave编码，证明任意可计算函数都可以在AnimaWeave中表达。
 
-### 4.2 寄存器机基本指令的NodeFlow实现
+### 4.2 寄存器机基本指令的AnimaWeave实现
 
 #### 引理 1：寄存器机状态表示
 
@@ -747,7 +747,7 @@ JZ_Node = {
 }
 ```
 
-### 4.3 寄存器机程序的NodeFlow图构造
+### 4.3 寄存器机程序的AnimaWeave图构造
 
 #### 引理 5：程序控制流实现
 
@@ -797,7 +797,7 @@ State → Dispatcher → Nodeᵢ → Updated_State → Dispatcher → ...
 ```mathematica
 ∀ 部分递归函数 f: ℕ → ℕ,
 ∃ 寄存器机程序 P_f,
-∃ NodeFlow图 G_f = ConstructGraph(P_f),
+∃ AnimaWeave图 G_f = ConstructGraph(P_f),
 
 使得：
 f(x) = y ⟺ G_f执行输入RegisterMachineState{[x,0,...], 1}
@@ -809,10 +809,10 @@ f(x) = y ⟺ G_f执行输入RegisterMachineState{[x,0,...], 1}
 #### 引理 9：状态同构映射
 
 ```mathematica
-Φ: RegisterMachineConfiguration → NodeFlowState
+Φ: RegisterMachineConfiguration → AnimaWeaveState
 Φ((r₁,...,rₖ, pc)) = RegisterMachineState{[r₁,...,rₖ], pc}
 
-ψ: NodeFlowState → RegisterMachineConfiguration  
+ψ: AnimaWeaveState → RegisterMachineConfiguration  
 ψ(RegisterMachineState{[r₁,...,rₖ], pc}) = (r₁,...,rₖ, pc)
 ```
 
@@ -821,9 +821,9 @@ f(x) = y ⟺ G_f执行输入RegisterMachineState{[x,0,...], 1}
 ```mathematica
 寄存器机一步执行: config ⊢ config'
 ⟺ 
-NodeFlow图一次状态转换: Φ(config) →* Φ(config')
+AnimaWeave图一次状态转换: Φ(config) →* Φ(config')
 
-其中 →* 表示可能的多步NodeFlow状态转换序列
+其中 →* 表示可能的多步AnimaWeave状态转换序列
 ```
 
 ### 4.6 主定理证明
@@ -831,19 +831,19 @@ NodeFlow图一次状态转换: Φ(config) →* Φ(config')
 #### 构造算法 11
 
 ```mathematica
-ConstructNodeFlowComputation(f: ℕ → ℕ):
+ConstructAnimaWeaveComputation(f: ℕ → ℕ):
 1. 构造寄存器机程序 P_f 计算函数f
-2. 为P_f的每条指令创建对应的NodeFlow节点
+2. 为P_f的每条指令创建对应的AnimaWeave节点
 3. 构造程序分发器Dispatcher
 4. 连接状态循环和控制流
-5. 返回完整的NodeFlow图 G_f
+5. 返回完整的AnimaWeave图 G_f
 ```
 
 #### 完备性保证 12
 
 ```mathematica
 ∀ 部分递归函数 f,
-∃ NodeFlow图 G_f = ConstructNodeFlowComputation(f),
+∃ AnimaWeave图 G_f = ConstructAnimaWeaveComputation(f),
 
 ∀ x ∈ ℕ,
 f(x) ↓ ⟺ G_f(x) 终止且产生正确输出
@@ -853,10 +853,10 @@ f(x) ↑ ⟺ G_f(x) 不终止
 #### 结论
 
 由于：
-1. 任意部分递归函数都可以编码为NodeFlow图
-2. NodeFlow图的执行语义保真地模拟寄存器机
+1. 任意部分递归函数都可以编码为AnimaWeave图
+2. AnimaWeave图的执行语义保真地模拟寄存器机
 3. 寄存器机与图灵机计算能力等价
 
-**因此，双流NodeFlow系统是图灵完备的。** □
+**因此，双流AnimaWeave系统是图灵完备的。** □
 
 ---

@@ -1,20 +1,20 @@
-# NodeFlow DSL 语法快速参考
+# AnimaWeave DSL 语法快速参考
 
 ## 📋 概述
 
-NodeFlow DSL支持两种文件类型：
-- **`.nodeflow`** - 节点和类型定义文件
-- **`.graph.nodeflow`** - 图实例文件
+AnimaWeave DSL支持两种文件类型：
+- **`.anima`** - 节点和类型定义文件
+- **`.graph.anima`** - 图实例文件
 
 ---
 
 ## 🔤 文件类型
 
-### 节点定义文件 (`.nodeflow`)
+### 节点定义文件 (`.anima`)
 
 ```nodeflow
 -- import
-basic.nodeflow
+basic.anima
 --
 
 -- types 
@@ -42,12 +42,12 @@ Add {
 --
 ```
 
-### 图实例文件 (`.graph.nodeflow`)
+### 图实例文件 (`.graph.anima`)
 
 ```nodeflow
 -- import
-basic.nodeflow
-add.nodeflow
+basic.anima
+add.anima
 --
 
 -- graph
@@ -75,8 +75,8 @@ controls {
 ### Import 语法
 ```nodeflow
 -- import
-module.nodeflow
-other.nodeflow {
+module.anima
+other.anima {
     alias_name OriginalName
 }
 --
@@ -180,7 +180,7 @@ instance_name NodeType {
 
 ### 完整示例：基础计算
 
-#### 1. 基础类型定义 (`basic.nodeflow`)
+#### 1. 基础类型定义 (`basic.anima`)
 ```nodeflow
 -- types
 int
@@ -203,10 +203,10 @@ RandomInput {
 --
 ```
 
-#### 2. 算术节点定义 (`add.nodeflow`)
+#### 2. 算术节点定义 (`add.anima`)
 ```nodeflow
 -- import
-basic.nodeflow
+basic.anima
 --
 
 -- nodes
@@ -225,11 +225,11 @@ Add {
 --
 ```
 
-#### 3. 计算图实例 (`sample.graph.nodeflow`)
+#### 3. 计算图实例 (`sample.graph.anima`)
 ```nodeflow
 -- import
-basic.nodeflow
-add.nodeflow
+basic.anima
+add.anima
 --
 
 -- graph
@@ -271,6 +271,6 @@ controls {
 
 ## 📚 相关文档
 
-- [NodeFlow DSL设计文档](./nodeflow-dsl-design.md)
+- [AnimaWeave DSL设计文档](./nodeflow-dsl-design.md)
 - [数学形式化定义](./nodeflow-mathematica-definition.md)
 - [语法规范EBNF](./nodeflow-grammar.ebnf) 
