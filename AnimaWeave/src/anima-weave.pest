@@ -1,13 +1,16 @@
 // AnimaWeave DSL - Pest Grammar
 // Converted from EBNF to PEG (Parsing Expression Grammar)
 
-WHITESPACE = _{ " " | "\t" | "\r\n" | "\n" }
-COMMENT = _{ "//" ~ (!("\n" | "\r\n") ~ ANY)* }
+WHITESPACE = _{ " " | "\t" }
+NEWLINE = _{ "\r\n" | "\n" }
+COMMENT = _{ "//" ~ (!NEWLINE ~ ANY)* }
 
 // ========== Top Level Structure ==========
-AnimaWeave_file = { SOI ~ (definition_file | graph_file) ~ EOI }
+AnimaWeave_file = { SOI ~ file_content ~ EOI }
 
-definition_file = { import_section? ~ types_section? ~ nodes_section? }
+file_content = { definition_file | graph_file }
+
+definition_file = { (import_section | types_section | nodes_section)+ }
 graph_file = { import_section? ~ graph_section }
 
 // ========== Import Section ==========
@@ -72,4 +75,4 @@ string_literal = @{ "\"" ~ (!"\"" ~ ANY)* ~ "\"" }
 letter = { 'A'..'Z' | 'a'..'z' | "_" }
 digit = { '0'..'9' }
 
-section_end = { "--" } 
+section_end = { "--" ~ NEWLINE? } 

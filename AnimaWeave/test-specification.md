@@ -28,10 +28,46 @@
 
 #### 定义1: 数据类型集合 𝒯
 **测试场景 T1.1**: 基础数据类型解析
-- **输入**: `int`, `string`, `double`, `bool` 等基础类型声明
-- **预期**: 解析器正确识别所有基础数据类型
-- **验证要点**: 类型名称解析、类型注册
-- **测试文件**: 基础类型定义的.anima文件
+
+**T1.1.1**: 单个基础类型在types section中解析
+- **输入**: 包含完整types section的.anima文件：`-- types\nint\n--`
+- **预期**: 解析器识别types section并提取int类型
+- **验证**: 解析结果包含types_section，其中包含DataType::Int
+
+**T1.1.2**: 多个基础类型在types section中解析
+- **输入**: 完整types section：`-- types\nint\nstring\ndouble\nbool\n--`
+- **预期**: 解析器识别所有四种基础类型
+- **验证**: 解析结果的types_section包含所有基础数据类型
+
+**T1.1.3**: types section文件加载
+- **输入**: 包含types section的实际.anima文件
+- **预期**: 从文件系统正确加载并解析types section
+- **验证**: 文件I/O和types section解析流程正确
+
+**T1.1.4**: 无效类型名称在types section中的错误处理
+- **输入**: types section中的无效类型：`-- types\ninvalid_type_name\n--`
+- **预期**: 解析器报告语法错误，指向无效的type_name
+- **验证**: 返回ParseError::InvalidTypeName
+
+**T1.1.5**: 空types section处理
+- **输入**: 空的types section：`-- types\n--`
+- **预期**: 解析成功，types section存在但类型集合为空
+- **验证**: 空types section的正确处理
+
+**T1.1.6**: 类型名称标识符规则验证
+- **输入**: `-- types\nINT\nInt\nint\n_invalid\n123invalid\n--`
+- **预期**: 按标识符规则解析，字母开头，大小写敏感
+- **验证**: 标识符规则的正确实施
+
+**T1.1.7**: types section格式验证
+- **输入**: 带有额外空格的types section：`--  types  \n  int  \n  string  \n--`
+- **预期**: 解析器忽略WHITESPACE正确解析
+- **验证**: WHITESPACE处理规则正确
+
+**T1.1.8**: 不完整types section错误处理
+- **输入**: 缺少结束标记：`-- types\nint\nstring`
+- **预期**: 解析器报告section_end缺失错误
+- **验证**: section语法结构验证正确
 
 #### 定义2: 控制信号类型 𝒞  
 **测试场景 T1.2**: 控制信号类型解析
