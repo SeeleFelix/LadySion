@@ -24,6 +24,90 @@
 
 ## 🗂️ 按数学定义组织的测试场景
 
+### 🎯 P0层：基础执行验证
+
+#### T0.1: 最小可执行图验证
+**测试场景 T0.1**: 基础执行引擎验证
+
+**核心任务**: 验证最基本的DSL执行能力和包引入机制
+
+**标准接口**: `awakening(sanctum: &str, genesis: &str) -> FateEcho`
+
+**T0.1.1**: 基础start节点执行
+- **圣所结构** (`sanctum/` - DSL源代码目录):
+  ```
+  sanctum/
+  ├── basic.anima          # basic包定义
+  └── genesis.weave     # 测试图
+  ```
+
+- **basic.anima内容**:
+  ```
+  -- types
+  Signal
+  UUID
+  --
+  
+  -- nodes
+  Start {
+      mode Concurrent
+      in {}
+      out {
+          signal Signal
+          execution_id UUID
+      }
+  }
+  --
+  ```
+
+- **genesis.weave内容**:
+  ```
+  -- import
+  basic.anima
+  --
+  
+  -- graph
+  nodes {
+      starter basic.Start
+  }
+  --
+  ```
+
+- **执行**: `awakening("./sanctum", "genesis")`
+- **预期结果**: 
+  - FateEcho.status = Success
+  - FateEcho.outputs包含starter节点的输出值
+  - starter.signal有值（Signal类型）
+  - starter.execution_id有唯一UUID值
+- **验证**: 验证最基本的节点执行和输出生成
+
+**T0.1.2**: 执行唯一性验证
+- **输入DSL**: 与T0.1.1相同
+- **执行**: 连续执行两次相同的图
+- **预期结果**: 两次执行产生不同的execution_id
+- **验证**: 验证每次执行的唯一性
+
+**T0.1.3**: 包引入机制验证
+- **输入DSL**: 不包含import的图文件
+- **执行**: 尝试使用basic.Start但未import
+- **预期结果**: 执行失败，报告未找到类型错误
+- **验证**: 验证包引入机制的必要性
+
+**T0.1.4**: 基础错误处理验证
+- **输入DSL**: 引用不存在的节点类型
+- **执行**: 尝试执行无效图
+- **预期结果**: FateEcho.status = Error，包含明确错误信息
+- **验证**: 验证基础错误处理机制
+
+**关键验证点**:
+- 最基本的节点执行能力
+- 包引入和类型解析
+- 输出值的正确生成
+- 执行唯一性保证
+- 基础错误处理
+
+---
+
 ### 📐 P1层：基础语法解析 (定义1-16)
 
 #### 定义1: 数据类型集合 𝒯
@@ -70,11 +154,151 @@
 - **验证**: section语法结构验证正确
 
 #### 定义2: 控制信号类型 𝒞  
-**测试场景 T1.2**: 控制信号类型解析
-- **输入**: `Signal` 类型在端口定义中的使用
-- **预期**: 解析器区分Signal与数据类型
-- **验证要点**: 控制类型识别、端口分类
-- **测试文件**: 包含Signal端口的节点定义
+**测试场景 T1.2**: 控制信号类型的执行行为验证
+
+**核心任务**: 验证控制信号类型(Signal)在图执行中的正确行为
+
+**标准接口**: `awakening(sanctum: &str, genesis: &str) -> FateEcho`
+
+**T1.2.1**: 基础控制信号传播
+- **输入DSL**:
+  ```
+  -- types
+  Signal
+  --
+  
+  -- nodes
+  Trigger {
+      in { start Signal }
+      out { signal Signal }
+  }
+  
+  Logger {
+      in { log Signal }
+      out {}
+  }
+  --
+  
+  -- graph
+  nodes {
+      trigger Trigger
+      logger Logger
+  }
+  
+  controls {
+      trigger.signal -> logger.log;
+  }
+  --
+  ```
+- **执行**: `awakening("./sanctum", "main")`
+- **预期结果**: 触发trigger.start后，logger.log接收到控制信号
+- **验证**: FateEcho显示控制信号成功传播
+
+**T1.2.2**: 控制信号激活模式AND验证
+- **输入DSL**:
+  ```
+  -- nodes
+  AndGate {
+      in { 
+          signal1 Signal
+          signal2 Signal
+          execute Signal mode=AND
+      }
+      out { result Signal }
+  }
+  --
+  
+  -- graph
+  nodes {
+      source1 Trigger
+      source2 Trigger
+      gate AndGate
+  }
+  
+  controls {
+      source1.signal -> gate.signal1;
+      source2.signal -> gate.signal2;
+      gate.signal1 -> gate.execute;
+      gate.signal2 -> gate.execute;
+  }
+  --
+  ```
+- **执行**: 只触发source1，然后同时触发source1和source2
+- **预期结果**: 第一次执行gate不激活，第二次执行gate激活
+- **验证**: 验证AND模式需要所有控制输入都激活
+
+**T1.2.3**: 控制信号激活模式OR验证  
+- **输入DSL**: 类似T1.2.2但使用`mode=OR`
+- **执行**: 只触发source1
+- **预期结果**: gate立即激活
+- **验证**: 验证OR模式只需要任一控制输入激活
+
+**T1.2.4**: 控制信号激活模式XOR验证
+- **输入DSL**: 类似T1.2.2但使用`mode=XOR`
+- **执行**: 先触发source1，再同时触发source1和source2
+- **预期结果**: 第一次gate激活，第二次gate不激活
+- **验证**: 验证XOR模式需要恰好一个控制输入激活
+
+**T1.2.5**: 控制信号与数据流的分离验证
+- **输入DSL**:
+  ```
+  -- nodes
+  Calculator {
+      in { 
+          a int
+          b int
+          execute Signal mode=AND
+      }
+      out { 
+          result int
+          done Signal
+      }
+  }
+  --
+  
+  -- graph
+  nodes {
+      calc Calculator
+      next Calculator
+  }
+  
+  datas {
+      calc.result -> next.a;
+  }
+  
+  controls {
+      calc.done -> next.execute;
+  }
+  --
+  ```
+- **执行**: 给calc提供数据和控制信号
+- **预期结果**: 数据通过datas连接传播，控制信号通过controls连接传播
+- **验证**: 验证数据流和控制流的正确分离
+
+**T1.2.6**: 复杂控制信号网络验证
+- **输入DSL**: 包含多层控制信号传播的复杂图
+- **执行**: 触发入口控制信号
+- **预期结果**: 控制信号按照连接关系正确传播到所有相关节点
+- **验证**: 验证控制信号在复杂网络中的传播正确性
+
+**T1.2.7**: 控制信号状态空间验证
+- **输入DSL**: 包含控制信号状态转换的图
+- **执行**: 观察控制信号的状态变化(+/-/⊥)
+- **预期结果**: 控制信号状态按数学定义正确转换
+- **验证**: 验证控制端口状态空间{+, -, ⊥}的正确实现
+
+**T1.2.8**: 控制信号错误处理
+- **输入DSL**: 包含无效控制信号连接的DSL
+- **执行**: 尝试执行无效图
+- **预期结果**: 引擎报告控制信号相关的错误
+- **验证**: 验证控制信号类型检查和错误报告机制
+
+**关键行为验证点**:
+- 控制信号传播的正确性
+- 激活模式(AND/OR/XOR)的语义正确性
+- 控制流与数据流的分离
+- 控制信号状态空间的正确实现
+- 错误情况的正确处理
 
 #### 定义3: 端口定义
 **测试场景 T1.3**: 端口声明语法

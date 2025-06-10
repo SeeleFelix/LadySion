@@ -1,0 +1,15 @@
+-- types
+Signal
+UUID
+--
+
+-- nodes
+Start {
+    mode Concurrent
+    in {}
+    out {
+        signal Signal
+        execution_id UUID
+    }
+}
+-- 

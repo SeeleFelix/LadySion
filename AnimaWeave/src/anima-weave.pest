@@ -1,17 +1,18 @@
 // AnimaWeave DSL - Pest Grammar
 // Converted from EBNF to PEG (Parsing Expression Grammar)
 
-WHITESPACE = _{ " " | "\t" }
+// 重新启用WHITESPACE，但确保不匹配四个连续空格
+WHITESPACE = _{ !("    ") ~ (" " | "\t") }
 NEWLINE = _{ "\r\n" | "\n" }
 COMMENT = _{ "//" ~ (!NEWLINE ~ ANY)* }
 
 // ========== Top Level Structure ==========
 AnimaWeave_file = { SOI ~ file_content ~ EOI }
 
-file_content = { definition_file | graph_file }
+file_content = { graph_file | definition_file }
 
 definition_file = { (import_section | types_section | nodes_section)+ }
-graph_file = { import_section? ~ graph_section }
+graph_file = { import_section? ~ NEWLINE* ~ graph_section }
 
 // ========== Import Section ==========
 import_section = { section_header_import ~ import_list ~ section_end }
@@ -50,8 +51,11 @@ graph_section = { section_header_graph ~ graph_body ~ section_end }
 section_header_graph = { "--" ~ "graph" ~ NEWLINE }
 graph_body = { nodes_instance_section? ~ data_connection_section? ~ control_connection_section? }
 
-nodes_instance_section = { "nodes" ~ "{" ~ NEWLINE ~ node_instance* ~ "}" ~ NEWLINE }
-node_instance = { identifier ~ qualified_name ~ instance_override? ~ NEWLINE }
+// 使用atomic规则(@)解决WHITESPACE自动插入与缩进冲突的问题
+// 关键：atomic规则禁用了pest的自动空格处理，确保四个空格缩进能正确匹配
+nodes_instance_section = @{ "nodes" ~ " "? ~ "{" ~ "\n" ~ node_instances ~ "}" ~ "\n"? }
+node_instances = { node_instance* }
+node_instance = { "    " ~ identifier ~ " " ~ qualified_name ~ instance_override? ~ "\n" }
 instance_override = { "{" ~ NEWLINE ~ override_declaration* ~ "}" }
 override_declaration = { (mode_override | port_override) ~ NEWLINE }
 mode_override = { "mode" ~ concurrent_mode }

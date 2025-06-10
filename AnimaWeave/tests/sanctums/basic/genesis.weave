@@ -1,0 +1,9 @@
+-- import
+basic.anima
+--
+ 
+-- graph
+nodes {
+    starter basic.Start
+}
+-- 
