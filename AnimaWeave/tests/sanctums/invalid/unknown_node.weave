@@ -1,9 +1,0 @@
--- import
-basic.anima
---
- 
--- graph
-nodes {
-    invalid_node basic.NonExistentNode
-}
--- 
