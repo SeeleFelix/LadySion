@@ -13,7 +13,7 @@ use anima_weave::{awakening, ExecutionStatus};
 fn t0_0_debug_actual_outputs() {
     println!("Testing genesis.weave execution");
     
-    let result = awakening("tests/sanctums/basic", "genesis");
+    let result = awakening("tests/sanctums", "genesis");
     
     println!("执行状态: {:?}", result.status);
     println!("实际输出: {}", serde_json::to_string(&result.outputs).unwrap());
@@ -21,7 +21,7 @@ fn t0_0_debug_actual_outputs() {
 
 #[test]
 fn t0_1_awakening_simple_trigger() {
-    let result = awakening("tests/sanctums/basic", "genesis");
+    let result = awakening("tests/sanctums", "genesis");
     
     assert_eq!(result.status, ExecutionStatus::Success);
     
@@ -34,12 +34,13 @@ fn t0_1_awakening_simple_trigger() {
     // 新的序列化格式包含类型信息
     assert_eq!(starter_signal["type"], "Signal");
     assert_eq!(starter_signal["version"], 1);
-    assert!(starter_signal["size_bytes"].as_u64().unwrap() > 0);
+    // Signal包含active字段，序列化后size_bytes为1
+    assert_eq!(starter_signal["size_bytes"].as_u64().unwrap(), 1);
 }
 
 #[test]
 fn t0_2_awakening_uuid_generation() {
-    let result = awakening("tests/sanctums/basic", "genesis");
+    let result = awakening("tests/sanctums", "genesis");
     
     assert_eq!(result.status, ExecutionStatus::Success);
     
@@ -56,7 +57,7 @@ fn t0_2_awakening_uuid_generation() {
 
 #[test]
 fn t0_3_validate_uuid_format() {
-    let result = awakening("tests/sanctums/basic", "genesis");
+    let result = awakening("tests/sanctums", "genesis");
     
     assert_eq!(result.status, ExecutionStatus::Success);
     

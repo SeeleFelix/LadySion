@@ -27,21 +27,46 @@ impl PestDslParser {
                 let mut types = Vec::new();
                 let mut nodes = HashMap::new();
                 
-                for line in file_pair.into_inner() {
-                    match line.as_rule() {
-                        Rule::import_section => {
-                            // 处理import section
-                            eprintln!("Debug: 处理import section");
-                        }
-                        Rule::types_section => {
-                            self.parse_types_section(line, &mut types)?;
-                        }
-                        Rule::nodes_section => {
-                            self.parse_nodes_section(line, &mut nodes)?;
+                for section in file_pair.into_inner() {
+                    match section.as_rule() {
+                        Rule::file_content => {
+                            // 处理file_content，内部应该是definition_file
+                            for content_part in section.into_inner() {
+                                match content_part.as_rule() {
+                                    Rule::definition_file => {
+                                        // 处理definition_file内容
+                                        for def_part in content_part.into_inner() {
+                                            match def_part.as_rule() {
+                                                Rule::import_section => {
+                                                    eprintln!("Debug: 处理import section");
+                                                }
+                                                Rule::types_section => {
+                                                    eprintln!("Debug: 处理types section");
+                                                    self.parse_types_section(def_part, &mut types)?;
+                                                }
+                                                Rule::nodes_section => {
+                                                    eprintln!("Debug: 处理nodes section");
+                                                    self.parse_nodes_section(def_part, &mut nodes)?;
+                                                }
+                                                _ => {
+                                                    eprintln!("Debug: definition_file中未处理的规则: {:?}", def_part.as_rule());
+                                                }
+                                            }
+                                        }
+                                    }
+                                    Rule::graph_file => {
+                                        // 对于.anima文件，通常不应该是graph_file
+                                        eprintln!("Warning: .anima文件包含graph_file内容");
+                                    }
+                                    _ => {
+                                        eprintln!("Debug: file_content中未处理的规则: {:?}", content_part.as_rule());
+                                    }
+                                }
+                            }
                         }
                         Rule::EOI => {}
                         _ => {
-                            eprintln!("Debug: 未处理的规则: {:?}", line.as_rule());
+                            eprintln!("Debug: 顶层未处理的规则: {:?}", section.as_rule());
                         }
                     }
                 }
@@ -76,16 +101,39 @@ impl PestDslParser {
                 
                 for section in file_pair.into_inner() {
                     match section.as_rule() {
-                        Rule::graph_section => {
-                            self.parse_graph_section(section, &mut graph)?;
-                        }
-                        Rule::import_section => {
-                            // 处理import section
-                            eprintln!("Debug: 处理import section");
+                        Rule::file_content => {
+                            // 处理file_content，内部可能是graph_file或definition_file
+                            for content_part in section.into_inner() {
+                                match content_part.as_rule() {
+                                    Rule::graph_file => {
+                                        // 处理graph_file内容
+                                        for graph_part in content_part.into_inner() {
+                                            match graph_part.as_rule() {
+                                                Rule::import_section => {
+                                                    self.parse_import_section_new(graph_part, &mut graph.imports)?;
+                                                }
+                                                Rule::graph_section => {
+                                                    self.parse_graph_section(graph_part, &mut graph)?;
+                                                }
+                                                _ => {
+                                                    eprintln!("Debug: graph_file中未处理的规则: {:?}", graph_part.as_rule());
+                                                }
+                                            }
+                                        }
+                                    }
+                                    Rule::definition_file => {
+                                        // 对于.weave文件，通常不应该是definition_file
+                                        eprintln!("Warning: .weave文件包含definition_file内容");
+                                    }
+                                    _ => {
+                                        eprintln!("Debug: file_content中未处理的规则: {:?}", content_part.as_rule());
+                                    }
+                                }
+                            }
                         }
                         Rule::EOI => {}
                         _ => {
-                            eprintln!("Debug: 未处理的规则: {:?}", section.as_rule());
+                            eprintln!("Debug: 顶层未处理的规则: {:?}", section.as_rule());
                         }
                     }
                 }
@@ -202,8 +250,8 @@ impl PestDslParser {
         for inner in mode_decl.into_inner() {
             if inner.as_rule() == Rule::concurrent_mode {
                 return match inner.as_str() {
-                    "concurrent" => Ok(ExecutionMode::Concurrent),
-                    "sequential" => Ok(ExecutionMode::Sequential),
+                    "Concurrent" => Ok(ExecutionMode::Concurrent),
+                    "Sequential" => Ok(ExecutionMode::Sequential),
                     _ => Err(format!("未知的执行模式: {}", inner.as_str())),
                 };
             }
@@ -267,15 +315,27 @@ impl PestDslParser {
     
     fn parse_import_section_new(&self, import_section: pest::iterators::Pair<Rule>, imports: &mut Vec<String>) -> Result<(), String> {
         for inner in import_section.into_inner() {
-            if inner.as_rule() == Rule::import_statement {
-                imports.push(inner.as_str().to_string());
+            match inner.as_rule() {
+                Rule::import_list => {
+                    for import_statement in inner.into_inner() {
+                        if import_statement.as_rule() == Rule::import_statement {
+                            let mut statement_inner = import_statement.into_inner();
+                            if let Some(qualified_name) = statement_inner.next() {
+                                imports.push(qualified_name.as_str().to_string());
+                            }
+                        }
+                    }
+                }
+                _ => {}
             }
         }
         Ok(())
     }
     
     fn parse_graph_section(&self, graph_section: pest::iterators::Pair<Rule>, graph: &mut GraphDefinition) -> Result<(), String> {
+        eprintln!("Debug: 开始解析graph_section");
         for content in graph_section.into_inner() {
+            eprintln!("Debug: 处理graph_section中的规则: {:?}", content.as_rule());
             match content.as_rule() {
                 Rule::graph_body => {
                     for body_content in content.into_inner() {
@@ -300,9 +360,19 @@ impl PestDslParser {
     }
     
     fn parse_nodes_instance_section(&self, nodes_section: pest::iterators::Pair<Rule>, nodes: &mut HashMap<String, NodeSpec>) -> Result<(), String> {
-        for content in nodes_section.into_inner() {
+        eprintln!("Debug: 开始解析nodes_instance_section");
+        eprintln!("Debug: nodes_section规则: {:?}", nodes_section.as_rule());
+        eprintln!("Debug: nodes_section内容: '{}'", nodes_section.as_str());
+        
+        let inner_count = nodes_section.clone().into_inner().count();
+        eprintln!("Debug: nodes_section内部规则数量: {}", inner_count);
+        
+        for (i, content) in nodes_section.into_inner().enumerate() {
+            eprintln!("Debug: 第{}个内部规则: {:?}, 内容: '{}'", i, content.as_rule(), content.as_str());
             if content.as_rule() == Rule::node_instances {
-                for node_instance in content.into_inner() {
+                eprintln!("Debug: 找到node_instances，开始解析");
+                for (j, node_instance) in content.into_inner().enumerate() {
+                    eprintln!("Debug: 第{}个node_instance: {:?}, 内容: '{}'", j, node_instance.as_rule(), node_instance.as_str());
                     if node_instance.as_rule() == Rule::node_instance {
                         let mut inner = node_instance.into_inner();
                         let instance_name = inner.next().unwrap().as_str().to_string();
@@ -315,6 +385,8 @@ impl PestDslParser {
                         } else {
                             ("default".to_string(), qualified_name)
                         };
+                        
+                        eprintln!("Debug: 解析到节点实例: {} -> {}.{}", instance_name, package, node_type);
                         
                         nodes.insert(instance_name.clone(), NodeSpec {
                             instance_name,

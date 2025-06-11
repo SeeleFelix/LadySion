@@ -236,15 +236,30 @@ impl AnimaSystem {
         
         for package_name in imports {
             let anima_def = self.find_and_parse_anima_file(package_name)?;
-            anima_defs.insert(package_name.clone(), anima_def);
+            
+            // 统一包名：去掉.anima后缀，以便与节点引用的包名匹配
+            let normalized_package_name = if package_name.ends_with(".anima") {
+                &package_name[..package_name.len() - 6]
+            } else {
+                package_name
+            };
+            
+            anima_defs.insert(normalized_package_name.to_string(), anima_def);
         }
         
         Ok(anima_defs)
     }
     
     fn find_and_parse_anima_file(&self, package_name: &str) -> Result<AnimaDefinition, String> {
+        // 处理包名：如果是basic.anima形式，提取基础名称
+        let base_package_name = if package_name.ends_with(".anima") {
+            &package_name[..package_name.len() - 6] // 去掉.anima后缀
+        } else {
+            package_name
+        };
+        
         // 首先检查指定圣所目录
-        let sanctum_path = format!("{}/{}.anima", self.sanctum_path, package_name);
+        let sanctum_path = format!("{}/{}.anima", self.sanctum_path, base_package_name);
         if Path::new(&sanctum_path).exists() {
             let content = std::fs::read_to_string(&sanctum_path)
                 .map_err(|e| format!("读取包文件失败: {}", e))?;
@@ -252,9 +267,9 @@ impl AnimaSystem {
         }
         
         // 然后检查插件类路径
-        let classpath_dirs = self.plugin_registry.get_package_classpath(package_name)?;
+        let classpath_dirs = self.plugin_registry.get_package_classpath(base_package_name)?;
         for dir in classpath_dirs {
-            let file_path = format!("{}/{}.anima", dir, package_name);
+            let file_path = format!("{}/{}.anima", dir, base_package_name);
             if Path::new(&file_path).exists() {
                 let content = std::fs::read_to_string(&file_path)
                     .map_err(|e| format!("读取包文件失败: {}", e))?;
@@ -262,7 +277,7 @@ impl AnimaSystem {
             }
         }
         
-        Err(format!("包定义文件未找到: {}", package_name))
+        Err(format!("包定义文件未找到: {}", base_package_name))
     }
     
     fn validate_graph(&self, graph: &GraphDefinition, anima_defs: &HashMap<String, AnimaDefinition>) -> Result<(), String> {
@@ -285,6 +300,11 @@ impl AnimaSystem {
     fn execute_graph(&self, graph: &GraphDefinition) -> FateEcho {
         // 简化的执行逻辑：按顺序执行所有节点
         let mut outputs = NodeOutputs::new();
+        
+        eprintln!("Debug: 开始执行图，节点数量: {}", graph.nodes.len());
+        for (name, spec) in &graph.nodes {
+            eprintln!("Debug: 节点 {} -> 类型 {}.{}", name, spec.package, spec.node_type);
+        }
         
         for (instance_name, node_spec) in &graph.nodes {
             // 准备节点输入

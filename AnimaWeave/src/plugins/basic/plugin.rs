@@ -12,8 +12,15 @@ pub struct BasicPlugin;
 // ===== Basic Package Type Definitions =====
 
 /// Signal类型 - 表示控制流信号
+/// 
+/// 语义：
+/// 1. `active = true`  表示激活信号 (+)
+/// 2. `active = false` 表示失活信号 (−)
+///   目前暂不实现 `No_Signal (⊥)`，由 Option<Signal> 表示缺失。
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Signal;
+pub struct Signal {
+    pub active: bool,
+}
 
 impl Type for Signal {
     fn type_name(&self) -> &'static str {
@@ -21,22 +28,34 @@ impl Type for Signal {
     }
     
     fn to_bytes(&self) -> Result<Vec<u8>, String> {
-        bincode::serialize(self)
-            .map_err(|e| format!("Signal序列化失败: {}", e))
+        // 序列化为单字节：0 = inactive, 1 = active
+        Ok(vec![if self.active { 1u8 } else { 0u8 }])
     }
     
     fn from_bytes(bytes: &[u8]) -> Result<Box<dyn Type>, String> {
-        let signal: Signal = bincode::deserialize(bytes)
-            .map_err(|e| format!("Signal反序列化失败: {}", e))?;
-        Ok(Box::new(signal))
+        if bytes.len() != 1 {
+            return Err("Signal字节流长度应为1".to_string());
+        }
+        let active = bytes[0] != 0;
+        Ok(Box::new(Signal { active }))
     }
     
     fn to_json(&self) -> serde_json::Value {
-        serde_json::Value::String("Signal".to_string())
+        serde_json::json!({
+            "state": if self.active { "active" } else { "inactive" }
+        })
     }
     
     fn from_json(_value: serde_json::Value) -> Result<Box<dyn Type>, String> {
-        Ok(Box::new(Signal))
+        match _value {
+            serde_json::Value::Object(map) => {
+                let state = map.get("state")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| "Signal JSON缺少state字段".to_string())?;
+                Ok(Box::new(Signal { active: state == "active" }))
+            }
+            _ => Err("Signal JSON格式错误".to_string()),
+        }
     }
     
     fn as_any(&self) -> &dyn Any {
@@ -117,13 +136,13 @@ impl ExecutionEnginePlugin for BasicPlugin {
 
 impl TypeSystemPlugin for BasicPlugin {
     fn register_types(&self, registry: &mut HashMap<String, Box<dyn Type>>) {
-        registry.insert("Signal".to_string(), Box::new(Signal));
+        registry.insert("Signal".to_string(), Box::new(Signal { active: true }));
         registry.insert("UUID".to_string(), Box::new(UUIDType { value: String::new() }));
     }
     
     fn create_default_value(&self, type_name: &str) -> Result<Box<dyn Type>, String> {
         match type_name {
-            "Signal" => Ok(Box::new(Signal)),
+            "Signal" => Ok(Box::new(Signal { active: true })),
             "UUID" => Ok(Box::new(UUIDType { value: String::new() })),
             _ => Err(format!("未知类型: {}", type_name)),
         }
@@ -135,7 +154,7 @@ impl BasicPlugin {
         let mut outputs = NodeOutputs::new();
         
         // Start节点输出signal和execution_id
-        outputs.insert("signal", Signal)?;
+        outputs.insert("signal", Signal { active: true })?;
         
         let uuid = UUIDType {
             value: format!("uuid-{}", chrono::Utc::now().timestamp_millis()),
@@ -147,7 +166,7 @@ impl BasicPlugin {
     
     fn execute_trigger(&self, _inputs: NodeInputs) -> Result<NodeOutputs, String> {
         let mut outputs = NodeOutputs::new();
-        outputs.insert("signal", Signal)?;
+        outputs.insert("signal", Signal { active: true })?;
         Ok(outputs)
     }
     

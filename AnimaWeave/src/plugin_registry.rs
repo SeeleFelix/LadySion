@@ -47,13 +47,13 @@ impl PluginRegistry {
     /// 自动发现并注册内置插件
     pub fn discover_builtin_plugins(&mut self) -> Result<(), String> {
         // 注册basic插件
-        use crate::plugins::basic::plugin::BasicPlugin;
+        use crate::plugins::basic::BasicPlugin;
         
         let basic_plugin = BasicPlugin;
         
-        // 注册basic包的classpath
+        // 注册basic包的classpath - 指向统一的sanctums目录
         let basic_classpath = vec![
-            "src/plugins/basic/sanctum".to_string(),
+            "sanctums".to_string(),
         ];
         self.register_package_classpath("basic".to_string(), basic_classpath);
         
