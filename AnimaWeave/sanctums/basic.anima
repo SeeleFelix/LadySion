@@ -11,43 +11,43 @@ Start {
     mode Concurrent
     in {}
     out {
-        signal Signal
-        execution_id UUID
+        signal basic.Signal
+        execution_id basic.UUID
     }
 }
 
 GetTimestamp {
     mode Concurrent
     in {
-        trigger Signal
+        trigger basic.Signal
     }
     out {
-        timestamp Int
-        done Signal
+        timestamp basic.Int
+        done basic.Signal
     }
 }
 
 IsEven {
     mode Concurrent
     in {
-        number Int
-        trigger Signal
+        number basic.Int
+        trigger basic.Signal
     }
     out {
-        result Bool
-        done Signal
+        result basic.Bool
+        done basic.Signal
     }
 }
 
 FormatNumber {
     mode Concurrent
     in {
-        number Int
-        trigger Signal
+        number basic.Int
+        trigger basic.Signal
     }
     out {
-        formatted String
-        done Signal
+        formatted basic.String
+        done basic.Signal
     }
 }
 -- 

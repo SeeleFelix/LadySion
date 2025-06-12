@@ -94,7 +94,7 @@ impl PestDslParser {
                 
                 let mut graph = GraphDefinition {
                     imports: Vec::new(),
-                    nodes: HashMap::new(),
+                    node_instances: HashMap::new(),
                     data_connections: Vec::new(),
                     control_connections: Vec::new(),
                 };
@@ -341,7 +341,7 @@ impl PestDslParser {
                     for body_content in content.into_inner() {
                         match body_content.as_rule() {
                             Rule::nodes_instance_section => {
-                                self.parse_nodes_instance_section(body_content, &mut graph.nodes)?;
+                                self.parse_nodes_instance_section(body_content, &mut graph.node_instances)?;
                             }
                             Rule::data_connection_section => {
                                 self.parse_data_connections(body_content, &mut graph.data_connections)?;

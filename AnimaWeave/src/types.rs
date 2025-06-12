@@ -1,166 +1,203 @@
 use std::any::Any;
+use std::collections::HashMap;
 use std::fmt::Debug;
 use serde::{Serialize, Deserialize};
 
-/// 核心类型trait - 支持多种序列化方案
-pub trait Type: Send + Sync + Debug {
-    fn type_name(&self) -> &'static str;
-    
-    /// 类型安全的二进制序列化（推荐用于节点间传递）
-    fn to_bytes(&self) -> Result<Vec<u8>, String>;
-    fn from_bytes(bytes: &[u8]) -> Result<Box<dyn Type>, String> where Self: Sized;
-    
-    /// JSON序列化（用于调试和可读性）
-    fn to_json(&self) -> serde_json::Value;
-    fn from_json(value: serde_json::Value) -> Result<Box<dyn Type>, String> where Self: Sized;
-    
-    /// 运行时类型检查
-    fn as_any(&self) -> &dyn Any;
-    fn clone_type(&self) -> Box<dyn Type>;
-    fn is_compatible_with(&self, other: &dyn Type) -> bool;
+/// 类型描述符 - 包含类型的完整信息
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct TypeDescriptor {
+    pub package: String,
+    pub type_name: String,
+    pub qualified_name: String, // package.type_name
 }
 
-/// 支持版本化的序列化包装器
-#[derive(Serialize, Deserialize, Debug, Clone)]
+impl TypeDescriptor {
+    pub fn new(package: &str, type_name: &str) -> Self {
+        Self {
+            package: package.to_string(),
+            type_name: type_name.to_string(),
+            qualified_name: format!("{}.{}", package, type_name),
+        }
+    }
+}
+
+/// 类型化值 - 保留完整类型信息的值容器
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct TypedValue {
-    type_name: String,
-    version: u32,
-    data: Vec<u8>,
+    pub type_descriptor: TypeDescriptor,
+    pub data: serde_json::Value, // 使用JSON存储，简单有效
 }
 
 impl TypedValue {
-    pub fn new<T: Type + Serialize>(value: &T) -> Result<Self, String> {
-        let data = bincode::serialize(value)
+    /// 从任意可序列化值创建TypedValue
+    pub fn new<T: Serialize>(type_desc: TypeDescriptor, value: &T) -> Result<Self, String> {
+        let data = serde_json::to_value(value)
             .map_err(|e| format!("序列化失败: {}", e))?;
         
-        Ok(TypedValue {
-            type_name: value.type_name().to_string(),
-            version: 1, // TODO: 从类型注册表获取版本
+        Ok(Self {
+            type_descriptor: type_desc,
             data,
         })
     }
     
-    pub fn deserialize<T: Type + for<'de> Deserialize<'de>>(&self) -> Result<T, String> {
-        bincode::deserialize(&self.data)
+    /// 反序列化为指定类型
+    pub fn deserialize<T: for<'de> Deserialize<'de>>(&self) -> Result<T, String> {
+        serde_json::from_value(self.data.clone())
             .map_err(|e| format!("反序列化失败: {}", e))
+    }
+    
+    /// 获取完全限定的类型名称
+    pub fn qualified_type_name(&self) -> &str {
+        &self.type_descriptor.qualified_name
     }
 }
 
-/// 类型安全的容器
-#[derive(Debug)]
-pub struct NodeInputs {
-    pub(crate) inputs: std::collections::HashMap<String, TypedValue>,
+/// 核心类型trait - 专注类型信息和实例创建
+pub trait Type: Send + Sync + Debug {
+    /// 类型名称（不含包名）
+    fn type_name() -> &'static str where Self: Sized;
+    
+    /// 包名称
+    fn package_name() -> &'static str where Self: Sized;
+    
+    /// 完全限定的类型名称（包名.类型名）
+    fn qualified_type_name() -> String where Self: Sized {
+        format!("{}.{}", Self::package_name(), Self::type_name())
+    }
+    
+    /// 获取类型描述符
+    fn type_descriptor() -> TypeDescriptor where Self: Sized {
+        TypeDescriptor::new(Self::package_name(), Self::type_name())
+    }
+    
+    /// 转换为TypedValue
+    fn to_typed_value(&self) -> Result<TypedValue, String> where Self: Serialize + Sized {
+        TypedValue::new(Self::type_descriptor(), self)
+    }
+    
+    /// 从TypedValue创建实例
+    fn from_typed_value(typed_value: &TypedValue) -> Result<Self, String> 
+    where 
+        Self: Sized + for<'de> Deserialize<'de> 
+    {
+        // 检查类型匹配
+        let expected = Self::qualified_type_name();
+        if typed_value.qualified_type_name() != expected {
+            return Err(format!(
+                "类型不匹配: 期望 {}, 实际 {}", 
+                expected, 
+                typed_value.qualified_type_name()
+            ));
+        }
+        
+        typed_value.deserialize()
+    }
+    
+    /// 运行时类型检查
+    fn as_any(&self) -> &dyn Any;
+    
+    /// 克隆为新的动态类型实例
+    fn clone_boxed(&self) -> Box<dyn Any>;
 }
 
-#[derive(Debug)]
-pub struct NodeOutputs {
-    pub(crate) outputs: std::collections::HashMap<String, TypedValue>,
+/// 节点输入容器
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct NodeInputs {
+    pub inputs: HashMap<String, TypedValue>, // 存储类型化值
 }
 
 impl NodeInputs {
     pub fn new() -> Self {
         Self {
-            inputs: std::collections::HashMap::new(),
+            inputs: HashMap::new(),
         }
     }
     
-    pub fn insert<T: Type + Serialize>(&mut self, name: &str, value: T) -> Result<(), String> {
-        let typed_value = TypedValue::new(&value)?;
+    /// 插入值 - 自动序列化
+    pub fn insert<T: Type + Serialize>(&mut self, name: &str, value: &T) -> Result<(), String> {
+        let typed_value = value.to_typed_value()?;
         self.inputs.insert(name.to_string(), typed_value);
         Ok(())
     }
     
+    /// 获取值 - 自动反序列化和类型检查
     pub fn get<T: Type + for<'de> Deserialize<'de>>(&self, name: &str) -> Result<T, String> {
         let typed_value = self.inputs.get(name)
-            .ok_or_else(|| format!("输入 '{}' 不存在", name))?;
-        typed_value.deserialize::<T>()
+            .ok_or_else(|| format!("输入端口 {} 不存在", name))?;
+        
+        T::from_typed_value(typed_value)
     }
     
-    /// 调试用的JSON输出
-    pub fn to_json(&self) -> serde_json::Value {
-        let mut json_obj = serde_json::Map::new();
-        for (key, typed_value) in &self.inputs {
-            json_obj.insert(key.clone(), serde_json::json!({
-                "type": typed_value.type_name,
-                "version": typed_value.version,
-                "size_bytes": typed_value.data.len()
-            }));
-        }
-        serde_json::Value::Object(json_obj)
+    /// 获取原始TypedValue
+    pub fn get_raw(&self, name: &str) -> Option<&TypedValue> {
+        self.inputs.get(name)
     }
+    
+    /// 插入原始TypedValue
+    pub fn insert_raw(&mut self, name: &str, typed_value: TypedValue) {
+        self.inputs.insert(name.to_string(), typed_value);
+    }
+    
+    /// 检查是否包含指定端口
+    pub fn contains(&self, name: &str) -> bool {
+        self.inputs.contains_key(name)
+    }
+    
+    /// 获取所有输入的类型信息
+    pub fn get_type_info(&self) -> HashMap<String, String> {
+        self.inputs.iter()
+            .map(|(name, value)| (name.clone(), value.qualified_type_name().to_string()))
+            .collect()
+    }
+}
+
+/// 节点输出容器
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct NodeOutputs {
+    pub outputs: HashMap<String, TypedValue>, // 存储类型化值
 }
 
 impl NodeOutputs {
     pub fn new() -> Self {
         Self {
-            outputs: std::collections::HashMap::new(),
+            outputs: HashMap::new(),
         }
     }
     
-    pub fn insert<T: Type + Serialize>(&mut self, name: &str, value: T) -> Result<(), String> {
-        let typed_value = TypedValue::new(&value)?;
+    /// 插入值 - 自动序列化
+    pub fn insert<T: Type + Serialize>(&mut self, name: &str, value: &T) -> Result<(), String> {
+        let typed_value = value.to_typed_value()?;
         self.outputs.insert(name.to_string(), typed_value);
         Ok(())
     }
     
+    /// 获取值 - 自动反序列化和类型检查
     pub fn get<T: Type + for<'de> Deserialize<'de>>(&self, name: &str) -> Result<T, String> {
         let typed_value = self.outputs.get(name)
-            .ok_or_else(|| format!("输出 '{}' 不存在", name))?;
-        typed_value.deserialize::<T>()
+            .ok_or_else(|| format!("输出端口 {} 不存在", name))?;
+        
+        T::from_typed_value(typed_value)
     }
     
-    /// 检查输出是否为空
-    pub fn is_empty(&self) -> bool {
-        self.outputs.is_empty()
+    /// 获取原始TypedValue
+    pub fn get_raw(&self, name: &str) -> Option<&TypedValue> {
+        self.outputs.get(name)
     }
     
-    /// 调试用的JSON输出
-    pub fn to_json(&self) -> serde_json::Value {
-        let mut json_obj = serde_json::Map::new();
-        for (key, typed_value) in &self.outputs {
-            json_obj.insert(key.clone(), serde_json::json!({
-                "type": typed_value.type_name,
-                "version": typed_value.version,
-                "size_bytes": typed_value.data.len()
-            }));
-        }
-        serde_json::Value::Object(json_obj)
+    /// 插入原始TypedValue
+    pub fn insert_raw(&mut self, name: &str, typed_value: TypedValue) {
+        self.outputs.insert(name.to_string(), typed_value);
+    }
+    
+    /// 检查是否包含指定端口
+    pub fn contains(&self, name: &str) -> bool {
+        self.outputs.contains_key(name)
+    }
+    
+    /// 获取所有输出的类型信息
+    pub fn get_type_info(&self) -> HashMap<String, String> {
+        self.outputs.iter()
+            .map(|(name, value)| (name.clone(), value.qualified_type_name().to_string()))
+            .collect()
     }
 }
-
-// 为NodeOutputs实现Clone
-impl Clone for NodeOutputs {
-    fn clone(&self) -> Self {
-        Self {
-            outputs: self.outputs.clone(),
-        }
-    }
-}
-
-// 为NodeOutputs实现PartialEq - 基于JSON比较
-impl PartialEq for NodeOutputs {
-    fn eq(&self, other: &Self) -> bool {
-        self.to_json() == other.to_json()
-    }
-}
-
-// 为NodeOutputs实现Serialize
-impl Serialize for NodeOutputs {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        self.to_json().serialize(serializer)
-    }
-}
-
-// 为NodeOutputs实现Deserialize
-impl<'de> Deserialize<'de> for NodeOutputs {
-    fn deserialize<D>(_deserializer: D) -> Result<NodeOutputs, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        // 简化的反序列化实现
-        Ok(NodeOutputs::new())
-    }
-} 

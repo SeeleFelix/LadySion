@@ -6,99 +6,287 @@
 // - FateEcho: 命运回音 (ExecutionResult)
 
 use std::collections::HashMap;
-use std::path::Path;
-use serde::{Deserialize, Serialize};
-use std::any::Any;
-use std::fmt::Debug;
+use serde_json;
 
 // 导入插件模块 (内部使用)
-mod plugins {
-    pub mod basic;
-}
+mod plugins;
 mod plugin_registry;
 mod types;
 mod parser;
-mod dsl {
-    pub use crate::{NodeSpec, NodeOverrides, ExecutionMode, ControlMode};
+
+// 重新导出核心类型
+pub use types::{TypedValue, NodeInputs, NodeOutputs, Type, TypeDescriptor};
+pub use plugin_registry::PluginRegistry;
+// parser函数通过内部调用，不需要重新导出
+
+// 重新导出插件接口
+pub trait ExecutionEnginePlugin: Send + Sync {
+    fn execute_node(&self, node_type: &str, inputs: &NodeInputs) -> Result<NodeOutputs, String>;
+    fn supported_node_types(&self) -> Vec<String>;
 }
 
-use plugin_registry::PluginRegistry;
-use parser::PestDslParser;
-pub use types::{Type, NodeInputs, NodeOutputs, TypedValue};
+pub trait TypeSystemPlugin: Send + Sync {
+    fn create_default_typed_value(&self, type_name: &str) -> Result<TypedValue, String>;
+    fn supported_types(&self) -> Vec<String>;
+}
 
 // ===== 对外接口 - 最小化暴露 =====
 
-/// 觉醒函数 - 系统唯一对外接口
-/// 
-/// # 参数
-/// - `sanctum`: 圣所路径，包含所有DSL源文件的目录
-/// - `genesis`: 创世图名称，不含扩展名
-/// 
-/// # 返回
-/// - `FateEcho`: 执行结果，包含状态、输出和元数据
-pub fn awakening(sanctum: &str, genesis: &str) -> FateEcho {
-    let system = match AnimaSystem::initialize(sanctum) {
-        Ok(system) => system,
-        Err(e) => return FateEcho::error(format!("系统初始化失败: {}", e)),
+/// AnimaWeave主执行函数
+pub fn awakening(sanctum_path: &str, weave_filename: &str) -> FateEcho {
+    // 1. 初始化插件注册表
+    let mut plugin_registry = PluginRegistry::new();
+    if let Err(e) = plugin_registry.initialize_basic_plugins() {
+        return FateEcho {
+            status: ExecutionStatus::Error(format!("插件初始化失败: {}", e)),
+            outputs: "{}".to_string(),
+        };
+    }
+
+    // 2. 解析weave文件
+    let weave_file_path = format!("{}/{}.weave", sanctum_path, weave_filename);
+    let weave_content = match std::fs::read_to_string(&weave_file_path) {
+        Ok(content) => content,
+        Err(e) => {
+            return FateEcho {
+                status: ExecutionStatus::Error(format!("读取weave文件失败: {}", e)),
+                outputs: "{}".to_string(),
+            };
+        }
     };
+
+    let parser = parser::PestDslParser::new();
+    let graph_definition = match parser.parse_graph_file(&weave_content) {
+        Ok(def) => def,
+        Err(e) => {
+            return FateEcho {
+                status: ExecutionStatus::Error(format!("解析weave文件失败: {}", e)),
+                outputs: "{}".to_string(),
+            };
+        }
+    };
+
+    // 3. 执行图 - 真正的图执行引擎
+    let execution_result = execute_graph(&graph_definition, &plugin_registry);
+    let all_outputs = match execution_result {
+        Ok(outputs) => outputs,
+        Err(e) => {
+            return FateEcho {
+                status: ExecutionStatus::Error(e),
+                outputs: "{}".to_string(),
+            };
+        }
+    };
+
+    // 5. 返回执行结果
+    FateEcho {
+        status: ExecutionStatus::Success,
+        outputs: serialize_outputs(&all_outputs),
+    }
+}
+
+/// 图执行引擎 - 事件驱动的动态执行模型
+fn execute_graph(graph: &GraphDefinition, registry: &PluginRegistry) -> Result<HashMap<String, NodeOutputs>, String> {
+    let mut all_outputs: HashMap<String, NodeOutputs> = HashMap::new();
+    let mut executed_nodes: std::collections::HashSet<String> = std::collections::HashSet::new();
+    let mut ready_nodes: Vec<String> = Vec::new();
     
-    system.execute_genesis(genesis)
+    // 1. 找到所有的Start节点作为入口点
+    for (node_name, node_spec) in &graph.node_instances {
+        if node_spec.node_type == "Start" {
+            ready_nodes.push(node_name.clone());
+            eprintln!("Debug: 找到启动节点: {}", node_name);
+        }
+    }
+    
+    if ready_nodes.is_empty() {
+        return Err("图中没有找到Start节点作为执行入口".to_string());
+    }
+    
+    // 2. 事件驱动循环：持续执行直到没有就绪节点
+    while !ready_nodes.is_empty() {
+        let mut next_ready_nodes = Vec::new();
+        
+        // 并行执行所有就绪节点
+        for node_name in ready_nodes {
+            if executed_nodes.contains(&node_name) {
+                continue; // 跳过已执行的节点
+            }
+            
+            let node_spec = &graph.node_instances[&node_name];
+            
+            // 构建节点输入：从共享输出空间收集数据和控制信号
+            let mut node_inputs = NodeInputs::new();
+            
+            // 查找所有指向当前节点的数据连接
+            for connection in &graph.data_connections {
+                if connection.to_node == node_name {
+                    if let Some(upstream_outputs) = all_outputs.get(&connection.from_node) {
+                        if let Some(output_value) = upstream_outputs.get_raw(&connection.from_port) {
+                            node_inputs.insert_raw(&connection.to_port, output_value.clone());
+                            eprintln!("Debug: 数据流 {}.{} -> {}.{}", 
+                                connection.from_node, connection.from_port,
+                                connection.to_node, connection.to_port);
+                        }
+                    }
+                }
+            }
+            
+            // 查找所有指向当前节点的控制连接
+            for connection in &graph.control_connections {
+                if connection.to_node == node_name {
+                    if let Some(upstream_outputs) = all_outputs.get(&connection.from_node) {
+                        if let Some(control_signal) = upstream_outputs.get_raw(&connection.from_port) {
+                            node_inputs.insert_raw(&connection.to_port, control_signal.clone());
+                            eprintln!("Debug: 控制流输入 {}.{} -> {}.{}", 
+                                connection.from_node, connection.from_port,
+                                connection.to_node, connection.to_port);
+                        }
+                    }
+                }
+            }
+            
+            // 执行节点
+            let full_node_type = format!("{}.{}", node_spec.package, node_spec.node_type);
+            eprintln!("Debug: 执行节点 {} ({})", node_name, full_node_type);
+            eprintln!("Debug: 输入端口数: {}", node_inputs.inputs.len());
+            
+            match registry.execute_node(&full_node_type, &node_inputs) {
+                Ok(node_output) => {
+                    eprintln!("Debug: 节点 {} 执行成功，输出端口数: {}", node_name, node_output.outputs.len());
+                    
+                    // 将输出保存到共享输出空间
+                    all_outputs.insert(node_name.clone(), node_output);
+                    executed_nodes.insert(node_name.clone());
+                    
+                    // 检查控制信号：找到所有被这个节点触发的下游节点
+                    for connection in &graph.control_connections {
+                        if connection.from_node == node_name {
+                            // 检查控制信号是否存在
+                            if let Some(outputs) = all_outputs.get(&node_name) {
+                                if outputs.get_raw(&connection.from_port).is_some() {
+                                    // 触发下游节点
+                                    if !executed_nodes.contains(&connection.to_node) {
+                                        next_ready_nodes.push(connection.to_node.clone());
+                                        eprintln!("Debug: 控制流触发 {}.{} -> {}.{}", 
+                                            connection.from_node, connection.from_port,
+                                            connection.to_node, connection.to_port);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                Err(e) => {
+                    return Err(format!("节点 {} 执行失败: {}", node_name, e));
+                }
+            }
+        }
+        
+        // 去重下一轮就绪节点
+        next_ready_nodes.sort();
+        next_ready_nodes.dedup();
+        ready_nodes = next_ready_nodes;
+        
+        eprintln!("Debug: 下一轮就绪节点: {:?}", ready_nodes);
+    }
+    
+    eprintln!("Debug: 图执行完成，已执行节点: {:?}", executed_nodes);
+    
+    // 过滤输出：只保留没有被其他节点消费的"终端端口"
+    let filtered_outputs = filter_terminal_outputs(&all_outputs, graph);
+    Ok(filtered_outputs)
+}
+
+/// 过滤输出：只保留没有被其他节点消费的"终端端口"
+fn filter_terminal_outputs(all_outputs: &HashMap<String, NodeOutputs>, graph: &GraphDefinition) -> HashMap<String, NodeOutputs> {
+    let mut filtered_outputs = HashMap::new();
+    
+    for (node_name, node_outputs) in all_outputs {
+        let mut filtered_node_outputs = NodeOutputs::new();
+        
+        // 检查每个输出端口是否被消费
+        for (port_name, output_value) in &node_outputs.outputs {
+            let mut is_consumed = false;
+            
+            // 检查数据连接：这个输出是否被其他节点的输入消费
+            for connection in &graph.data_connections {
+                if connection.from_node == *node_name && connection.from_port == *port_name {
+                    is_consumed = true;
+                    eprintln!("Debug: 过滤掉被消费的数据输出 {}.{} -> {}.{}", 
+                        connection.from_node, connection.from_port,
+                        connection.to_node, connection.to_port);
+                    break;
+                }
+            }
+            
+            // 检查控制连接：这个输出是否被其他节点的控制输入消费
+            if !is_consumed {
+                for connection in &graph.control_connections {
+                    if connection.from_node == *node_name && connection.from_port == *port_name {
+                        is_consumed = true;
+                        eprintln!("Debug: 过滤掉被消费的控制输出 {}.{} -> {}.{}", 
+                            connection.from_node, connection.from_port,
+                            connection.to_node, connection.to_port);
+                        break;
+                    }
+                }
+            }
+            
+            // 只保留未被消费的输出端口
+            if !is_consumed {
+                filtered_node_outputs.insert_raw(port_name, output_value.clone());
+                eprintln!("Debug: 保留终端输出 {}.{}", node_name, port_name);
+            }
+        }
+        
+        // 只有当节点还有输出端口时才加入结果
+        if !filtered_node_outputs.outputs.is_empty() {
+            filtered_outputs.insert(node_name.clone(), filtered_node_outputs);
+        }
+    }
+    
+    eprintln!("Debug: 过滤后的输出节点数: {}", filtered_outputs.len());
+    filtered_outputs
+}
+
+/// 序列化节点输出为字符串格式
+pub fn serialize_outputs(outputs: &HashMap<String, NodeOutputs>) -> String {
+    // 使用JSON序列化，保留完整的类型信息
+    match serde_json::to_string_pretty(outputs) {
+        Ok(json) => json,
+        Err(e) => format!("{{\"error\": \"序列化失败: {}\"}}", e),
+    }
+}
+
+/// 反序列化输出字符串为NodeOutputs映射
+pub fn deserialize_outputs(outputs_str: &str) -> Result<HashMap<String, NodeOutputs>, String> {
+    serde_json::from_str(outputs_str)
+        .map_err(|e| format!("反序列化失败: {}", e))
 }
 
 /// 执行状态
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ExecutionStatus {
     Success,
     Error(String),
 }
 
 /// 命运回音 - 执行结果
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct FateEcho {
     pub status: ExecutionStatus,
-    pub outputs: NodeOutputs,
-    pub metadata: HashMap<String, String>,
+    pub outputs: String, // 序列化的所有节点输出端口
 }
 
 impl FateEcho {
-    pub fn success(outputs: NodeOutputs) -> Self {
-        Self {
-            status: ExecutionStatus::Success,
-            outputs,
-            metadata: HashMap::new(),
-        }
-    }
-    
-    pub fn error(message: String) -> Self {
-        Self {
-            status: ExecutionStatus::Error(message),
-            outputs: NodeOutputs::new(),
-            metadata: HashMap::new(),
-        }
+    /// 获取反序列化的输出映射
+    pub fn get_outputs(&self) -> Result<HashMap<String, NodeOutputs>, String> {
+        deserialize_outputs(&self.outputs)
     }
 }
 
-// ===== 插件接口定义 =====
-
-/// 执行引擎插件接口  
-pub trait ExecutionEnginePlugin: Send + Sync {
-    /// 执行单个节点
-    fn execute_node(&self, node_spec: &NodeSpec, inputs: NodeInputs) -> Result<NodeOutputs, String>;
-    
-    /// 获取支持的节点类型
-    fn supported_node_types(&self) -> Vec<String> {
-        vec![] // 默认实现
-    }
-}
-
-/// 类型系统插件接口
-pub trait TypeSystemPlugin: Send + Sync {
-    /// 注册类型到全局注册表
-    fn register_types(&self, registry: &mut HashMap<String, Box<dyn Type>>);
-    
-    /// 创建指定类型的默认值
-    fn create_default_value(&self, type_name: &str) -> Result<Box<dyn Type>, String>;
-}
+// ===== 插件接口定义 - 已在上面定义，这里删除重复定义 =====
 
 // ===== DSL结构定义 =====
 
@@ -140,7 +328,7 @@ pub enum ControlMode {
 #[derive(Debug, Clone)]
 pub struct GraphDefinition {
     pub imports: Vec<String>,
-    pub nodes: HashMap<String, NodeSpec>,
+    pub node_instances: HashMap<String, NodeSpec>, // 改名以匹配awakening函数中的使用
     pub data_connections: Vec<Connection>,
     pub control_connections: Vec<Connection>,
 }
@@ -168,208 +356,6 @@ pub struct Connection {
     pub to_port: String,
 }
 
-// ===== 核心系统实现 =====
-
-struct AnimaSystem {
-    parser: PestDslParser,
-    plugin_registry: PluginRegistry,
-    sanctum_path: String,
-}
-
-impl AnimaSystem {
-    /// 初始化系统
-    fn initialize(sanctum_path: &str) -> Result<Self, String> {
-        if !Path::new(sanctum_path).exists() {
-            return Err(format!("圣所路径不存在: {}", sanctum_path));
-        }
-        
-        let mut plugin_registry = PluginRegistry::new();
-        
-        // 注册内置插件
-        plugin_registry.discover_builtin_plugins()?;
-        
-        Ok(Self {
-            parser: PestDslParser::new(),
-            plugin_registry,
-            sanctum_path: sanctum_path.to_string(),
-        })
-    }
-    
-    /// 执行创世图
-    fn execute_genesis(&self, genesis: &str) -> FateEcho {
-        // 1. 加载和解析图定义
-        let graph = match self.load_and_parse_graph(genesis) {
-            Ok(graph) => graph,
-            Err(e) => return FateEcho::error(e),
-        };
-        
-        // 2. 加载依赖包
-        let anima_defs = match self.load_dependencies(&graph.imports) {
-            Ok(defs) => defs,
-            Err(e) => return FateEcho::error(e),
-        };
-        
-        // 3. 验证图
-        if let Err(e) = self.validate_graph(&graph, &anima_defs) {
-            return FateEcho::error(e);
-        }
-        
-        // 4. 执行图
-        self.execute_graph(&graph)
-    }
-    
-    fn load_and_parse_graph(&self, genesis: &str) -> Result<GraphDefinition, String> {
-        let graph_path = format!("{}/{}.weave", self.sanctum_path, genesis);
-        
-        if !Path::new(&graph_path).exists() {
-            return Err(format!("创世图文件不存在: {}", graph_path));
-        }
-        
-        let content = std::fs::read_to_string(&graph_path)
-            .map_err(|e| format!("读取创世图文件失败: {}", e))?;
-            
-        self.parser.parse_graph_file(&content)
-    }
-    
-    fn load_dependencies(&self, imports: &[String]) -> Result<HashMap<String, AnimaDefinition>, String> {
-        let mut anima_defs = HashMap::new();
-        
-        for package_name in imports {
-            let anima_def = self.find_and_parse_anima_file(package_name)?;
-            
-            // 统一包名：去掉.anima后缀，以便与节点引用的包名匹配
-            let normalized_package_name = if package_name.ends_with(".anima") {
-                &package_name[..package_name.len() - 6]
-            } else {
-                package_name
-            };
-            
-            anima_defs.insert(normalized_package_name.to_string(), anima_def);
-        }
-        
-        Ok(anima_defs)
-    }
-    
-    fn find_and_parse_anima_file(&self, package_name: &str) -> Result<AnimaDefinition, String> {
-        // 处理包名：如果是basic.anima形式，提取基础名称
-        let base_package_name = if package_name.ends_with(".anima") {
-            &package_name[..package_name.len() - 6] // 去掉.anima后缀
-        } else {
-            package_name
-        };
-        
-        // 首先检查指定圣所目录
-        let sanctum_path = format!("{}/{}.anima", self.sanctum_path, base_package_name);
-        if Path::new(&sanctum_path).exists() {
-            let content = std::fs::read_to_string(&sanctum_path)
-                .map_err(|e| format!("读取包文件失败: {}", e))?;
-            return self.parser.parse_anima_file(&content);
-        }
-        
-        // 然后检查插件类路径
-        let classpath_dirs = self.plugin_registry.get_package_classpath(base_package_name)?;
-        for dir in classpath_dirs {
-            let file_path = format!("{}/{}.anima", dir, base_package_name);
-            if Path::new(&file_path).exists() {
-                let content = std::fs::read_to_string(&file_path)
-                    .map_err(|e| format!("读取包文件失败: {}", e))?;
-                return self.parser.parse_anima_file(&content);
-            }
-        }
-        
-        Err(format!("包定义文件未找到: {}", base_package_name))
-    }
-    
-    fn validate_graph(&self, graph: &GraphDefinition, anima_defs: &HashMap<String, AnimaDefinition>) -> Result<(), String> {
-        // 验证所有节点都有对应的类型定义
-        for (instance_name, node_spec) in &graph.nodes {
-            let anima_def = anima_defs.get(&node_spec.package)
-                .ok_or_else(|| format!("节点 {} 引用的包 {} 未找到", instance_name, node_spec.package))?;
-                
-            if !anima_def.nodes.contains_key(&node_spec.node_type) {
-                return Err(format!("节点 {} 的类型 {} 在包 {} 中未定义", 
-                    instance_name, node_spec.node_type, node_spec.package));
-            }
-        }
-        
-        // TODO: 验证连接的合法性
-        
-        Ok(())
-    }
-    
-    fn execute_graph(&self, graph: &GraphDefinition) -> FateEcho {
-        // 简化的执行逻辑：按依赖顺序执行节点
-        let mut outputs = NodeOutputs::new();
-        let mut node_outputs: HashMap<String, NodeOutputs> = HashMap::new();
-        
-        eprintln!("Debug: 开始执行图，节点数量: {}", graph.nodes.len());
-        
-        // 执行节点的顺序：先执行starter，然后依次执行其他节点
-        let execution_order = vec!["starter", "timer", "checker", "formatter"];
-        
-        for instance_name in execution_order {
-            if let Some(node_spec) = graph.nodes.get(instance_name) {
-                eprintln!("Debug: 执行节点 {} -> 类型 {}.{}", instance_name, node_spec.package, node_spec.node_type);
-                
-                // 准备节点输入
-                let mut inputs = NodeInputs::new();
-                
-                // 根据数据连接填充输入
-                for connection in &graph.data_connections {
-                    if connection.to_node == instance_name {
-                        // 查找来源节点的输出
-                        if let Some(source_outputs) = node_outputs.get(&connection.from_node) {
-                            if let Some(source_value) = source_outputs.outputs.get(&connection.from_port) {
-                                inputs.inputs.insert(connection.to_port.clone(), source_value.clone());
-                                eprintln!("Debug: 连接数据 {}.{} -> {}.{}", 
-                                    connection.from_node, connection.from_port,
-                                    connection.to_node, connection.to_port);
-                            }
-                        }
-                    }
-                }
-                
-                // 根据控制连接填充信号输入
-                for connection in &graph.control_connections {
-                    if connection.to_node == instance_name {
-                        // 查找来源节点的控制输出
-                        if let Some(source_outputs) = node_outputs.get(&connection.from_node) {
-                            if let Some(source_value) = source_outputs.outputs.get(&connection.from_port) {
-                                inputs.inputs.insert(connection.to_port.clone(), source_value.clone());
-                                eprintln!("Debug: 连接控制 {}.{} -> {}.{}", 
-                                    connection.from_node, connection.from_port,
-                                    connection.to_node, connection.to_port);
-                            }
-                        }
-                    }
-                }
-                
-                // 执行节点
-                match self.plugin_registry.execute_node(node_spec, inputs) {
-                    Ok(node_output) => {
-                        eprintln!("Debug: 节点 {} 执行成功，输出端口数: {}", instance_name, node_output.outputs.len());
-                        
-                        // 保存节点输出供后续节点使用
-                        node_outputs.insert(instance_name.to_string(), node_output.clone());
-                        
-                        // 将最终输出保存到全局输出
-                        for (port_name, value) in node_output.outputs {
-                            let full_port_name = format!("{}.{}", instance_name, port_name);
-                            outputs.outputs.insert(full_port_name, value);
-                        }
-                    }
-                    Err(e) => {
-                        eprintln!("Debug: 节点 {} 执行失败: {}", instance_name, e);
-                        return FateEcho::error(format!("节点 {} 执行失败: {}", instance_name, e));
-                    }
-                }
-            }
-        }
-        
-        FateEcho::success(outputs)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -377,6 +363,6 @@ mod tests {
     #[test]
     fn test_plugin_registry() {
         let mut registry = PluginRegistry::new();
-        registry.discover_builtin_plugins().unwrap();
+        // 这行代码在awakening函数中已经有了，这里应该删除
     }
 }

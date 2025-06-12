@@ -1,4 +1,4 @@
-// Basic Plugin Implementation - 使用类型安全序列化系统
+// Basic Plugin Implementation - PHP风格序列化
 use std::any::Any;
 use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
@@ -6,163 +6,64 @@ use crate::{
     ExecutionEnginePlugin, TypeSystemPlugin, Type, NodeInputs, NodeOutputs, NodeSpec
 };
 
-/// Basic包插件 - 提供Signal、UUID类型和trigger、uuid_gen节点
+/// Basic Package Plugin
+/// 提供基础数据类型和节点实现
+#[derive(Debug)]
 pub struct BasicPlugin;
 
-// ===== Basic Package Type Definitions =====
+impl BasicPlugin {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+// ===== Basic Package Type Definitions - PHP风格序列化 =====
 
 /// Signal类型 - 表示控制流信号
-/// 
-/// 语义：
-/// 1. `active = true`  表示激活信号 (+)
-/// 2. `active = false` 表示失活信号 (−)
-///   目前暂不实现 `No_Signal (⊥)`，由 Option<Signal> 表示缺失。
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Signal {
     pub active: bool,
 }
 
 impl Type for Signal {
-    fn type_name(&self) -> &'static str {
+    fn type_name() -> &'static str {
         "Signal"
     }
     
-    fn to_bytes(&self) -> Result<Vec<u8>, String> {
-        // 序列化为单字节：0 = inactive, 1 = active
-        Ok(vec![if self.active { 1u8 } else { 0u8 }])
-    }
-    
-    fn from_bytes(bytes: &[u8]) -> Result<Box<dyn Type>, String> {
-        if bytes.len() != 1 {
-            return Err("Signal字节流长度应为1".to_string());
-        }
-        let active = bytes[0] != 0;
-        Ok(Box::new(Signal { active }))
-    }
-    
-    fn to_json(&self) -> serde_json::Value {
-        serde_json::json!({
-            "state": if self.active { "active" } else { "inactive" }
-        })
-    }
-    
-    fn from_json(_value: serde_json::Value) -> Result<Box<dyn Type>, String> {
-        match _value {
-            serde_json::Value::Object(map) => {
-                let state = map.get("state")
-                    .and_then(|v| v.as_str())
-                    .ok_or_else(|| "Signal JSON缺少state字段".to_string())?;
-                Ok(Box::new(Signal { active: state == "active" }))
-            }
-            _ => Err("Signal JSON格式错误".to_string()),
-        }
+    fn package_name() -> &'static str {
+        "basic"
     }
     
     fn as_any(&self) -> &dyn Any {
         self
     }
     
-    fn clone_type(&self) -> Box<dyn Type> {
+    fn clone_boxed(&self) -> Box<dyn Any> {
         Box::new(self.clone())
     }
-    
-    fn is_compatible_with(&self, other: &dyn Type) -> bool {
-        other.type_name() == "Signal"
-    }
 }
 
-/// UUID类型 - 表示唯一标识符
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct UUIDType {
-    pub value: String,
-}
-
-impl Type for UUIDType {
-    fn type_name(&self) -> &'static str {
-        "UUID"
-    }
-    
-    fn to_bytes(&self) -> Result<Vec<u8>, String> {
-        bincode::serialize(self)
-            .map_err(|e| format!("UUID序列化失败: {}", e))
-    }
-    
-    fn from_bytes(bytes: &[u8]) -> Result<Box<dyn Type>, String> {
-        let uuid: UUIDType = bincode::deserialize(bytes)
-            .map_err(|e| format!("UUID反序列化失败: {}", e))?;
-        Ok(Box::new(uuid))
-    }
-    
-    fn to_json(&self) -> serde_json::Value {
-        serde_json::Value::String(self.value.clone())
-    }
-    
-    fn from_json(value: serde_json::Value) -> Result<Box<dyn Type>, String> {
-        match value {
-            serde_json::Value::String(s) => Ok(Box::new(UUIDType { value: s })),
-            _ => Err("UUID类型需要字符串值".to_string()),
-        }
-    }
-    
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-    
-    fn clone_type(&self) -> Box<dyn Type> {
-        Box::new(self.clone())
-    }
-    
-    fn is_compatible_with(&self, other: &dyn Type) -> bool {
-        other.type_name() == "UUID"
-    }
-}
-
-/// Int类型 - 表示整数
+/// Int类型 - 表示32位整数
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IntType {
     pub value: i32,
 }
 
 impl Type for IntType {
-    fn type_name(&self) -> &'static str {
+    fn type_name() -> &'static str {
         "Int"
     }
     
-    fn to_bytes(&self) -> Result<Vec<u8>, String> {
-        bincode::serialize(self)
-            .map_err(|e| format!("Int序列化失败: {}", e))
-    }
-    
-    fn from_bytes(bytes: &[u8]) -> Result<Box<dyn Type>, String> {
-        let int_val: IntType = bincode::deserialize(bytes)
-            .map_err(|e| format!("Int反序列化失败: {}", e))?;
-        Ok(Box::new(int_val))
-    }
-    
-    fn to_json(&self) -> serde_json::Value {
-        serde_json::Value::Number(serde_json::Number::from(self.value))
-    }
-    
-    fn from_json(value: serde_json::Value) -> Result<Box<dyn Type>, String> {
-        match value {
-            serde_json::Value::Number(n) => {
-                let int_val = n.as_i64().unwrap_or(0) as i32;
-                Ok(Box::new(IntType { value: int_val }))
-            }
-            _ => Err("Int类型需要数字值".to_string()),
-        }
+    fn package_name() -> &'static str {
+        "basic"
     }
     
     fn as_any(&self) -> &dyn Any {
         self
     }
     
-    fn clone_type(&self) -> Box<dyn Type> {
+    fn clone_boxed(&self) -> Box<dyn Any> {
         Box::new(self.clone())
-    }
-    
-    fn is_compatible_with(&self, other: &dyn Type) -> bool {
-        other.type_name() == "Int"
     }
 }
 
@@ -173,42 +74,20 @@ pub struct BoolType {
 }
 
 impl Type for BoolType {
-    fn type_name(&self) -> &'static str {
+    fn type_name() -> &'static str {
         "Bool"
     }
     
-    fn to_bytes(&self) -> Result<Vec<u8>, String> {
-        bincode::serialize(self)
-            .map_err(|e| format!("Bool序列化失败: {}", e))
-    }
-    
-    fn from_bytes(bytes: &[u8]) -> Result<Box<dyn Type>, String> {
-        let bool_val: BoolType = bincode::deserialize(bytes)
-            .map_err(|e| format!("Bool反序列化失败: {}", e))?;
-        Ok(Box::new(bool_val))
-    }
-    
-    fn to_json(&self) -> serde_json::Value {
-        serde_json::Value::Bool(self.value)
-    }
-    
-    fn from_json(value: serde_json::Value) -> Result<Box<dyn Type>, String> {
-        match value {
-            serde_json::Value::Bool(b) => Ok(Box::new(BoolType { value: b })),
-            _ => Err("Bool类型需要布尔值".to_string()),
-        }
+    fn package_name() -> &'static str {
+        "basic"
     }
     
     fn as_any(&self) -> &dyn Any {
         self
     }
     
-    fn clone_type(&self) -> Box<dyn Type> {
+    fn clone_boxed(&self) -> Box<dyn Any> {
         Box::new(self.clone())
-    }
-    
-    fn is_compatible_with(&self, other: &dyn Type) -> bool {
-        other.type_name() == "Bool"
     }
 }
 
@@ -219,172 +98,156 @@ pub struct StringType {
 }
 
 impl Type for StringType {
-    fn type_name(&self) -> &'static str {
+    fn type_name() -> &'static str {
         "String"
     }
     
-    fn to_bytes(&self) -> Result<Vec<u8>, String> {
-        bincode::serialize(self)
-            .map_err(|e| format!("String序列化失败: {}", e))
-    }
-    
-    fn from_bytes(bytes: &[u8]) -> Result<Box<dyn Type>, String> {
-        let string_val: StringType = bincode::deserialize(bytes)
-            .map_err(|e| format!("String反序列化失败: {}", e))?;
-        Ok(Box::new(string_val))
-    }
-    
-    fn to_json(&self) -> serde_json::Value {
-        serde_json::Value::String(self.value.clone())
-    }
-    
-    fn from_json(value: serde_json::Value) -> Result<Box<dyn Type>, String> {
-        match value {
-            serde_json::Value::String(s) => Ok(Box::new(StringType { value: s })),
-            _ => Err("String类型需要字符串值".to_string()),
-        }
+    fn package_name() -> &'static str {
+        "basic"
     }
     
     fn as_any(&self) -> &dyn Any {
         self
     }
     
-    fn clone_type(&self) -> Box<dyn Type> {
+    fn clone_boxed(&self) -> Box<dyn Any> {
         Box::new(self.clone())
-    }
-    
-    fn is_compatible_with(&self, other: &dyn Type) -> bool {
-        other.type_name() == "String"
     }
 }
 
-// ===== Plugin Implementations =====
+/// UUID类型 - 表示唯一标识符
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UUIDType {
+    pub value: String,
+}
+
+impl Type for UUIDType {
+    fn type_name() -> &'static str {
+        "UUID"
+    }
+    
+    fn package_name() -> &'static str {
+        "basic"
+    }
+    
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+    
+    fn clone_boxed(&self) -> Box<dyn Any> {
+        Box::new(self.clone())
+    }
+}
+
+// ===== Basic Package Node Implementations =====
 
 impl ExecutionEnginePlugin for BasicPlugin {
-    fn execute_node(&self, node_spec: &NodeSpec, inputs: NodeInputs) -> Result<NodeOutputs, String> {
-        match node_spec.node_type.as_str() {
-            "Start" => self.execute_start(inputs),
-            "GetTimestamp" => self.execute_get_timestamp(inputs),
-            "IsEven" => self.execute_is_even(inputs),
-            "FormatNumber" => self.execute_format_number(inputs),
-            "trigger" => self.execute_trigger(inputs),
-            "uuid_gen" => self.execute_uuid_gen(inputs),
-            _ => Err(format!("不支持的节点类型: {}", node_spec.node_type)),
+    fn execute_node(&self, node_type: &str, inputs: &NodeInputs) -> Result<NodeOutputs, String> {
+        match node_type {
+            "Start" => execute_start_node(inputs),
+            "GetTimestamp" => execute_get_timestamp_node(inputs),
+            "IsEven" => execute_is_even_node(inputs),
+            "FormatNumber" => execute_format_number_node(inputs),
+            _ => Err(format!("不支持的节点类型: {}", node_type)),
         }
     }
     
     fn supported_node_types(&self) -> Vec<String> {
         vec![
-            "Start".to_string(), 
+            "Start".to_string(),
             "GetTimestamp".to_string(),
             "IsEven".to_string(),
             "FormatNumber".to_string(),
-            "trigger".to_string(), 
-            "uuid_gen".to_string()
         ]
     }
 }
 
-impl TypeSystemPlugin for BasicPlugin {
-    fn register_types(&self, registry: &mut HashMap<String, Box<dyn Type>>) {
-        registry.insert("Signal".to_string(), Box::new(Signal { active: true }));
-        registry.insert("UUID".to_string(), Box::new(UUIDType { value: String::new() }));
-        registry.insert("Int".to_string(), Box::new(IntType { value: 0 }));
-        registry.insert("Bool".to_string(), Box::new(BoolType { value: false }));
-        registry.insert("String".to_string(), Box::new(StringType { value: String::new() }));
-    }
+fn execute_start_node(inputs: &NodeInputs) -> Result<NodeOutputs, String> {
+    let mut outputs = NodeOutputs::new();
     
-    fn create_default_value(&self, type_name: &str) -> Result<Box<dyn Type>, String> {
-        match type_name {
-            "Signal" => Ok(Box::new(Signal { active: true })),
-            "UUID" => Ok(Box::new(UUIDType { value: String::new() })),
-            "Int" => Ok(Box::new(IntType { value: 0 })),
-            "Bool" => Ok(Box::new(BoolType { value: false })),
-            "String" => Ok(Box::new(StringType { value: String::new() })),
-            _ => Err(format!("未知类型: {}", type_name)),
-        }
-    }
+    // 生成激活信号
+    let signal = Signal { active: true };
+    outputs.insert("signal", &signal)
+        .map_err(|e| format!("插入signal失败: {}", e))?;
+    
+    // 生成执行ID
+    let timestamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_millis();
+    let uuid = UUIDType {
+        value: format!("uuid-{}", timestamp),
+    };
+    outputs.insert("execution_id", &uuid)
+        .map_err(|e| format!("插入execution_id失败: {}", e))?;
+    
+    Ok(outputs)
 }
 
-impl BasicPlugin {
-    fn execute_start(&self, _inputs: NodeInputs) -> Result<NodeOutputs, String> {
-        let mut outputs = NodeOutputs::new();
-        
-        // Start节点输出signal和execution_id
-        outputs.insert("signal", Signal { active: true })?;
-        
-        let uuid = UUIDType {
-            value: format!("uuid-{}", chrono::Utc::now().timestamp_millis()),
-        };
-        outputs.insert("execution_id", uuid)?;
-        
-        Ok(outputs)
+fn execute_get_timestamp_node(inputs: &NodeInputs) -> Result<NodeOutputs, String> {
+    // 检查触发信号（简化版本 - 只检查是否存在触发信号）
+    if inputs.get_raw("trigger").is_none() {
+        return Err("GetTimestamp需要触发信号".to_string());
     }
     
-    fn execute_get_timestamp(&self, inputs: NodeInputs) -> Result<NodeOutputs, String> {
-        // 验证输入信号
-        let _signal: Signal = inputs.get("trigger")?;
-        
-        // 生成当前时间戳
-        let timestamp = IntType {
-            value: chrono::Utc::now().timestamp() as i32,
-        };
-        
-        let mut outputs = NodeOutputs::new();
-        outputs.insert("timestamp", timestamp)?;
-        outputs.insert("done", Signal { active: true })?;
-        Ok(outputs)
-    }
+    let mut outputs = NodeOutputs::new();
     
-    fn execute_is_even(&self, inputs: NodeInputs) -> Result<NodeOutputs, String> {
-        // 获取输入
-        let number: IntType = inputs.get("number")?;
-        let _signal: Signal = inputs.get("trigger")?;
-        
-        // 计算是否为偶数
-        let result = BoolType {
-            value: number.value % 2 == 0,
-        };
-        
-        let mut outputs = NodeOutputs::new();
-        outputs.insert("result", result)?;
-        outputs.insert("done", Signal { active: true })?;
-        Ok(outputs)
-    }
+    // 生成时间戳
+    let timestamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as i32;
     
-    fn execute_format_number(&self, inputs: NodeInputs) -> Result<NodeOutputs, String> {
-        // 获取输入
-        let number: IntType = inputs.get("number")?;
-        let _signal: Signal = inputs.get("trigger")?;
-        
-        // 格式化数字
-        let formatted = StringType {
-            value: format!("timestamp_{}", number.value),
-        };
-        
-        let mut outputs = NodeOutputs::new();
-        outputs.insert("formatted", formatted)?;
-        outputs.insert("done", Signal { active: true })?;
-        Ok(outputs)
-    }
+    let timestamp_value = IntType { value: timestamp };
+    outputs.insert("timestamp", &timestamp_value)
+        .map_err(|e| format!("插入timestamp失败: {}", e))?;
     
-    fn execute_trigger(&self, _inputs: NodeInputs) -> Result<NodeOutputs, String> {
-        let mut outputs = NodeOutputs::new();
-        outputs.insert("signal", Signal { active: true })?;
-        Ok(outputs)
-    }
+    // 生成完成信号
+    let done_signal = Signal { active: true };
+    outputs.insert("done", &done_signal)
+        .map_err(|e| format!("插入done失败: {}", e))?;
     
-    fn execute_uuid_gen(&self, inputs: NodeInputs) -> Result<NodeOutputs, String> {
-        // 验证输入信号
-        let _signal: Signal = inputs.get("trigger")?;
-        
-        // 生成UUID
-        let uuid = UUIDType {
-            value: format!("uuid-{}", chrono::Utc::now().timestamp_millis()),
-        };
-        
-        let mut outputs = NodeOutputs::new();
-        outputs.insert("uuid", uuid)?;
-        Ok(outputs)
-    }
+    Ok(outputs)
+}
+
+fn execute_is_even_node(inputs: &NodeInputs) -> Result<NodeOutputs, String> {
+    // 获取数字输入
+    let number_input: IntType = inputs.get("number")
+        .map_err(|e| format!("获取number输入失败: {}", e))?;
+    
+    let mut outputs = NodeOutputs::new();
+    
+    // 计算是否为偶数
+    let is_even = BoolType { value: number_input.value % 2 == 0 };
+    outputs.insert("result", &is_even)
+        .map_err(|e| format!("插入result失败: {}", e))?;
+    
+    // 生成完成信号
+    let done_signal = Signal { active: true };
+    outputs.insert("done", &done_signal)
+        .map_err(|e| format!("插入done失败: {}", e))?;
+    
+    Ok(outputs)
+}
+
+fn execute_format_number_node(inputs: &NodeInputs) -> Result<NodeOutputs, String> {
+    // 获取数字输入
+    let number_input: IntType = inputs.get("number")
+        .map_err(|e| format!("获取number输入失败: {}", e))?;
+    
+    let mut outputs = NodeOutputs::new();
+    
+    // 格式化数字
+    let formatted = StringType {
+        value: format!("timestamp_{}", number_input.value),
+    };
+    outputs.insert("formatted", &formatted)
+        .map_err(|e| format!("插入formatted失败: {}", e))?;
+    
+    // 生成完成信号
+    let done_signal = Signal { active: true };
+    outputs.insert("done", &done_signal)
+        .map_err(|e| format!("插入done失败: {}", e))?;
+    
+    Ok(outputs)
 } 
