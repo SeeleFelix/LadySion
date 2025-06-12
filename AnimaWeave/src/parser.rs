@@ -2,7 +2,7 @@
 use pest::Parser;
 use pest_derive::Parser;
 use std::collections::HashMap;
-use crate::{AnimaDefinition, NodeDefinition, PortDefinition, GraphDefinition, NodeSpec, ExecutionMode, ControlMode};
+use crate::{AnimaDefinition, NodeDefinition, PortDefinition, GraphDefinition, NodeSpec, ExecutionMode, ControlMode, Connection};
 
 #[derive(Parser)]
 #[grammar = "anima-weave.pest"]
@@ -344,10 +344,10 @@ impl PestDslParser {
                                 self.parse_nodes_instance_section(body_content, &mut graph.nodes)?;
                             }
                             Rule::data_connection_section => {
-                                // TODO: 解析data connections
+                                self.parse_data_connections(body_content, &mut graph.data_connections)?;
                             }
                             Rule::control_connection_section => {
-                                // TODO: 解析control connections
+                                self.parse_control_connections(body_content, &mut graph.control_connections)?;
                             }
                             _ => {}
                         }
@@ -399,5 +399,81 @@ impl PestDslParser {
             }
         }
         Ok(())
+    }
+    
+    fn parse_data_connections(&self, section: pest::iterators::Pair<Rule>, connections: &mut Vec<Connection>) -> Result<(), String> {
+        eprintln!("Debug: 开始解析data connections");
+        for content in section.into_inner() {
+            if content.as_rule() == Rule::connection {
+                let connection = self.parse_connection(content)?;
+                eprintln!("Debug: 解析到数据连接: {}.{} -> {}.{}", 
+                    connection.from_node, connection.from_port,
+                    connection.to_node, connection.to_port);
+                connections.push(connection);
+            }
+        }
+        Ok(())
+    }
+    
+    fn parse_control_connections(&self, section: pest::iterators::Pair<Rule>, connections: &mut Vec<Connection>) -> Result<(), String> {
+        eprintln!("Debug: 开始解析control connections");
+        for content in section.into_inner() {
+            if content.as_rule() == Rule::connection {
+                let connection = self.parse_connection(content)?;
+                eprintln!("Debug: 解析到控制连接: {}.{} -> {}.{}", 
+                    connection.from_node, connection.from_port,
+                    connection.to_node, connection.to_port);
+                connections.push(connection);
+            }
+        }
+        Ok(())
+    }
+    
+    fn parse_connection(&self, connection: pest::iterators::Pair<Rule>) -> Result<Connection, String> {
+        let mut from_node = String::new();
+        let mut from_port = String::new();
+        let mut to_node = String::new(); 
+        let mut to_port = String::new();
+        
+        for content in connection.into_inner() {
+            match content.as_rule() {
+                Rule::connection_source => {
+                    let (node, port) = self.parse_port_reference(content)?;
+                    from_node = node;
+                    from_port = port;
+                }
+                Rule::connection_target => {
+                    let (node, port) = self.parse_port_reference(content)?;
+                    to_node = node;
+                    to_port = port;
+                }
+                _ => {}
+            }
+        }
+        
+        Ok(Connection {
+            from_node,
+            from_port,
+            to_node,
+            to_port,
+        })
+    }
+    
+    fn parse_port_reference(&self, port_ref: pest::iterators::Pair<Rule>) -> Result<(String, String), String> {
+        let port_str = port_ref.as_str();
+        eprintln!("Debug: 解析port_reference: '{}'", port_str);
+        
+        // 直接用字符串分割，简单粗暴
+        let parts: Vec<&str> = port_str.split('.').collect();
+        
+        if parts.len() != 2 {
+            return Err(format!("port_reference格式错误: {}", port_str));
+        }
+        
+        let node_name = parts[0].to_string();
+        let port_name = parts[1].to_string();
+        
+        eprintln!("Debug: 最终解析结果: node='{}', port='{}'", node_name, port_name);
+        Ok((node_name, port_name))
     }
 } 

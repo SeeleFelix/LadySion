@@ -1,6 +1,9 @@
 -- types
 Signal
 UUID
+Int
+Bool
+String
 --
 
 -- nodes
@@ -10,6 +13,41 @@ Start {
     out {
         signal Signal
         execution_id UUID
+    }
+}
+
+GetTimestamp {
+    mode Concurrent
+    in {
+        trigger Signal
+    }
+    out {
+        timestamp Int
+        done Signal
+    }
+}
+
+IsEven {
+    mode Concurrent
+    in {
+        number Int
+        trigger Signal
+    }
+    out {
+        result Bool
+        done Signal
+    }
+}
+
+FormatNumber {
+    mode Concurrent
+    in {
+        number Int
+        trigger Signal
+    }
+    out {
+        formatted String
+        done Signal
     }
 }
 -- 

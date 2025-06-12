@@ -67,7 +67,9 @@ connection = { connection_source ~ "->" ~ connection_target ~ ";" ~ COMMENT? ~ N
 connection_source = { port_reference }
 connection_target = { port_reference }
 
-port_reference = { identifier ~ "." ~ identifier }
+port_reference = { node_identifier ~ "." ~ port_identifier }
+node_identifier = @{ letter ~ (letter | digit | "_")* }
+port_identifier = @{ letter ~ (letter | digit | "_")* }
 
 // ========== Basic Types ==========
 identifier = @{ letter ~ (letter | digit | "_")* }

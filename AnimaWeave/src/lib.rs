@@ -298,28 +298,71 @@ impl AnimaSystem {
     }
     
     fn execute_graph(&self, graph: &GraphDefinition) -> FateEcho {
-        // 简化的执行逻辑：按顺序执行所有节点
+        // 简化的执行逻辑：按依赖顺序执行节点
         let mut outputs = NodeOutputs::new();
+        let mut node_outputs: HashMap<String, NodeOutputs> = HashMap::new();
         
         eprintln!("Debug: 开始执行图，节点数量: {}", graph.nodes.len());
-        for (name, spec) in &graph.nodes {
-            eprintln!("Debug: 节点 {} -> 类型 {}.{}", name, spec.package, spec.node_type);
-        }
         
-        for (instance_name, node_spec) in &graph.nodes {
-            // 准备节点输入
-            let inputs = NodeInputs::new(); // TODO: 从连接中获取实际输入
-            
-            // 执行节点
-            match self.plugin_registry.execute_node(node_spec, inputs) {
-                Ok(node_outputs) => {
-                    // 将节点输出合并到最终输出
-                    for (port_name, value) in node_outputs.outputs {
-                        let full_port_name = format!("{}_{}", instance_name, port_name);
-                        outputs.outputs.insert(full_port_name, value);
+        // 执行节点的顺序：先执行starter，然后依次执行其他节点
+        let execution_order = vec!["starter", "timer", "checker", "formatter"];
+        
+        for instance_name in execution_order {
+            if let Some(node_spec) = graph.nodes.get(instance_name) {
+                eprintln!("Debug: 执行节点 {} -> 类型 {}.{}", instance_name, node_spec.package, node_spec.node_type);
+                
+                // 准备节点输入
+                let mut inputs = NodeInputs::new();
+                
+                // 根据数据连接填充输入
+                for connection in &graph.data_connections {
+                    if connection.to_node == instance_name {
+                        // 查找来源节点的输出
+                        if let Some(source_outputs) = node_outputs.get(&connection.from_node) {
+                            if let Some(source_value) = source_outputs.outputs.get(&connection.from_port) {
+                                inputs.inputs.insert(connection.to_port.clone(), source_value.clone());
+                                eprintln!("Debug: 连接数据 {}.{} -> {}.{}", 
+                                    connection.from_node, connection.from_port,
+                                    connection.to_node, connection.to_port);
+                            }
+                        }
                     }
                 }
-                Err(e) => return FateEcho::error(format!("节点 {} 执行失败: {}", instance_name, e)),
+                
+                // 根据控制连接填充信号输入
+                for connection in &graph.control_connections {
+                    if connection.to_node == instance_name {
+                        // 查找来源节点的控制输出
+                        if let Some(source_outputs) = node_outputs.get(&connection.from_node) {
+                            if let Some(source_value) = source_outputs.outputs.get(&connection.from_port) {
+                                inputs.inputs.insert(connection.to_port.clone(), source_value.clone());
+                                eprintln!("Debug: 连接控制 {}.{} -> {}.{}", 
+                                    connection.from_node, connection.from_port,
+                                    connection.to_node, connection.to_port);
+                            }
+                        }
+                    }
+                }
+                
+                // 执行节点
+                match self.plugin_registry.execute_node(node_spec, inputs) {
+                    Ok(node_output) => {
+                        eprintln!("Debug: 节点 {} 执行成功，输出端口数: {}", instance_name, node_output.outputs.len());
+                        
+                        // 保存节点输出供后续节点使用
+                        node_outputs.insert(instance_name.to_string(), node_output.clone());
+                        
+                        // 将最终输出保存到全局输出
+                        for (port_name, value) in node_output.outputs {
+                            let full_port_name = format!("{}.{}", instance_name, port_name);
+                            outputs.outputs.insert(full_port_name, value);
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Debug: 节点 {} 执行失败: {}", instance_name, e);
+                        return FateEcho::error(format!("节点 {} 执行失败: {}", instance_name, e));
+                    }
+                }
             }
         }
         
