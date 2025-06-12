@@ -77,7 +77,7 @@ mod type_system_foundation_tests {
         // 验证具体的计算逻辑
         if serialized_outputs.contains("\"result\"") {
             assert!(
-                serialized_outputs.contains("\"value\": true") || serialized_outputs.contains("\"value\": false"),
+                serialized_outputs.contains("\"data\": true") || serialized_outputs.contains("\"data\": false"),
                 "result字段应该是布尔值"
             );
         }
@@ -95,7 +95,52 @@ mod type_system_foundation_tests {
         println!("✅ T1.1 类型系统基础验证通过 - 只保留终端输出，过滤掉中间数据流");
     }
     
-    /// T1.2: 类型安全约束验证
+    /// T1.2: 组合类型验证
+    /// 
+    /// 验证哲学理念: 类型系统支持复杂组合类型
+    /// 数学定义2: 组合类型 Prompt = {id: UUID, name: String, content: String}
+    #[test]
+    fn test_composite_type_prompt() {
+        // 执行包含组合类型的图
+        let fate_echo = awakening("./tests/sanctums", "composite_type_test");
+        
+        // 验证执行成功
+        match fate_echo.status {
+            anima_weave::ExecutionStatus::Success => {
+                println!("✅ 组合类型图执行成功");
+            }
+            anima_weave::ExecutionStatus::Error(ref err) => {
+                panic!("❌ 组合类型图执行失败: {}", err);
+            }
+        }
+        
+        println!("🔍 组合类型序列化结果:");
+        println!("{}", fate_echo.outputs);
+        
+        // 验证包含Prompt组合类型
+        assert!(fate_echo.outputs.contains("basic.Prompt"), "应该包含basic.Prompt组合类型");
+        
+        // 验证Prompt的字段结构
+        assert!(fate_echo.outputs.contains("\"id\""), "Prompt应该包含id字段");
+        assert!(fate_echo.outputs.contains("\"name\""), "Prompt应该包含name字段");
+        assert!(fate_echo.outputs.contains("\"content\""), "Prompt应该包含content字段");
+        
+        // 验证生成的id格式
+        assert!(fate_echo.outputs.contains("\"prompt-"), "id应该以prompt-开头");
+        
+        // 验证name和content都是格式化的时间戳
+        assert!(fate_echo.outputs.contains("\"timestamp_"), "name和content应该包含格式化的时间戳");
+        
+        println!("🎯 组合类型验证:");
+        println!("  - Prompt.id (基于时间戳的UUID): ✓");
+        println!("  - Prompt.name (格式化字符串): ✓");
+        println!("  - Prompt.content (格式化字符串): ✓");
+        println!("  - 完整对象序列化保持结构: ✓");
+        
+        println!("✅ T1.2 组合类型验证通过 - 复杂数据结构正确序列化");
+    }
+
+    /// T1.3: 类型安全约束验证
     /// 
     /// 验证哲学理念: 类型系统提供安全约束
     /// 测试类型不匹配时应该失败

@@ -3,39 +3,23 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 use serde::{Serialize, Deserialize};
 
-/// 类型描述符 - 包含类型的完整信息
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct TypeDescriptor {
-    pub package: String,
-    pub type_name: String,
-    pub qualified_name: String, // package.type_name
-}
-
-impl TypeDescriptor {
-    pub fn new(package: &str, type_name: &str) -> Self {
-        Self {
-            package: package.to_string(),
-            type_name: type_name.to_string(),
-            qualified_name: format!("{}.{}", package, type_name),
-        }
-    }
-}
+// TypeDescriptor已被移除，直接使用字符串存储qualified_name
 
 /// 类型化值 - 保留完整类型信息的值容器
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct TypedValue {
-    pub type_descriptor: TypeDescriptor,
+    pub type_name: String, // 直接存储qualified_name，如"basic.Bool"
     pub data: serde_json::Value, // 使用JSON存储，简单有效
 }
 
 impl TypedValue {
     /// 从任意可序列化值创建TypedValue
-    pub fn new<T: Serialize>(type_desc: TypeDescriptor, value: &T) -> Result<Self, String> {
+    pub fn new<T: Serialize>(qualified_type_name: &str, value: &T) -> Result<Self, String> {
         let data = serde_json::to_value(value)
             .map_err(|e| format!("序列化失败: {}", e))?;
         
         Ok(Self {
-            type_descriptor: type_desc,
+            type_name: qualified_type_name.to_string(),
             data,
         })
     }
@@ -48,7 +32,7 @@ impl TypedValue {
     
     /// 获取完全限定的类型名称
     pub fn qualified_type_name(&self) -> &str {
-        &self.type_descriptor.qualified_name
+        &self.type_name
     }
 }
 
@@ -65,14 +49,14 @@ pub trait Type: Send + Sync + Debug {
         format!("{}.{}", Self::package_name(), Self::type_name())
     }
     
-    /// 获取类型描述符
-    fn type_descriptor() -> TypeDescriptor where Self: Sized {
-        TypeDescriptor::new(Self::package_name(), Self::type_name())
-    }
+    /// 获取类型描述符（已弃用，直接使用qualified_type_name）
+    // fn type_descriptor() -> TypeDescriptor where Self: Sized {
+    //     TypeDescriptor::new(Self::package_name(), Self::type_name())
+    // }
     
     /// 转换为TypedValue
     fn to_typed_value(&self) -> Result<TypedValue, String> where Self: Serialize + Sized {
-        TypedValue::new(Self::type_descriptor(), self)
+        TypedValue::new(&Self::qualified_type_name(), self)
     }
     
     /// 从TypedValue创建实例
@@ -100,29 +84,25 @@ pub trait Type: Send + Sync + Debug {
     fn clone_boxed(&self) -> Box<dyn Any>;
 }
 
-/// 节点输入容器
+/// 节点输入容器 - 直接存储端口映射，无多余层级
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct NodeInputs {
-    pub inputs: HashMap<String, TypedValue>, // 存储类型化值
-}
+pub struct NodeInputs(pub HashMap<String, TypedValue>);
 
 impl NodeInputs {
     pub fn new() -> Self {
-        Self {
-            inputs: HashMap::new(),
-        }
+        Self(HashMap::new())
     }
     
     /// 插入值 - 自动序列化
     pub fn insert<T: Type + Serialize>(&mut self, name: &str, value: &T) -> Result<(), String> {
         let typed_value = value.to_typed_value()?;
-        self.inputs.insert(name.to_string(), typed_value);
+        self.0.insert(name.to_string(), typed_value);
         Ok(())
     }
     
     /// 获取值 - 自动反序列化和类型检查
     pub fn get<T: Type + for<'de> Deserialize<'de>>(&self, name: &str) -> Result<T, String> {
-        let typed_value = self.inputs.get(name)
+        let typed_value = self.0.get(name)
             .ok_or_else(|| format!("输入端口 {} 不存在", name))?;
         
         T::from_typed_value(typed_value)
@@ -130,50 +110,46 @@ impl NodeInputs {
     
     /// 获取原始TypedValue
     pub fn get_raw(&self, name: &str) -> Option<&TypedValue> {
-        self.inputs.get(name)
+        self.0.get(name)
     }
     
     /// 插入原始TypedValue
     pub fn insert_raw(&mut self, name: &str, typed_value: TypedValue) {
-        self.inputs.insert(name.to_string(), typed_value);
+        self.0.insert(name.to_string(), typed_value);
     }
     
     /// 检查是否包含指定端口
     pub fn contains(&self, name: &str) -> bool {
-        self.inputs.contains_key(name)
+        self.0.contains_key(name)
     }
     
     /// 获取所有输入的类型信息
     pub fn get_type_info(&self) -> HashMap<String, String> {
-        self.inputs.iter()
+        self.0.iter()
             .map(|(name, value)| (name.clone(), value.qualified_type_name().to_string()))
             .collect()
     }
 }
 
-/// 节点输出容器
+/// 节点输出容器 - 直接存储端口映射，无多余层级
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct NodeOutputs {
-    pub outputs: HashMap<String, TypedValue>, // 存储类型化值
-}
+pub struct NodeOutputs(pub HashMap<String, TypedValue>);
 
 impl NodeOutputs {
     pub fn new() -> Self {
-        Self {
-            outputs: HashMap::new(),
-        }
+        Self(HashMap::new())
     }
     
     /// 插入值 - 自动序列化
     pub fn insert<T: Type + Serialize>(&mut self, name: &str, value: &T) -> Result<(), String> {
         let typed_value = value.to_typed_value()?;
-        self.outputs.insert(name.to_string(), typed_value);
+        self.0.insert(name.to_string(), typed_value);
         Ok(())
     }
     
     /// 获取值 - 自动反序列化和类型检查
     pub fn get<T: Type + for<'de> Deserialize<'de>>(&self, name: &str) -> Result<T, String> {
-        let typed_value = self.outputs.get(name)
+        let typed_value = self.0.get(name)
             .ok_or_else(|| format!("输出端口 {} 不存在", name))?;
         
         T::from_typed_value(typed_value)
@@ -181,22 +157,27 @@ impl NodeOutputs {
     
     /// 获取原始TypedValue
     pub fn get_raw(&self, name: &str) -> Option<&TypedValue> {
-        self.outputs.get(name)
+        self.0.get(name)
     }
     
     /// 插入原始TypedValue
     pub fn insert_raw(&mut self, name: &str, typed_value: TypedValue) {
-        self.outputs.insert(name.to_string(), typed_value);
+        self.0.insert(name.to_string(), typed_value);
     }
     
     /// 检查是否包含指定端口
     pub fn contains(&self, name: &str) -> bool {
-        self.outputs.contains_key(name)
+        self.0.contains_key(name)
+    }
+    
+    /// 检查是否为空
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
     }
     
     /// 获取所有输出的类型信息
     pub fn get_type_info(&self) -> HashMap<String, String> {
-        self.outputs.iter()
+        self.0.iter()
             .map(|(name, value)| (name.clone(), value.qualified_type_name().to_string()))
             .collect()
     }

@@ -4,6 +4,11 @@ UUID
 Int
 Bool
 String
+Prompt {
+    id basic.String
+    name basic.String
+    content basic.String
+}
 --
 
 -- nodes
@@ -47,6 +52,19 @@ FormatNumber {
     }
     out {
         formatted basic.String
+        done basic.Signal
+    }
+}
+
+CreatePrompt {
+    mode Concurrent
+    in {
+        name basic.String
+        content basic.String
+        trigger basic.Signal AND
+    }
+    out {
+        prompt basic.Prompt
         done basic.Signal
     }
 }

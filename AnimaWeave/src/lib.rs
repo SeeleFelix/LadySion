@@ -15,7 +15,7 @@ mod types;
 mod parser;
 
 // 重新导出核心类型
-pub use types::{TypedValue, NodeInputs, NodeOutputs, Type, TypeDescriptor};
+pub use types::{TypedValue, NodeInputs, NodeOutputs, Type};
 pub use plugin_registry::PluginRegistry;
 // parser函数通过内部调用，不需要重新导出
 
@@ -149,11 +149,11 @@ fn execute_graph(graph: &GraphDefinition, registry: &PluginRegistry) -> Result<H
             // 执行节点
             let full_node_type = format!("{}.{}", node_spec.package, node_spec.node_type);
             eprintln!("Debug: 执行节点 {} ({})", node_name, full_node_type);
-            eprintln!("Debug: 输入端口数: {}", node_inputs.inputs.len());
+            eprintln!("Debug: 输入端口数: {}", node_inputs.0.len());
             
             match registry.execute_node(&full_node_type, &node_inputs) {
                 Ok(node_output) => {
-                    eprintln!("Debug: 节点 {} 执行成功，输出端口数: {}", node_name, node_output.outputs.len());
+                    eprintln!("Debug: 节点 {} 执行成功，输出端口数: {}", node_name, node_output.0.len());
                     
                     // 将输出保存到共享输出空间
                     all_outputs.insert(node_name.clone(), node_output);
@@ -206,7 +206,7 @@ fn filter_terminal_outputs(all_outputs: &HashMap<String, NodeOutputs>, graph: &G
         let mut filtered_node_outputs = NodeOutputs::new();
         
         // 检查每个输出端口是否被消费
-        for (port_name, output_value) in &node_outputs.outputs {
+        for (port_name, output_value) in &node_outputs.0 {
             let mut is_consumed = false;
             
             // 检查数据连接：这个输出是否被其他节点的输入消费
@@ -241,7 +241,7 @@ fn filter_terminal_outputs(all_outputs: &HashMap<String, NodeOutputs>, graph: &G
         }
         
         // 只有当节点还有输出端口时才加入结果
-        if !filtered_node_outputs.outputs.is_empty() {
+        if !filtered_node_outputs.is_empty() {
             filtered_outputs.insert(node_name.clone(), filtered_node_outputs);
         }
     }
