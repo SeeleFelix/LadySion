@@ -11,7 +11,7 @@ AnimaWeave_file = { SOI ~ file_content ~ EOI }
 
 file_content = { graph_file | definition_file }
 
-definition_file = { NEWLINE* ~ (import_section | types_section | nodes_section) ~ (NEWLINE* ~ (import_section | types_section | nodes_section))* ~ NEWLINE* }
+definition_file = { NEWLINE* ~ (import_section | types_section | nodes_section) ~ (NEWLINE+ ~ (import_section | types_section | nodes_section))* ~ NEWLINE* }
 graph_file = { import_section? ~ NEWLINE* ~ graph_section }
 
 // ========== Import Section ==========
@@ -30,7 +30,7 @@ type_name = { qualified_name }
 convertible_types = { (qualified_name ~ NEWLINE)* }
 
 // ========== Nodes Section ==========
-nodes_section = { section_header_nodes ~ node_definition* ~ section_end }
+nodes_section = { section_header_nodes ~ (NEWLINE* ~ node_definition)* ~ NEWLINE* ~ section_end }
 section_header_nodes = { "--" ~ "nodes" ~ NEWLINE }
 node_definition = { identifier ~ "{" ~ NEWLINE ~ mode_declaration? ~ port_sections ~ "}" ~ NEWLINE }
 

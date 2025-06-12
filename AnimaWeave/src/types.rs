@@ -109,6 +109,11 @@ impl NodeOutputs {
         typed_value.deserialize::<T>()
     }
     
+    /// 检查输出是否为空
+    pub fn is_empty(&self) -> bool {
+        self.outputs.is_empty()
+    }
+    
     /// 调试用的JSON输出
     pub fn to_json(&self) -> serde_json::Value {
         let mut json_obj = serde_json::Map::new();
