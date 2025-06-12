@@ -208,6 +208,30 @@ alwaysApply: true
       每个测试用例都在问：这个数学定义在实际世界中意味着什么？
     </core_belief>
 
+    <architecture_understanding>
+      <!-- AnimaWeave架构的正确理解 -->
+      <testing_target>
+        我们测试的是：basic插件在图执行中的表现
+        不是测试：anima文件解析、plugin内部实现
+        接口：awakening(sanctum_path, weave_filename) -> FateEcho
+        测试文件：weave图文件，不是anima定义文件
+      </testing_target>
+
+      <plugin_role>
+        basic.anima：定义类型和节点的接口契约
+        plugin.rs：实现具体的类型和节点行为
+        weave文件：描述使用这些类型和节点的图
+        测试：验证图执行时插件行为符合数学定义
+      </plugin_role>
+
+      <integration_focus>
+        T1.1验证的是：类型系统在图执行中的完整表现
+        不是语法解析，而是集成能力
+        不是单元测试，而是端到端验证
+        焦点：数学定义在实际计算中的体现
+      </integration_focus>
+    </architecture_understanding>
+
     <thinking_chain>
       <philosophical_question>
         <!-- 强制先思考哲学层面 -->
@@ -234,64 +258,88 @@ alwaysApply: true
     </thinking_chain>
 
     <workflow_discipline>
-      <step_1>
-        <!-- 读取哲学文档，理解深层含义 -->
-        "这个需求背后的哲学理念是什么？"
-        在开始任何实现之前，必须引用具体的哲学文档章节
-      </step_1>
+      <step_1_mathematical_definition>
+        <!-- 先理解数学定义的哲学理念 -->
+        "这个数学定义背后体现了什么哲学理念？"
+        "𝒯 = {Int, Bool, String, ...} 在实际世界中意味着什么？"
+        在开始任何实现之前，必须引用具体的数学定义
+      </step_1_mathematical_definition>
 
-      <step_2>
-        <!-- 写测试用例文档，不是代码 -->
-        "我如何用文字描述这个测试场景？"
+      <step_2_reality_scenarios>
+        <!-- 分析需要什么实际验证场景 -->
+        "要验证'类型是计算的基础'，我们需要什么实际场景？"
+        "这个哲学理念在图执行中应该如何体现？"
+        "什么样的场景能证明类型系统真的是计算的基础？"
+      </step_2_reality_scenarios>
+
+      <step_3_plugin_capabilities>
+        <!-- 反推插件需要什么能力 -->
+        "这些验证场景需要basic插件具备什么能力？"
+        "需要什么类型？什么节点？什么行为？"
+        "当前的basic.anima和plugin.rs支持这些能力吗？"
+      </step_3_plugin_capabilities>
+
+      <step_4_anima_definition>
+        <!-- 补充basic.anima定义 -->
+        "根据测试场景，basic.anima需要定义哪些类型和节点？"
+        "这些定义是否能支撑我们想要验证的数学概念？"
+        先完善anima定义，再考虑测试
+      </step_4_anima_definition>
+
+      <step_5_weave_test_graphs>
+        <!-- 构造测试用的weave图文件 -->
+        "用basic.anima的元素能构造出什么有意义的测试图？"
+        "这些图文件能体现真实的业务场景，不是玩具例子"
+        测试图必须使用awakening接口执行，不是直接测试anima解析
+      </step_5_weave_test_graphs>
+
+      <step_6_test_case_documentation>
+        <!-- 写测试用例文档 -->
+        "我如何用文字描述这些测试场景？"
+        "每个测试用例对应哪个数学定义的哪个方面？"
         测试用例文档是进度条，是沟通工具，不是代码
-      </step_2>
+      </step_6_test_case_documentation>
 
-      <step_3>
-        <!-- 检查basic.anima的支撑能力 -->
-        "现在的basic.anima能支撑这个概念吗？"
-        "需要补充什么基础定义？"
-      </step_3>
-
-      <step_4>
-        <!-- 准备测试数据文件 -->
-        "用basic.anima的元素能构造出什么测试图文件？"
-        图文件应该体现真实的业务场景，不是玩具例子
-      </step_4>
-
-      <step_5>
+      <step_7_test_implementation>
         <!-- 一比一实现测试方法 -->
         根据测试用例文档，机械地写测试代码
+        使用awakening接口执行weave文件，验证输出
         这里没有创造性，只有忠实转换
-      </step_5>
+      </step_7_test_implementation>
 
-      <step_6>
-        <!-- 让测试失败，确认测试有效 -->
-        "这个失败信息告诉我什么？"
-        "是数学定义的问题，还是实现的问题？"
-      </step_6>
+      <step_8_plugin_implementation>
+        <!-- 实现basic插件的缺失功能 -->
+        "测试失败说明插件缺少什么功能？"
+        只实现够让测试通过的最小功能
+        不过度设计，专注于数学定义的验证
+      </step_8_plugin_implementation>
 
-      <step_7>
-        <!-- 最小实现 -->
-        只写够让测试通过的代码，不多写一行
-      </step_7>
-
-      <step_8>
-        <!-- 哲学检验重构 -->
+      <step_9_philosophical_verification>
+        <!-- 哲学检验 -->
         "这个实现体现了原始的哲学理念吗？"
         "代码的结构反映了数学定义的美吗？"
-      </step_8>
+        "我们真的验证了'类型是计算的基础'吗？"
+      </step_9_philosophical_verification>
     </workflow_discipline>
 
     <error_response>
       <!-- 当我跳过流程时的自我纠正 -->
+      如果我直接测试anima文件解析，立即停止并问：
+      "我是不是又在测试anima解析而不是图执行？"
+      "awakening只能传入weave文件，我是不是搞错了测试对象？"
+      "我应该测试的是basic插件在图中的表现，不是内部实现对吗？"
+      
       如果我直接给出代码实现，立即停止并问：
       "我刚才跳过了哪个思考步骤？"
-      "这个需求对应的哲学文档是什么？"
-      "我有没有先设计测试用例文档？"
+      "这个需求对应的数学定义是什么？"
+      "我有没有先分析验证场景和插件能力需求？"
       
       如果我给出了太复杂的实现，问：
       "这真的是最小实现吗？"
       "我是不是过度设计了？"
+      
+      如果我忘记了正确的TDD流程，强制重新开始：
+      "等等，让我重新捋顺逻辑：数学定义→验证场景→插件能力→anima定义→weave图→测试文档→测试代码→插件实现"
     </error_response>
 
     <progress_tracking>
