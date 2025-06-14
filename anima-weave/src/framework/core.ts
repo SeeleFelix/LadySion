@@ -151,6 +151,28 @@ export class VesselRegistry {
   getAllNodes(): string[] {
     return Array.from(this.nodeClasses.keys());
   }
+
+  /**
+   * 获取标签的完整类型名（包含vessel前缀，如果需要的话）
+   */
+  getLabelFullTypeName(labelInstance: any): string {
+    // 遍历所有已注册的vessel，找到定义了这个标签类型的vessel
+    for (const vesselName of this.vessels.keys()) {
+      const vessel = this.vessels.get(vesselName);
+      if (!vessel) continue;
+      
+      const supportedLabels = vessel.getSupportedLabels();
+      for (const LabelClass of supportedLabels) {
+        const testInstance = new LabelClass(null);
+        if (testInstance.labelName === labelInstance.labelName) {
+          return `${vesselName}.${labelInstance.labelName}`;
+        }
+      }
+    }
+    
+    // 如果找不到类型定义，直接返回类型名（不加vessel前缀）
+    return labelInstance.labelName;
+  }
 }
 
 // ========== 图结构 ==========
@@ -182,6 +204,23 @@ export interface SemanticValue {
   value: unknown;
 }
 
+// ========== 验证错误类型 ==========
+
+export interface ValidationError {
+  type: "TYPE_MISMATCH" | "PORT_NOT_FOUND" | "NODE_NOT_FOUND" | "CONNECTION_INVALID";
+  message: string;
+  connection: {
+    from: { node: string; port: string };
+    to: { node: string; port: string };
+  };
+  sourceType?: string;
+  targetType?: string;
+}
+
+export interface ValidationErrorContext extends Record<string, unknown> {
+  validationErrors: ValidationError[];
+}
+
 // ========== 执行结果 ==========
 
 export enum ExecutionStatus {
@@ -207,13 +246,17 @@ export interface ErrorDetails {
   context?: Record<string, unknown>;
 }
 
+import type { ExecutionTrace } from "./graph_executor.ts";
+
 export interface FateEcho {
   status: ExecutionStatus;
   outputs: string;
   error?: ErrorDetails;
+  executionTrace?: ExecutionTrace;
   getOutputs(): Record<string, SemanticValue>;
   getRawOutputs(): Record<string, unknown>;
   getErrorDetails(): ErrorDetails | null;
+  getExecutionTrace?(): ExecutionTrace | null;
 }
 
 export function isStaticError(status: ExecutionStatus): boolean {

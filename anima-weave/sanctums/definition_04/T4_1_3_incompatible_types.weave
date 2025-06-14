@@ -1,0 +1,33 @@
+-- import
+basic.anima
+--
+
+-- graph
+// Verify incompatibility: test type pairs not in Gamma are rejected by static check
+// This graph attempts to connect Bool type to UUID type, should be rejected by static validation
+
+nodes {
+    starter basic.Start
+    timer basic.GetTimestamp
+    checker basic.IsEven
+    formatter basic.StringFormatter
+}
+
+datas {
+    // Provide proper data flow to make checker executable
+    timer.timestamp -> checker.number;
+    
+    // Attempt to connect Bool result to UUID input - this should be rejected
+    checker.result -> formatter.input;
+}
+
+controls {
+    // Provide proper control flow to make checker executable
+    starter.signal -> timer.trigger;
+    timer.done -> checker.trigger;
+    
+    // Control flow for formatter (though it won't execute due to static error)
+    checker.done -> formatter.trigger;
+}
+--
+ 

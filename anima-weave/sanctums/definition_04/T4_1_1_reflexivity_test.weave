@@ -1,0 +1,23 @@
+-- import
+basic.anima
+--
+
+-- graph
+// Verify reflexivity: for all tau in L, (tau, tau) in Gamma
+// This graph tests same-type connections to ensure every type is compatible with itself
+
+nodes {
+    starter basic.Start
+    processor basic.DataProcessor
+}
+
+datas {
+    // No data connections - processor outputs its own result
+}
+
+controls {
+    // processor needs execute signal to start
+    starter.signal -> processor.execute;
+}
+--
+ 

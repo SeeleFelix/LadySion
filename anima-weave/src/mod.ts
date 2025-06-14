@@ -3,9 +3,10 @@
 
 import { AnimaWeaveEngine } from "./framework/engine.ts";
 import { ExecutionStatus, isStaticError, isRuntimeError, type FateEcho } from "./framework/core.ts";
+import type { ExecutionTrace, ExecutionNode } from "./framework/graph_executor.ts";
 
 // 重新导出核心接口
-export { ExecutionStatus, isStaticError, isRuntimeError, type FateEcho };
+export { ExecutionStatus, isStaticError, isRuntimeError, type FateEcho, type ExecutionTrace, type ExecutionNode };
 export type {
   AnimaVessel,
   WeaveConnection,
@@ -80,6 +81,17 @@ async function resolveSanctumPath(sanctumPath: string): Promise<string> {
  */
 export function createEngine(): AnimaWeaveEngine {
   return new AnimaWeaveEngine();
+}
+
+/**
+ * 重新生成所有anima文件（根据vessel定义）
+ */
+export async function regenerateAnimaFiles(): Promise<void> {
+  console.log("🔄 重新生成anima文件...");
+  const engine = new AnimaWeaveEngine();
+  // 触发容器发现和anima文件生成
+  await engine.regenerateAnimaFiles();
+  console.log("✅ anima文件生成完成");
 }
 
 // 重新导出框架组件（供容器开发使用）

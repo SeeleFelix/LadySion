@@ -225,7 +225,17 @@ export class VesselManager {
     const supportedLabels = vessel.getSupportedLabels();
     for (const LabelClass of supportedLabels) {
       const labelInstance = new LabelClass(null);
-      content += `${labelInstance.labelName}\n`;
+      const convertibleLabels = labelInstance.getConvertibleLabels();
+      
+      if (convertibleLabels.length > 0) {
+        content += `${labelInstance.labelName} {\n`;
+        for (const targetLabel of convertibleLabels) {
+          content += `    ${targetLabel}\n`;
+        }
+        content += `}\n`;
+      } else {
+        content += `${labelInstance.labelName}\n`;
+      }
     }
 
     content += "--\n\n-- nodes\n";
@@ -241,7 +251,8 @@ export class VesselManager {
       // 输入端口
       for (const inputPort of nodeInstance.inputs) {
         const labelInstance = new inputPort.label(null);
-        content += `        ${inputPort.name} ${vessel.name}.${labelInstance.labelName}\n`;
+        const fullTypeName = this.registry.getLabelFullTypeName(labelInstance);
+        content += `        ${inputPort.name} ${fullTypeName}\n`;
       }
       
       content += `    }\n`;
@@ -250,7 +261,8 @@ export class VesselManager {
       // 输出端口
       for (const outputPort of nodeInstance.outputs) {
         const labelInstance = new outputPort.label(null);
-        content += `        ${outputPort.name} ${vessel.name}.${labelInstance.labelName}\n`;
+        const fullTypeName = this.registry.getLabelFullTypeName(labelInstance);
+        content += `        ${outputPort.name} ${fullTypeName}\n`;
       }
       
       content += `    }\n`;
@@ -261,4 +273,6 @@ export class VesselManager {
 
     return content;
   }
+
+
 } 

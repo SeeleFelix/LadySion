@@ -3,8 +3,15 @@ Signal
 Int
 Bool
 String
-UUID
-Prompt
+UUID {
+    String
+}
+Prompt {
+    String
+}
+Prompts {
+    Prompt
+}
 --
 
 -- nodes
@@ -69,7 +76,7 @@ CreatePrompt {
 StringFormatter {
     mode Concurrent
     in {
-        input basic.UUID
+        input basic.String
         trigger basic.Signal
     }
     out {

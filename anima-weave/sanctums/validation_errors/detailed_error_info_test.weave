@@ -1,0 +1,24 @@
+-- import
+basic.anima
+--
+
+-- graph
+// Test graph for detailed error information
+// This should provide specific port and connection error details
+
+nodes {
+    starter basic.Start
+    checker basic.IsEven
+    formatter basic.StringFormatter
+}
+
+datas {
+    // Specific type mismatch: Bool -> UUID (checker outputs Bool, formatter expects UUID)
+    checker.result -> formatter.input;
+}
+
+controls {
+    starter.signal -> checker.trigger;
+    checker.done -> formatter.trigger;
+}
+-- 

@@ -54,6 +54,18 @@ export class UUIDLabel extends SemanticLabel {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     return uuidRegex.test(str);
   }
+  
+  override getConvertibleLabels(): string[] {
+    return ["String"];  // UUID可以转换为String
+  }
+  
+  override convertTo(targetLabelName: string): any {
+    if (targetLabelName === "String") {
+      // UUID直接作为字符串返回
+      return this.value;
+    }
+    throw new Error(`Conversion from UUID to ${targetLabelName} not supported`);
+  }
 }
 
 export class PromptLabel extends SemanticLabel {
@@ -73,6 +85,62 @@ export class PromptLabel extends SemanticLabel {
         content: new StringLabel("")
       });
     }
+  }
+  
+  override getConvertibleLabels(): string[] {
+    return ["String"];  // Prompt可以转换为String
+  }
+  
+  override convertTo(targetLabelName: string): any {
+    if (targetLabelName === "String") {
+      // 将Prompt转换为字符串：使用content字段
+      const prompt = this.value;
+      return prompt.content.value;
+    }
+    throw new Error(`Conversion from Prompt to ${targetLabelName} not supported`);
+  }
+}
+
+export class PromptsLabel extends SemanticLabel {
+  readonly labelName = "Prompts";
+  
+  constructor(value: any) {
+    if (Array.isArray(value) && value.every(item => 
+        typeof item === "object" && item !== null &&
+        item.id instanceof UUIDLabel && 
+        item.name instanceof StringLabel && 
+        item.content instanceof StringLabel)) {
+      super(value);
+    } else if (typeof value === "object" && value !== null && 
+               value.id instanceof UUIDLabel && 
+               value.name instanceof StringLabel && 
+               value.content instanceof StringLabel) {
+      // 如果传入单个prompt，包装为数组
+      super([value]);
+    } else {
+      // 默认值：包含一个默认prompt的数组
+      super([{
+        id: new UUIDLabel(crypto.randomUUID()),
+        name: new StringLabel("Default Enhanced Prompt"),
+        content: new StringLabel("Enhanced prompt content")
+      }]);
+    }
+  }
+  
+  override getConvertibleLabels(): string[] {
+    return ["Prompt"];  // Prompts可以转换为Prompt（取第一个）
+  }
+  
+  override convertTo(targetLabelName: string): any {
+    if (targetLabelName === "Prompt") {
+      // 将Prompts转换为Prompt：取数组中的第一个
+      const prompts = this.value;
+      if (Array.isArray(prompts) && prompts.length > 0) {
+        return prompts[0];
+      }
+      throw new Error("Cannot convert empty Prompts to Prompt");
+    }
+    throw new Error(`Conversion from Prompts to ${targetLabelName} not supported`);
   }
 }
 
@@ -199,17 +267,16 @@ export class CreatePromptNode extends Node {
 export class StringFormatterNode extends Node {
   readonly nodeName = "StringFormatter";
   readonly inputs = [
-    new Port("input", UUIDLabel),  // 接收UUID输入
+    new Port("input", StringLabel),  // 接收String输入 - 这才合理！
     new Port("trigger", SignalLabel)
   ];
   readonly outputs = [
     new Port("formatted", StringLabel),
     new Port("done", SignalLabel)
   ];
-  readonly description = "将输入格式化为字符串 - 验证DataPort定义";
+  readonly description = "将字符串输入格式化为新的字符串格式";
   
   execute(inputPorts: Port[]): Port[] {
-    // 验证DataPort二元组: (port_id: "input", semantic_label: UUIDLabel) -> (port_id: "formatted", semantic_label: StringLabel)
     const inputValue = inputPorts[0].getValue()!.value as string;
     const formatted = `Formatted: ${inputValue}`;
     
@@ -285,6 +352,7 @@ export class BasicVessel implements AnimaVessel {
       StringLabel,
       UUIDLabel,
       PromptLabel,
+      PromptsLabel,
     ];
   }
 

@@ -1,0 +1,29 @@
+-- types
+--
+
+-- nodes
+EnhancePrompt {
+    mode Concurrent
+    in {
+        prompt basic.Prompt
+        trigger basic.Signal
+    }
+    out {
+        prompts basic.Prompts
+        done basic.Signal
+    }
+}
+
+MockOpenRouterCall {
+    mode Concurrent
+    in {
+        prompts basic.Prompts
+        trigger basic.Signal
+    }
+    out {
+        response basic.String
+        done basic.Signal
+    }
+}
+
+--

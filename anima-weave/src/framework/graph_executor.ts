@@ -5,6 +5,26 @@ import type { WeaveGraph, WeaveConnection, WeaveNode, VesselRegistry, SemanticVa
 import { Port as PortClass } from "./core.ts";
 
 /**
+ * 执行节点信息
+ */
+export interface ExecutionNode {
+  nodeId: string;
+  nodeType: string;
+  executionOrder: number;
+  timestamp: number;
+  duration?: number;
+}
+
+/**
+ * 执行轨迹信息
+ */
+export interface ExecutionTrace {
+  totalDuration: number;
+  executionOrder: ExecutionNode[];
+  parallelGroups: string[][];
+}
+
+/**
  * 图执行器 - 处理图的动态执行
  */
 export class GraphExecutor {
@@ -13,8 +33,18 @@ export class GraphExecutor {
   /**
    * 执行图
    */
-  async executeWeaveGraph(graph: WeaveGraph): Promise<Record<string, SemanticValue>> {
+  async executeWeaveGraph(graph: WeaveGraph): Promise<{
+    outputs: Record<string, SemanticValue>;
+    executionTrace: ExecutionTrace;
+  }> {
     console.log("🔄 开始执行图...");
+    
+    const startTime = Date.now();
+    const executionTrace: ExecutionTrace = {
+      totalDuration: 0,
+      executionOrder: [],
+      parallelGroups: []
+    };
 
     const nodeResults = new Map<string, Port[]>();
     
@@ -42,8 +72,16 @@ export class GraphExecutor {
     console.log("📋 初始就绪队列:", Array.from(readyQueue));
     console.log("📊 控制输入计数:", Object.fromEntries(controlInputCounts));
 
+    let executionOrderCounter = 1;
+
     // 动态执行循环
     while (readyQueue.size > 0) {
+      // 记录当前批次的并行执行节点
+      const currentBatch = Array.from(readyQueue);
+      if (currentBatch.length > 1) {
+        executionTrace.parallelGroups.push([...currentBatch]);
+      }
+      
       const nodeIterator = readyQueue.values().next();
       if (nodeIterator.done || !nodeIterator.value) {
         break;
@@ -57,6 +95,7 @@ export class GraphExecutor {
         continue;
       }
       
+      const nodeStartTime = Date.now();
       console.log(`⚙️ 执行节点: ${nodeId} (${node.vessel}.${node.type})`);
 
       // 收集输入Port数组
@@ -64,10 +103,23 @@ export class GraphExecutor {
 
       // 执行节点
       const outputPorts = await this.registry.executeNode(node.vessel, node.type, inputPorts);
+      
+      const nodeEndTime = Date.now();
+      const nodeDuration = nodeEndTime - nodeStartTime;
+
+      // 记录执行信息
+      const executionNode: ExecutionNode = {
+        nodeId,
+        nodeType: `${node.vessel}.${node.type}`,
+        executionOrder: executionOrderCounter++,
+        timestamp: nodeStartTime,
+        duration: nodeDuration
+      };
+      executionTrace.executionOrder.push(executionNode);
 
       // 存储结果
       nodeResults.set(nodeId, outputPorts);
-      console.log(`✅ 节点 ${nodeId} 执行完成:`, outputPorts.map(p => ({ name: p.name, value: p.getValue()?.value })));
+      console.log(`✅ 节点 ${nodeId} 执行完成 (${nodeDuration}ms):`, outputPorts.map(p => ({ name: p.name, value: p.getValue()?.value })));
 
       // 处理控制输出，更新下游节点的就绪状态
       this.updateDownstreamReadiness(nodeId, outputPorts, graph, receivedControlInputs, controlInputCounts, readyQueue);
@@ -75,10 +127,17 @@ export class GraphExecutor {
 
     // 收集终端输出（带语义标签）
     const terminalOutputs = this.collectTerminalOutputs(graph, nodeResults);
+    
+    const endTime = Date.now();
+    executionTrace.totalDuration = endTime - startTime;
 
     console.log("🎯 图执行完成，终端输出:", terminalOutputs);
+    console.log("⏱️ 执行轨迹:", executionTrace);
 
-    return terminalOutputs;
+    return {
+      outputs: terminalOutputs,
+      executionTrace
+    };
   }
 
   /**
@@ -282,8 +341,17 @@ export class GraphExecutor {
       const metadata = this.registry.getNodeMetadata(node.vessel, node.type);
       if (!metadata) return false;
 
-      // 检查节点是否有trigger输入端口
-      return metadata.inputs.some(port => port.name === 'trigger');
+      // 检查节点是否有任何Signal类型的输入端口
+      // 不仅仅是名为'trigger'的端口，而是任何控制输入端口
+      return metadata.inputs.some(port => {
+        try {
+          const labelInstance = new port.label(null);
+          return labelInstance.labelName === 'Signal';
+        } catch (error) {
+          // 如果无法确定标签类型，检查端口名
+          return port.name === 'trigger' || port.name === 'execute' || port.name === 'signal';
+        }
+      });
     } catch (error) {
       // 如果无法确定，保守地认为需要trigger
       return true;
@@ -291,7 +359,7 @@ export class GraphExecutor {
   }
 
   /**
-   * 将输入数据转换为Port数组
+   * 将输入数据转换为Port数组（支持类型转换）
    */
   private convertDataToPorts(node: WeaveNode, data: Record<string, unknown>): Port[] {
     const ports: Port[] = [];
@@ -306,13 +374,99 @@ export class GraphExecutor {
     for (const [inputName, value] of Object.entries(data)) {
       const inputPort = metadata.inputs.find(port => port.name === inputName);
       if (inputPort) {
-        const label = new inputPort.label(value);
+        // 检查是否需要类型转换
+        const convertedValue = this.convertValueToTargetType(value, inputPort.label);
+        const label = new inputPort.label(convertedValue);
         const port = new PortClass(inputName, inputPort.label, label);
         ports.push(port);
       }
     }
     
     return ports;
+  }
+
+  /**
+   * 将值转换为目标类型（支持递归转换）
+   */
+  private convertValueToTargetType(value: unknown, targetLabelClass: new (value: any) => any): unknown {
+    // 如果值是SemanticLabel，检查是否需要转换
+    if (value && typeof value === 'object' && 'labelName' in value && 'value' in value) {
+      const sourceLabel = value as any;
+      const targetLabelInstance = new targetLabelClass(null);
+      
+      // 如果类型已经匹配，直接返回值
+      if (sourceLabel.labelName === targetLabelInstance.labelName) {
+        return sourceLabel.value;
+      }
+      
+      // 尝试转换
+      try {
+        const convertedValue = this.performRecursiveConversion(
+          sourceLabel, 
+          targetLabelInstance.labelName
+        );
+        return convertedValue;
+      } catch (error) {
+        console.warn(`⚠️ 类型转换失败: ${sourceLabel.labelName} -> ${targetLabelInstance.labelName}`, error);
+        return sourceLabel.value; // 回退到原始值
+      }
+    }
+    
+    // 对于非SemanticLabel值，直接返回
+    return value;
+  }
+
+  /**
+   * 执行递归类型转换
+   */
+  private performRecursiveConversion(sourceLabel: any, targetLabelName: string): unknown {
+    // 检查是否可以直接转换
+    const convertibleLabels = sourceLabel.getConvertibleLabels();
+    if (convertibleLabels.includes(targetLabelName)) {
+      return sourceLabel.convertTo(targetLabelName);
+    }
+    
+    // 递归转换：通过中间类型
+    for (const intermediateLabelName of convertibleLabels) {
+      try {
+        // 先转换到中间类型
+        const intermediateValue = sourceLabel.convertTo(intermediateLabelName);
+        
+        // 创建中间类型的标签实例
+        const intermediateLabelClass = this.findLabelClass(intermediateLabelName);
+        if (intermediateLabelClass) {
+          const intermediateLabel = new intermediateLabelClass(intermediateValue);
+          
+          // 递归转换到目标类型
+          return this.performRecursiveConversion(intermediateLabel, targetLabelName);
+        }
+      } catch (error) {
+        // 继续尝试其他中间类型
+        continue;
+      }
+    }
+    
+    throw new Error(`Cannot convert ${sourceLabel.labelName} to ${targetLabelName}`);
+  }
+
+  /**
+   * 根据标签名查找标签类
+   */
+  private findLabelClass(labelName: string): (new (value: any) => any) | null {
+    // 遍历所有已注册的vessel，查找标签类
+    for (const vesselName of this.registry.listVessels()) {
+      const vessel = this.registry.getVessel(vesselName);
+      if (vessel) {
+        const supportedLabels = vessel.getSupportedLabels();
+        for (const LabelClass of supportedLabels) {
+          const testInstance = new LabelClass(null);
+          if (testInstance.labelName === labelName) {
+            return LabelClass;
+          }
+        }
+      }
+    }
+    return null;
   }
 
   /**

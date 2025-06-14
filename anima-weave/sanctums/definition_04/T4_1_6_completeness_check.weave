@@ -1,0 +1,23 @@
+-- import
+basic.anima
+--
+
+-- graph
+// Verify completeness and consistency of compatibility relation system
+// This graph tests multiple compatibility relations to ensure system internal consistency
+
+nodes {
+    starter basic.Start
+    compatibility_test basic.StringFormatter
+    completeness_marker basic.CompletionMarker
+}
+
+datas {
+    starter.execution_id -> compatibility_test.input;
+}
+
+controls {
+    starter.signal -> compatibility_test.trigger;
+    compatibility_test.done -> completeness_marker.trigger;
+}
+-- 

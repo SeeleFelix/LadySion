@@ -75,22 +75,26 @@ export class AnimaWeaveEngine {
 
       // 5. 执行图
       const result = await this.graphExecutor.executeWeaveGraph(graph);
-      const rawResult = this.semanticHandler.extractRawOutputs(result);
+      const rawResult = this.semanticHandler.extractRawOutputs(result.outputs);
 
       return {
         status: ExecutionStatus.Success,
-        outputs: JSON.stringify(result),
+        outputs: JSON.stringify(result.outputs),
         error: undefined,
-        getOutputs: () => result,
+        executionTrace: result.executionTrace,
+        getOutputs: () => result.outputs,
         getRawOutputs: () => rawResult,
         getErrorDetails: () => null,
+        getExecutionTrace: () => result.executionTrace,
       };
     } catch (error) {
+      if (error instanceof Error && (error.message.includes("validation error") || (error as any).validationErrors)) {
+        return ErrorHandler.handleValidationError(error);
+      } else {
       return this.errorHandler.createErrorFateEcho(error, sanctumPath, weaveName);
+      }
     }
   }
-
-
 
   /**
    * 确保所需容器已加载
@@ -131,5 +135,10 @@ export class AnimaWeaveEngine {
     return this.registry;
   }
 
-
+  /**
+   * 重新生成anima文件（从vessel定义）
+   */
+  async regenerateAnimaFiles(): Promise<void> {
+    await this.vesselManager.discoverAndLoadVessels();
+  }
 }
