@@ -114,9 +114,10 @@ export class OakAdapter implements HttpAdapter {
   private extractHeaders(ctx: Context): Record<string, string> {
     const headers: Record<string, string> = {};
 
-    for (const [name, value] of ctx.request.headers.entries()) {
+    // 使用 forEach 替代 entries()，这在 Deno 环境中更兼容
+    ctx.request.headers.forEach((value, name) => {
       headers[name.toLowerCase()] = value;
-    }
+    });
 
     return headers;
   }

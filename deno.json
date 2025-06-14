@@ -48,7 +48,7 @@
   "compilerOptions": {
     "strict": true,
     "noImplicitAny": true,
-    "lib": ["deno.ns", "es2022"]
+    "lib": ["deno.ns", "es2022", "dom", "webworker"]
   },
   "lint": {
     "rules": {
