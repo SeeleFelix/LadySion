@@ -1,0 +1,38 @@
+-- import
+basic.anima
+--
+
+-- graph
+nodes {
+    starter basic.Start
+    timer1 basic.GetTimestamp
+    timer2 basic.GetTimestamp
+    judge1 basic.IsEven
+    judge2 basic.IsEven
+    formatter basic.FormatNumber
+    creator basic.CreatePrompt
+}
+
+datas {
+    // 复杂的数据流网络
+    timer1.timestamp -> judge1.number;
+    timer2.timestamp -> judge2.number;
+    timer1.timestamp -> formatter.number;
+    formatter.formatted -> creator.name;
+    formatter.formatted -> creator.content;
+}
+
+controls {
+    // 复杂的控制流网络 - 验证所有控制信号都是Signal类型
+    starter.signal -> timer1.trigger;
+    starter.signal -> timer2.trigger;
+    
+    timer1.done -> judge1.trigger;
+    timer2.done -> judge2.trigger;
+    
+    judge1.done -> formatter.trigger;
+    judge2.done -> creator.trigger;
+    
+    formatter.done -> creator.trigger;
+}
+-- 

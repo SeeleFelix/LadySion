@@ -460,14 +460,46 @@ export class AnimaWeaveEngine {
     console.log("🔄 开始执行图...");
 
     const nodeResults = new Map<string, Record<string, unknown>>();
-
-    // 按拓扑顺序执行节点
-    const executionOrder = this.topologicalSort(graph);
-    console.log("📋 执行顺序:", executionOrder);
-
-    for (const nodeId of executionOrder) {
+    
+    // 🎯 动态控制流调度实现
+    const readyQueue = new Set<string>();
+    const controlInputCounts = new Map<string, number>();
+    const receivedControlInputs = new Map<string, number>();
+    
+    // 初始化控制输入计数
+    for (const nodeId of Object.keys(graph.nodes)) {
       const node = graph.nodes[nodeId];
+      const controlInputs = graph.connections.filter(conn => 
+        conn.to.node === nodeId && this.isControlConnection(conn, graph)
+      );
+      controlInputCounts.set(nodeId, controlInputs.length);
+      receivedControlInputs.set(nodeId, 0);
+      
+      // 修复：只有真正的入口节点才立即就绪
+      // 入口节点的特征：1) 没有控制输入连接 2) 不需要trigger输入
+      if (controlInputs.length === 0 && !this.nodeRequiresTrigger(node)) {
+        readyQueue.add(nodeId);
+      }
+    }
+    
+    console.log("📋 初始就绪队列:", Array.from(readyQueue));
+    console.log("📊 控制输入计数:", Object.fromEntries(controlInputCounts));
 
+    // 动态执行循环
+    while (readyQueue.size > 0) {
+      const nodeIterator = readyQueue.values().next();
+      if (nodeIterator.done || !nodeIterator.value) {
+        break;
+      }
+      const nodeId = nodeIterator.value;
+      readyQueue.delete(nodeId);
+      
+      const node = graph.nodes[nodeId];
+      if (!node) {
+        console.warn(`⚠️ 节点未找到: ${nodeId}`);
+        continue;
+      }
+      
       console.log(`⚙️ 执行节点: ${nodeId} (${node.plugin}.${node.type})`);
 
       // 收集输入数据
@@ -478,8 +510,10 @@ export class AnimaWeaveEngine {
 
       // 存储结果
       nodeResults.set(nodeId, outputs);
-
       console.log(`✅ 节点 ${nodeId} 执行完成:`, outputs);
+
+      // 处理控制输出，更新下游节点的就绪状态
+      this.updateDownstreamReadiness(nodeId, outputs, graph, receivedControlInputs, controlInputCounts, readyQueue);
     }
 
     // 收集终端输出（带语义标签）
@@ -491,49 +525,51 @@ export class AnimaWeaveEngine {
   }
 
   /**
-   * 拓扑排序
+   * 判断连接是否为控制连接
    */
-  private topologicalSort(graph: WeaveGraph): string[] {
-    const result: string[] = [];
-    const visited = new Set<string>();
-    const visiting = new Set<string>();
+  private isControlConnection(connection: WeaveConnection, graph: WeaveGraph): boolean {
+    // 简单判断：如果输出端口名包含"signal"或"done"，认为是控制连接
+    // 更准确的方法是检查语义标签，但这里先用简单方法
+    const outputPort = connection.from.output;
+    return outputPort === "signal" || outputPort === "done" || outputPort === "trigger";
+  }
 
-    const visit = (nodeId: string) => {
-      if (visiting.has(nodeId)) {
-        throw new Error(`Circular dependency detected: ${nodeId}`);
+  /**
+   * 更新下游节点的就绪状态
+   */
+  private updateDownstreamReadiness(
+    nodeId: string,
+    outputs: Record<string, unknown>,
+    graph: WeaveGraph,
+    receivedControlInputs: Map<string, number>,
+    controlInputCounts: Map<string, number>,
+    readyQueue: Set<string>
+  ): void {
+    // 找到当前节点的控制输出连接
+    const controlOutputConnections = graph.connections.filter(conn => 
+      conn.from.node === nodeId && this.isControlConnection(conn, graph)
+    );
+
+    for (const connection of controlOutputConnections) {
+      const targetNodeId = connection.to.node;
+      const outputValue = outputs[connection.from.output];
+      
+      // 只有当控制信号为true时才计数
+      if (outputValue === true) {
+        const currentCount = receivedControlInputs.get(targetNodeId) || 0;
+        const newCount = currentCount + 1;
+        receivedControlInputs.set(targetNodeId, newCount);
+        
+        const expectedCount = controlInputCounts.get(targetNodeId) || 0;
+        console.log(`🔄 节点 ${targetNodeId} 收到控制信号: ${newCount}/${expectedCount}`);
+        
+        // 当收到所有控制输入时，节点变为就绪
+        if (newCount === expectedCount && expectedCount > 0) {
+          readyQueue.add(targetNodeId);
+          console.log(`✅ 节点 ${targetNodeId} 就绪，加入执行队列`);
+        }
       }
-
-      if (visited.has(nodeId)) return;
-
-      visiting.add(nodeId);
-
-      // 找到依赖当前节点的节点
-      const dependents = graph.connections
-        .filter((conn) => conn.from.node === nodeId)
-        .map((conn) => conn.to.node);
-
-      for (const dependent of dependents) {
-        visit(dependent);
-      }
-
-      visiting.delete(nodeId);
-      visited.add(nodeId);
-      result.unshift(nodeId);
-    };
-
-    // 从入口点开始
-    for (const entryPoint of graph.metadata.entry_points) {
-      visit(entryPoint);
     }
-
-    // 确保所有节点都被访问
-    for (const nodeId of Object.keys(graph.nodes)) {
-      if (!visited.has(nodeId)) {
-        visit(nodeId);
-      }
-    }
-
-    return result;
   }
 
   /**
@@ -718,5 +754,26 @@ export class AnimaWeaveEngine {
    */
   getRegistry(): PluginRegistry {
     return this.registry;
+  }
+
+  /**
+   * 判断节点是否需要trigger输入
+   */
+  private nodeRequiresTrigger(node: WeaveNode): boolean {
+    try {
+      const plugin = this.registry.getPlugin(node.plugin);
+      if (!plugin) return false;
+
+      const definition = plugin.getPluginDefinition();
+      const nodeDefinition = definition.nodes[node.type.split('.').pop() || ''];
+      
+      if (!nodeDefinition) return false;
+
+      // 检查节点是否有trigger输入端口
+      return 'trigger' in nodeDefinition.inputs;
+    } catch (error) {
+      // 如果无法确定，保守地认为需要trigger
+      return true;
+    }
   }
 }

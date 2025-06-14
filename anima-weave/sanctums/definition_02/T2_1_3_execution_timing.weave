@@ -1,0 +1,26 @@
+-- import
+basic.anima
+--
+
+-- graph
+nodes {
+    starter basic.Start
+    timer basic.GetTimestamp
+    judge basic.IsEven
+    formatter basic.FormatNumber
+}
+
+datas {
+    // 数据流：timer.timestamp流向两个消费者
+    timer.timestamp -> judge.number;
+    timer.timestamp -> formatter.number;
+}
+
+controls {
+    // 时序控制链：确保严格的执行顺序
+    // Start -> Timer -> Judge & Formatter (并行)
+    starter.signal -> timer.trigger;
+    timer.done -> judge.trigger;
+    timer.done -> formatter.trigger;
+}
+-- 

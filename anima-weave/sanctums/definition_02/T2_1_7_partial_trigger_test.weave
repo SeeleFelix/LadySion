@@ -1,0 +1,33 @@
+-- import
+basic.anima
+--
+
+-- graph
+nodes {
+    starter basic.Start
+    timer1 basic.GetTimestamp
+    timer2 basic.GetTimestamp
+    formatter basic.FormatNumber
+}
+
+datas {
+    // 给formatter提供数据输入，但控制输入不完整
+    timer1.timestamp -> formatter.number;
+}
+
+controls {
+    // 🎯 部分控制输入测试：
+    // 只触发timer1，不触发timer2
+    // formatter需要两个控制输入：timer1.done 和 timer2.done
+    // 如果是真正的AND门，formatter应该不执行
+    
+    // 只触发timer1
+    starter.signal -> timer1.trigger;
+    
+    // 注意：timer2没有被触发！所以timer2.done永远不会产生
+    
+    // formatter需要两个控制输入，但只会收到timer1.done
+    timer1.done -> formatter.trigger;
+    timer2.done -> formatter.trigger;  // 这个信号永远不会到达，因为timer2没被触发
+}
+-- 

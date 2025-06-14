@@ -1,0 +1,14 @@
+-- import
+basic.anima
+--
+
+-- graph
+nodes {
+    starter basic.Start
+}
+
+controls {
+    // Start节点的signal输出将被验证为basic.Signal语义标签
+    // 这是控制信号语义标签集合𝒞的基础验证
+}
+-- 

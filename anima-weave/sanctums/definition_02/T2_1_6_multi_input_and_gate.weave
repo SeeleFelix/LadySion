@@ -1,0 +1,30 @@
+-- import
+basic.anima
+--
+
+-- graph
+nodes {
+    starter basic.Start
+    timer1 basic.GetTimestamp
+    timer2 basic.GetTimestamp
+    formatter basic.FormatNumber
+}
+
+datas {
+    // 数据流：timer1的时间戳给formatter
+    timer1.timestamp -> formatter.number;
+}
+
+controls {
+    // 🎯 多输入AND门核心测试：
+    // formatter节点需要接收两个控制输入：timer1.done 和 timer2.done
+    // 只有当这两个信号都到达时，formatter才能执行
+    
+    starter.signal -> timer1.trigger;
+    starter.signal -> timer2.trigger;
+    
+    // 关键：formatter需要等待两个控制输入
+    timer1.done -> formatter.trigger;
+    timer2.done -> formatter.trigger;
+}
+-- 

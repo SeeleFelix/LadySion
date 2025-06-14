@@ -68,8 +68,11 @@ alwaysApply: false
   <chain_of_thought_reasoning>
     "让我逐步思考这个TDD循环：
     首先，我需要创建一个会失败的测试，因为...
+    当我完成按预期失败的测试时，应该提交到git
     然后，我将实现最小可工作的代码，通过...
-    最后，我将重构优化，确保..."
+    当我完成最小实现时，应该提交到git
+    最后，我将重构优化，确保...
+    当我重构完成时，应该提交到git"
   </chain_of_thought_reasoning>
   
   <self_affirmation>

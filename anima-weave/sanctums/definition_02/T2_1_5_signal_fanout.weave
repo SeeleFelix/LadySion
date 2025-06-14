@@ -1,0 +1,32 @@
+-- import
+basic.anima
+--
+
+-- graph
+nodes {
+    starter basic.Start
+    timer1 basic.GetTimestamp
+    timer2 basic.GetTimestamp
+    judge1 basic.IsEven
+    judge2 basic.IsEven
+    formatter basic.FormatNumber
+}
+
+datas {
+    // 数据流：各节点产生的数据
+    timer1.timestamp -> judge1.number;
+    timer2.timestamp -> judge2.number;
+    timer1.timestamp -> formatter.number;
+}
+
+controls {
+    // 🎯 Signal扇出核心验证：一个starter.signal同时激活多个节点
+    starter.signal -> timer1.trigger;
+    starter.signal -> timer2.trigger;
+    starter.signal -> formatter.trigger;
+    
+    // 后续控制流
+    timer1.done -> judge1.trigger;
+    timer2.done -> judge2.trigger;
+}
+-- 
