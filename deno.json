@@ -1,28 +1,55 @@
 {
   "importMap": "./import_map.json",
   "nodeModulesDir": "auto",
-  "check": { "ignore": ["server/src/presentation/routes/**/*.ts"] },
+  "workspace": [
+    "./web",
+    "./server",
+    "./dynamic-graph-executor",
+    "./whisper-framework",
+    "./shared"
+  ],
   "tasks": {
-    "start": "deno run -A server/src/main.ts",
+    "// === 开发任务 ===": "",
+    "dev": "deno task start:backend & deno task start:frontend",
+    "start": "deno task start:backend",
     "start:backend": "deno run -A server/src/main.ts",
     "start:frontend": "cd web && deno task dev",
-    "dev": "deno task start:backend & deno task start:frontend",
-    "build": "cd web && deno task build",
+
+    "// === 构建任务 ===": "",
+    "build": "deno task build:frontend",
+    "build:frontend": "cd web && deno task build",
+    "build:backend": "deno check server/src/main.ts",
+    "build:all": "deno task build:backend && deno task build:frontend",
+
+    "// === 测试任务 ===": "",
     "test": "deno test --allow-read --allow-write --allow-net --allow-env",
-    "test:unit:core": "deno test --allow-read whisper-framework/backend/__tests__/whisper-backend.test.ts whisper-framework/backend/__tests__/oak-integration.test.ts",
-    "test:unit:full": "deno test --allow-read --allow-env --ignore=whisper-framework/examples/,whisper-framework/backend/__tests__/usage-example.test.ts",
-    "test:integration": "deno test --allow-read --allow-write --allow-net --allow-env whisper-framework/examples/integration-test/",
+    "test:all": "deno task test:backend && deno task test:frontend && deno task test:whisper && deno task test:dynamic-graph",
     "test:backend": "deno test --allow-read --allow-write --allow-net --allow-env server/",
-    "test:whisper": "deno test --allow-read --allow-write --allow-net --allow-env whisper-framework/",
-    "test:node-flow": "deno test --allow-read --allow-write node-flow/",
-    "test:dynamic-graph": "cd dynamic-graph-executor && deno task test",
     "test:frontend": "cd web && deno task test",
-    "test:all": "deno test --allow-read --allow-write --allow-net --allow-env",
-    "fmt": "deno fmt && cd web && deno fmt",
-    "lint": "deno lint && cd web && deno lint",
-    "setup": "cd web && deno install"
+    "test:whisper": "deno test --allow-read --allow-write --allow-net --allow-env whisper-framework/",
+    "test:dynamic-graph": "cd dynamic-graph-executor && deno task test",
+    "test:integration": "deno test --allow-read --allow-write --allow-net --allow-env whisper-framework/examples/integration-test/",
+
+    "// === 代码质量任务 ===": "",
+    "fmt": "deno fmt",
+    "fmt:check": "deno fmt --check",
+    "lint": "deno lint",
+    "lint:fix": "deno lint --fix",
+    "check": "deno check **/*.ts",
+
+    "// === 安装和设置任务 ===": "",
+    "setup": "deno install && cd web && deno install",
+    "clean": "rm -rf node_modules/ web/node_modules/ web/dist/ web/.vite/",
+
+    "// === 工具任务 ===": "",
+    "docs:serve": "cd docs && python -m http.server 8080",
+    "connectivity:test": "./test-connectivity.sh"
   },
-  "workspace": ["./web", "./node-flow", "./dynamic-graph-executor"],
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "lib": ["deno.ns", "es2022"]
+  },
   "lint": {
     "rules": {
       "exclude": [
@@ -32,12 +59,51 @@
         "ban-ts-comment"
       ]
     },
-    "files": { "include": ["server/", "shared/", "web/src/"] }
+    "include": [
+      "server/**/*.ts",
+      "shared/**/*.ts",
+      "whisper-framework/**/*.ts",
+      "dynamic-graph-executor/**/*.ts"
+    ],
+    "exclude": [
+      "web/",
+      "node_modules/",
+      "**/*.test.ts",
+      "**/dist/",
+      "**/.vite/"
+    ]
   },
   "fmt": {
-    "files": {
-      "include": ["server/", "shared/", "web/src/"]
-    }
+    "useTabs": false,
+    "lineWidth": 100,
+    "indentWidth": 2,
+    "semiColons": true,
+    "singleQuote": false,
+    "include": [
+      "server/**/*.ts",
+      "shared/**/*.ts",
+      "whisper-framework/**/*.ts",
+      "dynamic-graph-executor/**/*.ts",
+      "*.json",
+      "*.md"
+    ],
+    "exclude": [
+      "web/",
+      "node_modules/",
+      "**/dist/",
+      "**/.vite/",
+      "deno.lock"
+    ]
   },
-  "todo_lint_exclusions": "临时排除 no-explicit-any、require-await、no-unused-vars、ban-ts-comment，后续需逐步恢复并修复"
+  "exclude": [
+    "web/node_modules/",
+    "web/dist/",
+    "web/.vite/",
+    "node_modules/"
+  ],
+  "_comments": {
+    "workspace": "包含所有TypeScript子项目，web有自己的配置",
+    "lint_exclusions": "临时排除常见规则，后续逐步修复",
+    "tasks": "按功能分组，使用注释分隔符便于阅读"
+  }
 }

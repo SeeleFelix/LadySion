@@ -1,14 +1,7 @@
 import { OpenAI } from "openai/mod.ts";
-import {
-  CompletionRequest,
-  CompletionResponse,
-  LLMAdapter,
-} from "./LLMAdapter.ts";
+import { CompletionRequest, CompletionResponse, LLMAdapter } from "./LLMAdapter.ts";
 import type { ModelInfo } from "@/shared/types/index.ts";
-import {
-  ConfigurationError,
-  ExternalServiceError,
-} from "@/shared/errors/DomainErrors.ts";
+import { ConfigurationError, ExternalServiceError } from "@/shared/errors/DomainErrors.ts";
 
 /**
  * OpenRouter适配器实现

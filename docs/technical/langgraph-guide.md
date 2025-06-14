@@ -429,5 +429,4 @@ def trace_workflow_execution(workflow, state):
 - 使用版本控制管理工作流定义
 - 实现工作流的测试框架
 
-这个指南提供了LangGraph在Lady
-Sion项目中的完整集成方案，支持复杂的AI工作流编排和状态管理。
+这个指南提供了LangGraph在Lady Sion项目中的完整集成方案，支持复杂的AI工作流编排和状态管理。

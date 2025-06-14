@@ -24,8 +24,7 @@ export interface ExampleDialogue {
 /**
  * 角色创建表单数据
  */
-export interface CharacterFormData
-  extends Omit<Character, "id" | "createdAt" | "updatedAt"> {
+export interface CharacterFormData extends Omit<Character, "id" | "createdAt" | "updatedAt"> {
   id?: string;
   createdAt?: string;
   updatedAt?: string;

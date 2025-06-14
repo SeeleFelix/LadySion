@@ -1,0 +1,11 @@
+{
+  "name": "lady-sion-shared",
+  "exports": {
+    "./types": "./types/index.ts",
+    "./contracts": "./contracts/index.ts"
+  },
+  "compilerOptions": {
+    "strict": true,
+    "lib": ["es2022"]
+  }
+}

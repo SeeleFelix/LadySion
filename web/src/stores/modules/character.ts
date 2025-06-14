@@ -2,11 +2,7 @@ import { computed, ref } from "vue";
 import { defineStore } from "pinia";
 import { ElMessage } from "element-plus";
 import { characterApi } from "@/services";
-import type {
-  Character,
-  CreateCharacterData,
-  UpdateCharacterData,
-} from "@/types";
+import type { Character, CreateCharacterData, UpdateCharacterData } from "@/types";
 
 export const useCharacterStore = defineStore("character", () => {
   // 状态

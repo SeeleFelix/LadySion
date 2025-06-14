@@ -81,25 +81,30 @@ nodes {
 ## 🔧 解析规则
 
 ### 1. 插件导入
+
 ```weave
 basic.anima  →  sanctum/basic.anima
 ```
 
 ### 2. 子图导入
+
 ```weave
 common.weave  →  subgraphs/common.weave
 ```
 
 ### 3. 带别名导入
+
 ```weave
 custom.anima {
     my_basic basic
 }
 ```
+
 - 创建别名映射：`my_basic` → `custom.basic`
 - 原路径仍然可用：`custom.basic`
 
 ### 4. 节点引用方式
+
 1. **完整路径**：`plugin.node` (如 `basic.Start`)
 2. **别名引用**：`alias` (如 `my_basic`)
 
@@ -172,12 +177,14 @@ datas {
 ## 🔄 迁移路径
 
 ### 当前结构
+
 ```
 src/plugins/basic/sanctum/basic.anima
 tests/sanctums/basic/genesis.weave
 ```
 
-### 目标结构  
+### 目标结构
+
 ```
 sanctum/basic.anima
 subgraphs/genesis.weave
@@ -186,12 +193,14 @@ subgraphs/genesis.weave
 ### 迁移步骤
 
 #### 步骤1：修复当前包名匹配问题
+
 ```rust
 // 当前问题：basic.anima vs basic
 // 解决：统一为 basic
 ```
 
 #### 步骤2：支持新语法
+
 ```weave
 -- imports  
 basic.anima
@@ -199,10 +208,12 @@ basic.anima
 ```
 
 #### 步骤3：重构目录结构
+
 - 移动anima文件到 `sanctum/`
 - 移动weave文件到 `subgraphs/`
 
 #### 步骤4：添加别名功能
+
 ```weave
 -- imports
 custom.anima { my_node node }
@@ -212,6 +223,7 @@ custom.anima { my_node node }
 ## 🎯 实现要点
 
 ### 解析器修改
+
 ```rust
 // 解析import语句
 fn parse_import_section(pair: Pair<Rule>) -> Vec<ImportStatement> {
@@ -235,6 +247,7 @@ enum ImportFileType {
 ```
 
 ### 文件路径解析
+
 ```rust
 fn resolve_import_path(name: &str, file_type: ImportFileType) -> PathBuf {
     match file_type {
@@ -247,14 +260,16 @@ fn resolve_import_path(name: &str, file_type: ImportFileType) -> PathBuf {
 ### 当前问题的解决
 
 **现在的解决方案**：
-- import: `basic.anima` 
+
+- import: `basic.anima`
 - 解析包名: `basic` (去掉.anima后缀)
 - 包名匹配: `basic` ✅
 
 **清晰的语义区分**：
+
 - `.anima` = 插件类型定义
 - `.weave` = 用户图文件
 
 这样既解决了当前的包名问题，又为将来的功能扩展提供了清晰的语义基础！
 
-现在让我们开始按步骤实现吧！ 
+现在让我们开始按步骤实现吧！

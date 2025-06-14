@@ -3,10 +3,7 @@
  * 管理所有后端 Seeker 实现的注册、发现和调用
  */
 
-import type { 
-  SeekerImplementation, 
-  SeekerRegistration 
-} from "../types/backend.ts";
+import type { SeekerImplementation, SeekerRegistration } from "../types/backend.ts";
 
 /**
  * 🎯 Seeker 注册管理器
@@ -30,7 +27,7 @@ export class SeekerRegistry {
   register(eidolonName: string, implementation: SeekerImplementation): void {
     // 🔍 自动发现实现的方法
     const methods = this.discoverMethods(implementation);
-    
+
     const registration: SeekerRegistration = {
       name: eidolonName,
       instance: implementation,
@@ -38,12 +35,12 @@ export class SeekerRegistry {
       metadata: {
         registeredAt: new Date().toISOString(),
         className: implementation.constructor.name,
-      }
+      },
     };
 
     this.seekers.set(eidolonName, registration);
-    
-    console.log(`🎯 已注册 Seeker: ${eidolonName}, 方法: [${Array.from(methods).join(', ')}]`);
+
+    console.log(`🎯 已注册 Seeker: ${eidolonName}, 方法: [${Array.from(methods).join(", ")}]`);
   }
 
   /**
@@ -66,7 +63,7 @@ export class SeekerRegistry {
    */
   async invoke(eidolonName: string, ritualName: string, args: any[]): Promise<any> {
     const seeker = this.seekers.get(eidolonName);
-    
+
     if (!seeker) {
       throw new Error(`未找到 Seeker: ${eidolonName}`);
     }
@@ -76,8 +73,8 @@ export class SeekerRegistry {
     }
 
     const method = (seeker.instance as any)[ritualName];
-    
-    if (typeof method !== 'function') {
+
+    if (typeof method !== "function") {
       throw new Error(`${eidolonName}.${ritualName} 不是一个函数`);
     }
 
@@ -100,7 +97,7 @@ export class SeekerRegistry {
     totalMethods: number;
     seekerList: Array<{ name: string; methodCount: number }>;
   } {
-    const seekerList = Array.from(this.seekers.values()).map(seeker => ({
+    const seekerList = Array.from(this.seekers.values()).map((seeker) => ({
       name: seeker.name,
       methodCount: seeker.methods.size,
     }));
@@ -117,16 +114,18 @@ export class SeekerRegistry {
    */
   private discoverMethods(implementation: SeekerImplementation): Set<string> {
     const methods = new Set<string>();
-    
+
     // 获取实例自身的方法
     const prototype = Object.getPrototypeOf(implementation);
     const instanceMethods = Object.getOwnPropertyNames(prototype);
-    
+
     for (const methodName of instanceMethods) {
       // 排除构造函数和私有方法
-      if (methodName !== 'constructor' && 
-          !methodName.startsWith('_') && 
-          typeof (implementation as any)[methodName] === 'function') {
+      if (
+        methodName !== "constructor" &&
+        !methodName.startsWith("_") &&
+        typeof (implementation as any)[methodName] === "function"
+      ) {
         methods.add(methodName);
       }
     }
@@ -134,8 +133,10 @@ export class SeekerRegistry {
     // 也检查实例自身的方法（箭头函数等）
     const ownMethods = Object.getOwnPropertyNames(implementation);
     for (const methodName of ownMethods) {
-      if (!methodName.startsWith('_') && 
-          typeof (implementation as any)[methodName] === 'function') {
+      if (
+        !methodName.startsWith("_") &&
+        typeof (implementation as any)[methodName] === "function"
+      ) {
         methods.add(methodName);
       }
     }
@@ -149,4 +150,4 @@ export class SeekerRegistry {
   clear(): void {
     this.seekers.clear();
   }
-} 
+}

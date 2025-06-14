@@ -40,18 +40,22 @@ interface ProjectEidolon {
 interface TaskSeeker extends Seeker<TaskEidolon> {
   // 测试辅助方法
   initTestData(): Promise<void>;
-  
+
   // 基础 CRUD
   findById(id: string): Promise<TaskEidolon>;
-  create(title: string, description: string, priority: "low" | "medium" | "high"): Promise<TaskEidolon>;
+  create(
+    title: string,
+    description: string,
+    priority: "low" | "medium" | "high",
+  ): Promise<TaskEidolon>;
   update(id: string, data: Partial<TaskEidolon>): Promise<TaskEidolon>;
   delete(id: string): Promise<void>;
-  
+
   // 业务方法
   complete(id: string): Promise<TaskEidolon>;
   addTags(id: string, tags: string[]): Promise<TaskEidolon>;
   searchByTag(tag: string): Promise<TaskEidolon[]>;
-  
+
   // 复杂查询
   search(
     query: string,
@@ -60,9 +64,9 @@ interface TaskSeeker extends Seeker<TaskEidolon> {
       priority?: "low" | "medium" | "high";
       tags?: string[];
     },
-    pagination: { page: number; size: number }
+    pagination: { page: number; size: number },
   ): Promise<TaskEidolon[]>;
-  
+
   // 统计方法
   getStats(): Promise<{
     total: number;
@@ -74,7 +78,7 @@ interface TaskSeeker extends Seeker<TaskEidolon> {
 interface ProjectSeeker extends Seeker<ProjectEidolon> {
   // 测试辅助方法
   initTestData(): Promise<void>;
-  
+
   findById(id: string): Promise<ProjectEidolon>;
   create(name: string, description: string): Promise<ProjectEidolon>;
   updateStatus(id: string, status: "planning" | "active" | "completed"): Promise<ProjectEidolon>;
@@ -88,7 +92,7 @@ interface ProjectSeeker extends Seeker<ProjectEidolon> {
 class TaskSeekerService implements TaskSeeker, SeekerImplementation {
   private tasks = new Map<string, TaskEidolon>();
   private tagIndex = new Map<string, Set<string>>(); // tag -> taskIds
-  
+
   constructor() {
     this.initTestData();
   }
@@ -106,17 +110,17 @@ class TaskSeekerService implements TaskSeeker, SeekerImplementation {
         priority: "high" as const,
         tags: ["设计", "UI", "前端"],
         createdAt: "2024-01-01T10:00:00Z",
-        updatedAt: "2024-01-01T10:00:00Z"
+        updatedAt: "2024-01-01T10:00:00Z",
       },
       {
-        id: "2", 
+        id: "2",
         title: "实现后端API",
         description: "根据接口文档实现RESTful API",
         completed: true,
         priority: "high" as const,
         tags: ["后端", "API", "开发"],
         createdAt: "2024-01-01T11:00:00Z",
-        updatedAt: "2024-01-02T15:30:00Z"
+        updatedAt: "2024-01-02T15:30:00Z",
       },
       {
         id: "3",
@@ -126,13 +130,13 @@ class TaskSeekerService implements TaskSeeker, SeekerImplementation {
         priority: "medium" as const,
         tags: ["测试", "质量保证"],
         createdAt: "2024-01-01T12:00:00Z",
-        updatedAt: "2024-01-01T12:00:00Z"
-      }
+        updatedAt: "2024-01-01T12:00:00Z",
+      },
     ];
 
     for (const task of tasks) {
       this.tasks.set(task.id, task);
-      
+
       // 构建标签索引
       for (const tag of task.tags) {
         if (!this.tagIndex.has(tag)) {
@@ -150,19 +154,23 @@ class TaskSeekerService implements TaskSeeker, SeekerImplementation {
         code: 404,
         status: "error",
         message: `任务 ${id} 不存在`,
-        signal: "task_not_found"
+        signal: "task_not_found",
       });
     }
     return { ...task };
   }
 
-  async create(title: string, description: string, priority: "low" | "medium" | "high"): Promise<TaskEidolon> {
+  async create(
+    title: string,
+    description: string,
+    priority: "low" | "medium" | "high",
+  ): Promise<TaskEidolon> {
     if (!title.trim()) {
       throw new OmenError("标题不能为空", {
         code: 400,
         status: "error",
         message: "任务标题不能为空",
-        signal: "invalid_title"
+        signal: "invalid_title",
       });
     }
 
@@ -176,7 +184,7 @@ class TaskSeekerService implements TaskSeeker, SeekerImplementation {
       priority,
       tags: [],
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
     };
 
     this.tasks.set(id, task);
@@ -185,12 +193,12 @@ class TaskSeekerService implements TaskSeeker, SeekerImplementation {
 
   async update(id: string, data: Partial<TaskEidolon>): Promise<TaskEidolon> {
     const task = await this.findById(id);
-    
+
     const updated = {
       ...task,
       ...data,
       id, // 确保ID不被修改
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
 
     // 如果更新了标签，需要更新索引
@@ -199,7 +207,7 @@ class TaskSeekerService implements TaskSeeker, SeekerImplementation {
       for (const oldTag of task.tags) {
         this.tagIndex.get(oldTag)?.delete(id);
       }
-      
+
       // 添加到新标签
       for (const newTag of data.tags) {
         if (!this.tagIndex.has(newTag)) {
@@ -215,12 +223,12 @@ class TaskSeekerService implements TaskSeeker, SeekerImplementation {
 
   async delete(id: string): Promise<void> {
     const task = await this.findById(id);
-    
+
     // 从标签索引中移除
     for (const tag of task.tags) {
       this.tagIndex.get(tag)?.delete(id);
     }
-    
+
     this.tasks.delete(id);
   }
 
@@ -237,8 +245,8 @@ class TaskSeekerService implements TaskSeeker, SeekerImplementation {
   async searchByTag(tag: string): Promise<TaskEidolon[]> {
     const taskIds = this.tagIndex.get(tag) || new Set();
     return Array.from(taskIds)
-      .map(id => this.tasks.get(id)!)
-      .map(task => ({ ...task }));
+      .map((id) => this.tasks.get(id)!)
+      .map((task) => ({ ...task }));
   }
 
   async search(
@@ -248,14 +256,14 @@ class TaskSeekerService implements TaskSeeker, SeekerImplementation {
       priority?: "low" | "medium" | "high";
       tags?: string[];
     },
-    pagination: { page: number; size: number }
+    pagination: { page: number; size: number },
   ): Promise<TaskEidolon[]> {
     let results = Array.from(this.tasks.values());
 
     // 关键词过滤
     if (query) {
       const lowerQuery = query.toLowerCase();
-      results = results.filter(task =>
+      results = results.filter((task) =>
         task.title.toLowerCase().includes(lowerQuery) ||
         task.description.toLowerCase().includes(lowerQuery)
       );
@@ -263,26 +271,24 @@ class TaskSeekerService implements TaskSeeker, SeekerImplementation {
 
     // 完成状态过滤
     if (filters.completed !== undefined) {
-      results = results.filter(task => task.completed === filters.completed);
+      results = results.filter((task) => task.completed === filters.completed);
     }
 
     // 优先级过滤
     if (filters.priority) {
-      results = results.filter(task => task.priority === filters.priority);
+      results = results.filter((task) => task.priority === filters.priority);
     }
 
     // 标签过滤
     if (filters.tags && filters.tags.length > 0) {
-      results = results.filter(task =>
-        filters.tags!.some(tag => task.tags.includes(tag))
-      );
+      results = results.filter((task) => filters.tags!.some((tag) => task.tags.includes(tag)));
     }
 
     // 分页
     const start = pagination.page * pagination.size;
     const end = start + pagination.size;
 
-    return results.slice(start, end).map(task => ({ ...task }));
+    return results.slice(start, end).map((task) => ({ ...task }));
   }
 
   async getStats(): Promise<{
@@ -292,8 +298,8 @@ class TaskSeekerService implements TaskSeeker, SeekerImplementation {
   }> {
     const tasks = Array.from(this.tasks.values());
     const total = tasks.length;
-    const completed = tasks.filter(t => t.completed).length;
-    
+    const completed = tasks.filter((t) => t.completed).length;
+
     const byPriority = tasks.reduce((acc, task) => {
       acc[task.priority] = (acc[task.priority] || 0) + 1;
       return acc;
@@ -320,7 +326,7 @@ class ProjectSeekerService implements ProjectSeeker, SeekerImplementation {
         description: "智能对话系统项目",
         status: "active" as const,
         taskCount: 15,
-        createdAt: "2024-01-01T00:00:00Z"
+        createdAt: "2024-01-01T00:00:00Z",
       },
       {
         id: "2",
@@ -328,8 +334,8 @@ class ProjectSeekerService implements ProjectSeeker, SeekerImplementation {
         description: "前后端通信框架",
         status: "active" as const,
         taskCount: 8,
-        createdAt: "2024-01-02T00:00:00Z"
-      }
+        createdAt: "2024-01-02T00:00:00Z",
+      },
     ];
 
     for (const project of projects) {
@@ -344,7 +350,7 @@ class ProjectSeekerService implements ProjectSeeker, SeekerImplementation {
         code: 404,
         status: "error",
         message: `项目 ${id} 不存在`,
-        signal: "project_not_found"
+        signal: "project_not_found",
       });
     }
     return { ...project };
@@ -358,14 +364,17 @@ class ProjectSeekerService implements ProjectSeeker, SeekerImplementation {
       description,
       status: "planning",
       taskCount: 0,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
 
     this.projects.set(id, project);
     return { ...project };
   }
 
-  async updateStatus(id: string, status: "planning" | "active" | "completed"): Promise<ProjectEidolon> {
+  async updateStatus(
+    id: string,
+    status: "planning" | "active" | "completed",
+  ): Promise<ProjectEidolon> {
     const project = await this.findById(id);
     const updated = { ...project, status };
     this.projects.set(id, updated);
@@ -373,7 +382,7 @@ class ProjectSeekerService implements ProjectSeeker, SeekerImplementation {
   }
 
   async getAll(): Promise<ProjectEidolon[]> {
-    return Array.from(this.projects.values()).map(p => ({ ...p }));
+    return Array.from(this.projects.values()).map((p) => ({ ...p }));
   }
 }
 
@@ -392,9 +401,9 @@ export function createTestServer(port: number = 8080): Application {
   // 设置 Whisper 路由
   setupWhisperRoutes(router, {
     "Task": taskSeeker,
-    "Project": projectSeeker
+    "Project": projectSeeker,
   }, {
-    whisperPath: "/api/whisper"
+    whisperPath: "/api/whisper",
   });
 
   // 添加 CORS 支持
@@ -402,12 +411,12 @@ export function createTestServer(port: number = 8080): Application {
     ctx.response.headers.set("Access-Control-Allow-Origin", "*");
     ctx.response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
     ctx.response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
-    
+
     if (ctx.request.method === "OPTIONS") {
       ctx.response.status = 200;
       return;
     }
-    
+
     await next();
   });
 
@@ -416,7 +425,7 @@ export function createTestServer(port: number = 8080): Application {
     ctx.response.body = {
       status: "ok",
       timestamp: new Date().toISOString(),
-      services: ["Task", "Project"]
+      services: ["Task", "Project"],
     };
   });
 
@@ -444,4 +453,4 @@ export function createTestServer(port: number = 8080): Application {
 if (import.meta.main) {
   const app = createTestServer(8080);
   await app.listen({ port: 8080 });
-} 
+}

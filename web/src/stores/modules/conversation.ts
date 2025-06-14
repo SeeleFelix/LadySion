@@ -2,12 +2,7 @@ import { computed, ref } from "vue";
 import { defineStore } from "pinia";
 import { ElMessage } from "element-plus";
 import { conversationApi } from "@/services";
-import type {
-  Conversation,
-  CreateConversationData,
-  Message,
-  SendMessageData,
-} from "@/types";
+import type { Conversation, CreateConversationData, Message, SendMessageData } from "@/types";
 
 export const useConversationStore = defineStore("conversation", () => {
   // 状态
@@ -23,9 +18,7 @@ export const useConversationStore = defineStore("conversation", () => {
   const hasConversations = computed(() => conversations.value.length > 0);
   const currentMessages = computed(() =>
     currentConversation.value
-      ? messages.value.filter((m) =>
-        m.conversationId === currentConversation.value!.id
-      )
+      ? messages.value.filter((m) => m.conversationId === currentConversation.value!.id)
       : []
   );
 
@@ -119,9 +112,7 @@ export const useConversationStore = defineStore("conversation", () => {
         conversationId,
       );
       // 更新messages数组，替换该对话的消息
-      messages.value = messages.value.filter((m) =>
-        m.conversationId !== conversationId
-      );
+      messages.value = messages.value.filter((m) => m.conversationId !== conversationId);
       messages.value.push(...conversationMessages);
     } catch (err: any) {
       error.value = err.message || "加载消息失败";

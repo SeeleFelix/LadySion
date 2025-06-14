@@ -1517,14 +1517,6 @@
       "npm:vue-router@4.3.0",
       "npm:vue-tsc@2.0.6",
       "npm:vue@3.4.21"
-    ],
-    "members": {
-      "dynamic-graph-executor": {
-        "dependencies": [
-          "jsr:@std/assert@1.0.9",
-          "jsr:@std/testing@1.0.8"
-        ]
-      }
-    }
+    ]
   }
 }

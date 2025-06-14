@@ -15,12 +15,12 @@ export { FreshAdapter } from "./adapters/FreshAdapter.ts";
 
 // 📜 类型定义导出
 export type {
-  SeekerImplementation,
-  WhisperServerConfig,
   HttpAdapter,
   RequestContext,
   RouteHandler,
+  SeekerImplementation,
+  WhisperServerConfig,
 } from "./types/backend.ts";
 
 // 🚀 便捷工厂函数
-export { createWhisperServer } from "./core/factory.ts"; 
+export { createWhisperServer } from "./core/factory.ts";

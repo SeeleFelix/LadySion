@@ -1,0 +1,17 @@
+{
+  "name": "whisper-framework",
+  "tasks": {
+    "test": "deno test --allow-read --allow-write --allow-net --allow-env",
+    "test:core": "deno test --allow-read backend/__tests__/whisper-backend.test.ts backend/__tests__/oak-integration.test.ts",
+    "test:integration": "deno test --allow-read --allow-write --allow-net --allow-env examples/integration-test/",
+    "build": "deno check index.ts",
+    "example": "deno run -A examples/usage.ts"
+  },
+  "exports": {
+    ".": "./index.ts"
+  },
+  "compilerOptions": {
+    "strict": true,
+    "lib": ["deno.ns", "es2022"]
+  }
+}

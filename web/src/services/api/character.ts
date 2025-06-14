@@ -1,9 +1,5 @@
 import { BaseApiService } from "@/services/api";
-import type {
-  Character,
-  CreateCharacterData,
-  UpdateCharacterData,
-} from "@/types";
+import type { Character, CreateCharacterData, UpdateCharacterData } from "@/types";
 
 class CharacterService extends BaseApiService {
   /**

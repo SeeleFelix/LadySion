@@ -263,9 +263,7 @@ const characters = ref<Character[]>([]);
 const loading = ref(false);
 
 // ✅ 推荐 - 计算属性用于派生状态
-const activeCharacters = computed(() =>
-  characters.value.filter((c) => c.active)
-);
+const activeCharacters = computed(() => characters.value.filter((c) => c.active));
 
 // ❌ 避免 - 过度使用reactive
 const state = reactive({

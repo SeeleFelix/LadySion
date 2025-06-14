@@ -29,7 +29,9 @@ export async function errorHandlingMiddleware(
           code: "INTERNAL_ERROR",
           message: Deno.env.get("NODE_ENV") === "production"
             ? "内部服务器错误"
-            : error instanceof Error ? error.message : "未知错误",
+            : error instanceof Error
+            ? error.message
+            : "未知错误",
         },
       };
     }

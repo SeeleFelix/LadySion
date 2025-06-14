@@ -4,10 +4,10 @@
  */
 
 import type {
-  SeekerImplementation,
-  WhisperServerConfig,
   HttpAdapter,
   RequestContext,
+  SeekerImplementation,
+  WhisperServerConfig,
 } from "../types/backend.ts";
 import { SeekerRegistry } from "./SeekerRegistry.ts";
 import { RequestDispatcher } from "./RequestDispatcher.ts";
@@ -31,7 +31,7 @@ export class WhisperServer {
       whisperPath: "/api/whisper",
       ...config,
     };
-    
+
     this.registry = SeekerRegistry.getInstance();
     this.dispatcher = new RequestDispatcher();
   }
@@ -75,12 +75,12 @@ export class WhisperServer {
 
     // 🌐 挂载到HTTP框架
     await adapter.mount(serverInstance, this.config);
-    
+
     // 📋 注册 Whisper 路由
     await this.registerWhisperRoutes(adapter, handler);
 
     this.isStarted = true;
-    
+
     console.log(`🎉 Whisper 服务器已启动`);
     console.log(`🌐 监听地址: http://${this.config.host}:${this.config.port}`);
     console.log(`🎯 Whisper 路径: ${this.config.whisperPath}`);
@@ -141,9 +141,9 @@ export class WhisperServer {
     if (doctrine.baseUrl) {
       const url = new URL(doctrine.baseUrl);
       this.config.host = url.hostname;
-      this.config.port = parseInt(url.port) || (url.protocol === 'https:' ? 443 : 80);
+      this.config.port = parseInt(url.port) || (url.protocol === "https:" ? 443 : 80);
     }
-    
+
     if (doctrine.whisperPath) {
       this.config.whisperPath = doctrine.whisperPath;
     }
@@ -159,7 +159,7 @@ export class WhisperServer {
         verify: async (token: string) => {
           // 简单的 token 验证示例
           return token === doctrine.auth?.token;
-        }
+        },
       };
     }
 
@@ -167,8 +167,8 @@ export class WhisperServer {
     if (doctrine.debug) {
       this.config.logging = {
         enabled: true,
-        level: 'debug',
-        format: 'text'
+        level: "debug",
+        format: "text",
       };
     }
   }
@@ -177,14 +177,14 @@ export class WhisperServer {
    * 🎯 注册 Whisper 路由
    */
   private async registerWhisperRoutes(
-    adapter: HttpAdapter, 
-    handler: (context: RequestContext) => Promise<any>
+    adapter: HttpAdapter,
+    handler: (context: RequestContext) => Promise<any>,
   ): Promise<void> {
     // 创建通用的 Whisper 路由：POST /whisper/:eidolon/:ritual
     const routePattern = `${this.config.whisperPath}/:eidolon/:ritual`;
-    
+
     const adaptedHandler = adapter.createRouteHandler(handler);
-    
+
     // 这里需要适配器实现具体的路由注册逻辑
     // 不同框架的路由注册方式不同，由适配器处理
   }
@@ -194,17 +194,17 @@ export class WhisperServer {
    */
   private printRegisteredRoutes(): void {
     const routes = this.getRoutes();
-    
+
     if (routes.length === 0) {
       console.log("⚠️ 没有注册任何 Seeker");
       return;
     }
 
     console.log("\n📋 已注册的 Whisper 路由:");
-    console.log("=" .repeat(50));
-    
+    console.log("=".repeat(50));
+
     const groupedRoutes = new Map<string, string[]>();
-    
+
     for (const route of routes) {
       if (!groupedRoutes.has(route.eidolon)) {
         groupedRoutes.set(route.eidolon, []);
@@ -218,8 +218,8 @@ export class WhisperServer {
         console.log(`   📍 POST ${this.config.whisperPath}/${eidolon}/${ritual}`);
       }
     }
-    
-    console.log("=" .repeat(50));
+
+    console.log("=".repeat(50));
     console.log(`📊 总计: ${routes.length} 个路由\n`);
   }
 
@@ -231,19 +231,19 @@ export class WhisperServer {
       parseFromHttp: async (req: any): Promise<RequestContext> => {
         // 这个方法会被适配器使用来解析不同框架的请求
         const url = new URL(req.url, `http://${req.headers.host}`);
-        const pathParts = url.pathname.split('/').filter(Boolean);
-        
+        const pathParts = url.pathname.split("/").filter(Boolean);
+
         // 期望路径格式: /api/whisper/{eidolon}/{ritual}
-        const whisperPathParts = this.config.whisperPath!.split('/').filter(Boolean);
+        const whisperPathParts = this.config.whisperPath!.split("/").filter(Boolean);
         const startIndex = whisperPathParts.length;
-        
+
         if (pathParts.length < startIndex + 2) {
           throw new Error("无效的 Whisper 路径格式");
         }
 
         const eidolon = pathParts[startIndex];
         const ritual = pathParts[startIndex + 1];
-        
+
         // 解析请求体
         let spell;
         try {
@@ -259,10 +259,10 @@ export class WhisperServer {
           spell,
           headers: req.headers || {},
           ip: req.ip,
-          userAgent: req.headers['user-agent'],
+          userAgent: req.headers["user-agent"],
           timestamp: Date.now(),
         };
-      }
+      },
     };
   }
-} 
+}

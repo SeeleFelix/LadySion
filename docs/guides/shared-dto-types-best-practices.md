@@ -1,7 +1,6 @@
 # Monorepo 共享DTO类型系统最佳实践
 
-本文档说明了Lady
-Sion项目中Monorepo架构下前后端共享DTO类型系统的设计理念、架构优势以及开发最佳实践。
+本文档说明了Lady Sion项目中Monorepo架构下前后端共享DTO类型系统的设计理念、架构优势以及开发最佳实践。
 
 ## 🎯 **为什么选择共享DTO类型系统？**
 
@@ -68,8 +67,7 @@ export interface ActivatableEntity extends BaseEntity {
 }
 
 // 4. 类型安全工具
-export type EntityByType<T extends EntityType> = T extends EntityType.PRESET
-  ? PresetDTO
+export type EntityByType<T extends EntityType> = T extends EntityType.PRESET ? PresetDTO
   : T extends EntityType.CHARACTER ? CharacterDTO
   : T extends EntityType.CONVERSATION ? ConversationDTO
   : never;
@@ -153,8 +151,7 @@ export interface CreatePresetRequestDTO {
 /**
  * 更新预设请求DTO
  */
-export interface UpdatePresetRequestDTO
-  extends Partial<CreatePresetRequestDTO> {}
+export interface UpdatePresetRequestDTO extends Partial<CreatePresetRequestDTO> {}
 ```
 
 ### 2. **后端领域实体扩展**
@@ -332,11 +329,7 @@ export function validateEntityType(value: unknown): value is EntityType {
 // 按模块重新导出，支持tree-shaking
 export type { CreatePresetRequestDTO, PresetDTO, PresetType } from "./preset";
 
-export type {
-  CharacterDTO,
-  CharacterType,
-  CreateCharacterRequestDTO,
-} from "./character";
+export type { CharacterDTO, CharacterType, CreateCharacterRequestDTO } from "./character";
 
 // 懒加载类型定义
 export const PresetTypes = () => import("./preset");

@@ -3,7 +3,7 @@
  * 定义后端框架的核心接口和类型
  */
 
-import type { Eidolon, Grace, Omen, Spell, Doctrine } from "../../types/core.ts";
+import type { Doctrine, Eidolon, Grace, Omen, Spell } from "../../types/core.ts";
 
 /**
  * 🙏 Seeker 实现基类
@@ -50,30 +50,30 @@ export interface WhisperServerConfig {
   port?: number;
   host?: string;
   whisperPath?: string;
-  
+
   // 安全配置
   cors?: {
     origin?: string | string[];
     credentials?: boolean;
   };
-  
-  // 认证配置  
+
+  // 认证配置
   auth?: {
     enabled?: boolean;
     verify?: (token: string) => Promise<boolean>;
   };
-  
+
   // 日志配置
   logging?: {
     enabled?: boolean;
-    level?: 'debug' | 'info' | 'warn' | 'error';
-    format?: 'json' | 'text';
+    level?: "debug" | "info" | "warn" | "error";
+    format?: "json" | "text";
   };
-  
+
   // 性能配置
   timeout?: number;
   maxBodySize?: number;
-  
+
   // 中间件配置
   middleware?: {
     enableMetrics?: boolean;
@@ -105,9 +105,9 @@ export interface RequestMetrics {
   startTime: number;
   endTime?: number;
   duration?: number;
-  status: 'pending' | 'success' | 'error';
+  status: "pending" | "success" | "error";
   statusCode?: number;
-  errorType?: 'omen' | 'wrath';
+  errorType?: "omen" | "wrath";
 }
 
 /**
@@ -117,4 +117,4 @@ export interface ErrorHandlerConfig {
   includeStackTrace?: boolean;
   logErrors?: boolean;
   customErrorMap?: Record<string, Omen>;
-} 
+}

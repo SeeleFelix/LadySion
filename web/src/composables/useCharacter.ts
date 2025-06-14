@@ -51,9 +51,7 @@ export function useCharacter() {
   };
 
   const getCharactersByName = (name: string) => {
-    return characters.value.filter((c) =>
-      c.name.toLowerCase().includes(name.toLowerCase())
-    );
+    return characters.value.filter((c) => c.name.toLowerCase().includes(name.toLowerCase()));
   };
 
   return {

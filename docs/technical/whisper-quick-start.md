@@ -5,6 +5,7 @@
 ## 🎯 核心概念 (3分钟理解)
 
 ### 神性命名体系
+
 ```typescript
 Seeker      = API客户端接口（前端调用者）
 Eidolon     = 业务实体/数据模型
@@ -16,6 +17,7 @@ Scripture   = 业务定义包（配置中心）
 ```
 
 ### 核心协议
+
 - **URL模式**: `POST /whisper/{eidolon}/{ritual}`
 - **请求体**: `{ "spell": { "args": [...] } }`
 - **响应体**: `{ "eidolon": T, "omen": { code, status, message }, "timestamp": number }`
@@ -23,6 +25,7 @@ Scripture   = 业务定义包（配置中心）
 ## 🚀 30秒快速开始
 
 ### 1. 定义业务接口（共享）
+
 ```typescript
 // shared/types/user.ts
 interface UserEidolon {
@@ -41,20 +44,22 @@ interface UserSeeker extends Seeker<UserEidolon> {
 ```
 
 ### 2. 创建Seeker实例（Scripture配置包）
+
 ```typescript
 // shared/scripture/index.ts
-import { createSeeker } from '@/whisper-framework';
+import { createSeeker } from "@/whisper-framework";
 
 export const userSeeker = createSeeker<UserSeeker>("User", {
   baseUrl: "http://localhost:8000",
-  headers: { "Authorization": "Bearer token" }
+  headers: { "Authorization": "Bearer token" },
 });
 ```
 
 ### 3. 前端使用（超干净）
+
 ```typescript
 // web/src/components/UserList.vue
-import { userSeeker } from '@/scripture';
+import { userSeeker } from "@/scripture";
 
 // 🎯 像调用普通函数一样
 const user = await userSeeker.create("茜", "test@example.com", 25);
@@ -63,6 +68,7 @@ const results = await userSeeker.search("关键词", { age: 25 });
 ```
 
 ### 4. 后端实现（无Controller）
+
 ```typescript
 // server/services/UserSeekerService.ts
 export class UserSeekerService implements UserSeeker {
@@ -70,20 +76,20 @@ export class UserSeekerService implements UserSeeker {
   async create(name: string, email: string, age: number): Promise<UserEidolon> {
     return await this.userRepo.save({ name, email, age });
   }
-  
+
   async findById(id: string): Promise<UserEidolon> {
     const user = await this.userRepo.findById(id);
     if (!user) throw new OmenError("用户不存在", { code: 404 });
     return user;
   }
-  
+
   async search(keyword: string, filters: any): Promise<UserEidolon[]> {
     return await this.userRepo.search(keyword, filters);
   }
 }
 
 // server/main.ts - 启动服务器
-import { setupWhisperRoutes } from '@/whisper-framework/backend';
+import { setupWhisperRoutes } from "@/whisper-framework/backend";
 
 const userService = new UserSeekerService();
 setupWhisperRoutes(router, { User: userService });
@@ -92,6 +98,7 @@ setupWhisperRoutes(router, { User: userService });
 ## ⚡ 关键特性
 
 ### 🔮 多参数支持
+
 ```typescript
 // ✅ 支持任意参数组合
 await userSeeker.create("name", "email", 25);
@@ -100,13 +107,15 @@ await userSeeker.updateProfile(id, { name: "new", settings: {...} });
 ```
 
 ### 🎭 TypeScript类型安全
+
 ```typescript
 // ✅ 编译时检查，只能调用已定义的方法
-userSeeker.create("name", "email", 25);  // ✅ 正确
-userSeeker.delete("id");                 // ❌ 编译错误：方法不存在
+userSeeker.create("name", "email", 25); // ✅ 正确
+userSeeker.delete("id"); // ❌ 编译错误：方法不存在
 ```
 
 ### 🚨 统一错误处理
+
 ```typescript
 // ✅ 业务错误处理
 try {
@@ -142,6 +151,7 @@ project/
 ## 🔧 配置管理
 
 ### 环境配置
+
 ```typescript
 // 开发环境 whisper.config.json
 {
@@ -156,30 +166,32 @@ WHISPER_TIMEOUT=60000
 ```
 
 ### 认证配置
+
 ```typescript
 // scripture/config/auth.ts
 export const authConfig = {
   headers: {
     "Authorization": `Bearer ${getToken()}`,
-    "X-API-Key": process.env.API_KEY
-  }
+    "X-API-Key": process.env.API_KEY,
+  },
 };
 
 // scripture/index.ts
 export const userSeeker = createSeeker<UserSeeker>("User", {
   ...baseConfig,
-  ...authConfig
+  ...authConfig,
 });
 ```
 
 ## 🧪 测试
 
 ### 前端测试
+
 ```typescript
 // 测试seeker调用
 const mockUserSeeker = {
   create: vi.fn().mockResolvedValue({ id: "123", name: "test" }),
-  findById: vi.fn().mockResolvedValue({ id: "123", name: "test" })
+  findById: vi.fn().mockResolvedValue({ id: "123", name: "test" }),
 };
 
 // 测试组件
@@ -187,6 +199,7 @@ const result = await mockUserSeeker.create("name", "email", 25);
 ```
 
 ### 后端测试
+
 ```typescript
 // 测试service实现
 const userService = new UserSeekerService();
@@ -195,6 +208,7 @@ expect(user.name).toBe("name");
 ```
 
 ### 集成测试
+
 ```bash
 cd whisper-framework
 deno test --allow-all  # 运行完整端到端测试
@@ -203,20 +217,22 @@ deno test --allow-all  # 运行完整端到端测试
 ## 📚 进阶使用
 
 ### 复杂参数处理
+
 ```typescript
 interface ComplexSeeker extends Seeker<any> {
   // 对象参数
   createWithProfile(user: UserProfile, settings: UserSettings): Promise<User>;
-  
+
   // 数组参数
   batchCreate(users: UserData[]): Promise<User[]>;
-  
+
   // 混合参数
   search(query: string, filters: SearchFilters, pagination: Pagination): Promise<SearchResult>;
 }
 ```
 
 ### 错误码约定
+
 ```typescript
 // 业务错误码
 200: 成功
@@ -231,6 +247,7 @@ interface ComplexSeeker extends Seeker<any> {
 ```
 
 ### 性能优化
+
 ```typescript
 // 批量操作
 const users = await userSeeker.batchCreate([...userList]);
@@ -250,6 +267,7 @@ class UserSeekerService implements UserSeeker {
 ## 🎯 最佳实践
 
 ### ✅ 推荐做法
+
 - 在Scripture包中集中管理所有配置
 - 保持Seeker接口简洁，一个方法一个职责
 - 使用TypeScript严格类型检查
@@ -257,6 +275,7 @@ class UserSeekerService implements UserSeeker {
 - Service层实现纯业务逻辑，零HTTP概念
 
 ### ❌ 避免的做法
+
 - 不要在前端组件中硬编码API配置
 - 不要在Service中处理HTTP状态码
 - 不要绕过Whisper协议直接发送HTTP请求
@@ -271,4 +290,4 @@ class UserSeekerService implements UserSeeker {
 
 ---
 
-> 💡 **记住**: Whisper让前端调用变得像函数一样简单，后端实现变得像接口一样纯净！ 
+> 💡 **记住**: Whisper让前端调用变得像函数一样简单，后端实现变得像接口一样纯净！

@@ -56,9 +56,9 @@ class UserSeekerService implements UserSeeker, SeekerImplementation {
     if (!user) {
       throw new OmenError("用户不存在", {
         code: 404,
-        status: "error", 
+        status: "error",
         message: `用户 ${id} 不存在`,
-        signal: "user_not_found"
+        signal: "user_not_found",
       });
     }
     return user;
@@ -66,8 +66,8 @@ class UserSeekerService implements UserSeeker, SeekerImplementation {
 
   async create(name: string, email: string, age: number): Promise<UserEidolon> {
     // 业务验证
-    if (age < 0) throw new OmenError("年龄无效", { /* ... */ });
-    
+    if (age < 0) throw new OmenError("年龄无效", {/* ... */});
+
     // 业务逻辑
     return await this.userRepo.create({ name, email, age });
   }
@@ -114,6 +114,7 @@ Frontend                     Backend
 所有 API 遵循统一协议：
 
 ### 请求格式
+
 ```bash
 POST /api/whisper/{eidolon}/{ritual}
 Content-Type: application/json
@@ -126,6 +127,7 @@ Content-Type: application/json
 ```
 
 ### 响应格式
+
 ```json
 {
   "eidolon": { "返回的业务数据" },
@@ -148,12 +150,12 @@ Content-Type: application/json
 throw new OmenError("用户不存在", {
   code: 404,
   status: "error",
-  message: "用户不存在", 
-  signal: "user_not_found"
+  message: "用户不存在",
+  signal: "user_not_found",
 });
 
 // ✅ 系统错误 - 框架自动处理
-throw new WrathError("数据库连接失败", { /* ... */ });
+throw new WrathError("数据库连接失败", {/* ... */});
 
 // ✅ 普通异常 - 自动转换为 500 错误
 throw new Error("意外错误");
@@ -164,6 +166,7 @@ throw new Error("意外错误");
 支持多种 HTTP 框架：
 
 ### Oak 框架
+
 ```typescript
 import { setupWhisperRoutes } from "@whisper/backend";
 
@@ -171,6 +174,7 @@ setupWhisperRoutes(oakRouter, seekers);
 ```
 
 ### Fresh 框架
+
 ```typescript
 import { FreshAdapter } from "@whisper/backend";
 
@@ -180,15 +184,16 @@ const adapter = new FreshAdapter();
 ```
 
 ### 自定义框架
+
 ```typescript
 // 实现 HttpAdapter 接口即可
 class MyFrameworkAdapter implements HttpAdapter {
   name = "my-framework";
-  
+
   async mount(server: any, config: WhisperServerConfig) {
     // 实现框架特定的挂载逻辑
   }
-  
+
   createRouteHandler(handler: RouteHandler) {
     // 实现框架特定的处理器转换
   }
@@ -198,28 +203,32 @@ class MyFrameworkAdapter implements HttpAdapter {
 ## 📊 高级功能
 
 ### 自动 API 文档生成
+
 ```typescript
 const server = createWhisperServer();
 const docs = server.generateApiDocs(); // OpenAPI 格式
 ```
 
-### 请求度量和监控  
+### 请求度量和监控
+
 ```typescript
 const stats = server.getStatus();
 console.log(`处理了 ${stats.requestCount} 个请求`);
 ```
 
 ### 认证和权限
+
 ```typescript
 setupWhisperRoutes(router, seekers, {
   auth: {
     enabled: true,
-    verify: async (token) => await validateJWT(token)
-  }
+    verify: async (token) => await validateJWT(token),
+  },
 });
 ```
 
 ### 环境配置
+
 ```typescript
 // whisper.config.json
 {
@@ -236,11 +245,13 @@ setupWhisperRoutes(router, seekers, {
 ## 🎯 最佳实践
 
 ### 1. Seeker 实现原则
+
 - **单一职责**：每个 Seeker 只处理一类业务
 - **纯业务逻辑**：不包含任何 HTTP 相关代码
 - **异常处理**：使用 OmenError 表示业务异常
 
 ### 2. 项目结构
+
 ```
 src/
 ├── seekers/           # Seeker 实现
@@ -252,6 +263,7 @@ src/
 ```
 
 ### 3. 错误处理策略
+
 ```typescript
 // ✅ 正确：明确的业务异常
 if (!user) {
@@ -259,7 +271,7 @@ if (!user) {
     code: 404,
     status: "error",
     message: "指定的用户不存在",
-    signal: "user_not_found"
+    signal: "user_not_found",
   });
 }
 
@@ -279,15 +291,16 @@ assertEquals(user.username, "test");
 await assertRejects(
   () => userSeeker.findById("999"),
   OmenError,
-  "用户不存在"
+  "用户不存在",
 );
 ```
 
 ## 📚 示例项目
 
 查看 `examples/usage.ts` 获取完整的使用示例，包括：
+
 - 用户管理 API
-- 产品管理 API  
+- 产品管理 API
 - 复杂参数处理
 - 错误处理示例
 
@@ -299,7 +312,7 @@ await assertRejects(
 // 迁移前：Controller + Service 模式
 class UserController {
   constructor(private userService: UserService) {}
-  
+
   async findById(ctx: Context) {
     try {
       const id = ctx.params.id;
@@ -324,6 +337,7 @@ class UserSeekerService implements UserSeeker {
 ## 🤝 贡献
 
 欢迎提交 Issue 和 PR！特别欢迎：
+
 - 新的框架适配器
 - 性能优化
 - 文档改进
@@ -338,9 +352,9 @@ MIT License
 ## 💡 设计哲学
 
 > **前端干掉 HTTP，后端干掉 Controller**
-> 
+>
 > 让开发者专注于业务逻辑，让框架处理所有技术细节。
-> 
+>
 > 这就是 Whisper 的核心价值 - **极简 API + 强大框架**。
 
-**🎉 开始使用 Whisper，体验前后端完美对称的开发乐趣！** 
+**🎉 开始使用 Whisper，体验前后端完美对称的开发乐趣！**

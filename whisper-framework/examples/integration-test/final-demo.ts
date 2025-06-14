@@ -16,10 +16,10 @@ async function main() {
   console.log(`🚀 启动 Whisper 测试服务器...`);
   const app = createTestServer(PORT);
   const serverPromise = app.listen({ port: PORT });
-  
+
   // 等待服务器启动
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+
   try {
     // 2. 验证服务器健康状态
     console.log(`\n🔍 验证服务器健康状态...`);
@@ -37,16 +37,16 @@ async function main() {
 
     // 4. 验证协议层面的正确性
     console.log(`\n🔧 验证 Whisper 协议...`);
-    
+
     // 直接发送 HTTP 请求验证协议
     const createResponse = await fetch(`${BASE_URL}/api/whisper/Task/create`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         spell: {
-          args: ["协议测试任务", "验证 Whisper 协议的正确性", "medium"]
-        }
-      })
+          args: ["协议测试任务", "验证 Whisper 协议的正确性", "medium"],
+        },
+      }),
     });
 
     const createResult = await createResponse.json();
@@ -54,16 +54,16 @@ async function main() {
     console.log(`   - 状态码: ${createResponse.status}`);
     console.log(`   - Omen 码: ${createResult.omen.code}`);
     console.log(`   - 任务ID: ${createResult.eidolon.id}`);
-    
+
     // 查找刚创建的任务
     const findResponse = await fetch(`${BASE_URL}/api/whisper/Task/findById`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         spell: {
-          args: [createResult.eidolon.id]
-        }
-      })
+          args: [createResult.eidolon.id],
+        },
+      }),
     });
 
     const findResult = await findResponse.json();
@@ -73,15 +73,15 @@ async function main() {
 
     // 5. 演示错误处理
     console.log(`\n🚨 验证错误处理...`);
-    
+
     const errorResponse = await fetch(`${BASE_URL}/api/whisper/Task/findById`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         spell: {
-          args: ["non-existent-id"]
-        }
-      })
+          args: ["non-existent-id"],
+        },
+      }),
     });
 
     const errorResult = await errorResponse.json();
@@ -95,20 +95,20 @@ async function main() {
     console.log(`\n⚡ 简单性能测试...`);
     const startTime = Date.now();
     const promises = [];
-    
+
     for (let i = 0; i < 10; i++) {
       promises.push(
         fetch(`${BASE_URL}/api/whisper/Task/getStats`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ spell: { args: [] } })
-        })
+          body: JSON.stringify({ spell: { args: [] } }),
+        }),
       );
     }
-    
+
     await Promise.all(promises);
     const endTime = Date.now();
-    
+
     console.log(`✅ 并发性能测试完成:`);
     console.log(`   - 10个并发请求耗时: ${endTime - startTime}ms`);
     console.log(`   - 平均响应时间: ${(endTime - startTime) / 10}ms`);
@@ -120,7 +120,6 @@ async function main() {
     console.log(`   🚨 错误处理健全`);
     console.log(`   ⚡ 性能表现良好`);
     console.log(`   🎯 Whisper 协议工作正常`);
-
   } catch (error) {
     console.error(`❌ 演示过程中出现错误:`, error);
   }
@@ -132,4 +131,4 @@ async function main() {
 
 if (import.meta.main) {
   await main();
-} 
+}

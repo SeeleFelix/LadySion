@@ -147,8 +147,7 @@ export default [
         "error",
         {
           selector: "ExportAllDeclaration",
-          message:
-            "避免使用 export * 语法，请使用具名导出来提高代码可读性和tree-shaking效果",
+          message: "避免使用 export * 语法，请使用具名导出来提高代码可读性和tree-shaking效果",
         },
       ],
     },

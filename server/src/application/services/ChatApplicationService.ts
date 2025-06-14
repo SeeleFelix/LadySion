@@ -159,9 +159,7 @@ export class ChatApplicationService {
       title: chat.title,
       characterId: chat.characterId || undefined,
       messageCount: chat.messageCount,
-      lastMessage: chat.lastMessage
-        ? this.messageToDto(chat.lastMessage)
-        : undefined,
+      lastMessage: chat.lastMessage ? this.messageToDto(chat.lastMessage) : undefined,
       createdAt: chat.createdAt,
       updatedAt: chat.updatedAt,
     };

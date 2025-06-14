@@ -3,16 +3,16 @@
  * 简洁的工厂函数，在scripture中创建seeker实例
  */
 
-import type { 
-  Seeker, 
-  Eidolon, 
-  Grace, 
-  Whisper, 
-  Spell, 
-  Doctrine, 
-  CreateSeeker
+import type {
+  CreateSeeker,
+  Doctrine,
+  Eidolon,
+  Grace,
+  Seeker,
+  Spell,
+  Whisper,
 } from "../types/core.ts";
-import { WrathError, OmenError } from "../types/core.ts";
+import { OmenError, WrathError } from "../types/core.ts";
 import { getDoctrine } from "./doctrine.ts";
 
 /**
@@ -24,7 +24,7 @@ function handleGraceResponse<T>(grace: Grace<T>): T | T[] | null {
   if (grace.omen.code === 200) {
     return grace.eidolon;
   }
-  
+
   // 📋 所有非200的omen.code都是业务错误，抛出OmenError
   // 业务代码可以catch这些异常并处理
   throw new OmenError(grace.omen.message, grace.omen);
@@ -35,7 +35,7 @@ function handleGraceResponse<T>(grace: Grace<T>): T | T[] | null {
  */
 function argsToSpell(args: any[]): Spell {
   return {
-    args: args
+    args: args,
   };
 }
 
@@ -44,10 +44,10 @@ function argsToSpell(args: any[]): Spell {
  */
 async function executeWhisper<T>(
   whisper: Whisper,
-  doctrine: Required<Doctrine>
+  doctrine: Required<Doctrine>,
 ): Promise<T | T[] | null> {
   const url = `${doctrine.baseUrl}${doctrine.whisperPath}/${whisper.eidolon}/${whisper.ritual}`;
-  
+
   try {
     const response = await fetch(url, {
       method: "POST",
@@ -63,10 +63,10 @@ async function executeWhisper<T>(
         errorData.message || `HTTP ${response.status}: ${response.statusText}`,
         {
           code: response.status,
-          status: 'error',
+          status: "error",
           message: errorData.message || `HTTP ${response.status}: ${response.statusText}`,
-          signal: 'http_error'
-        }
+          signal: "http_error",
+        },
       );
       throw error;
     }
@@ -77,31 +77,33 @@ async function executeWhisper<T>(
     if (error instanceof WrathError || error instanceof OmenError) {
       throw error;
     }
-    
+
     // 🔥 系统异常都属于Wrath，抛出WrathError
-    let signal = 'unknown_error';
-    let message = 'Unknown error';
-    
+    let signal = "unknown_error";
+    let message = "Unknown error";
+
     if (error instanceof Error) {
       message = error.message;
-      
+
       // 根据错误类型设置不同的signal
-      if (error.name === 'AbortError' || message.includes('timeout')) {
-        signal = 'timeout_error';
-      } else if (message.includes('JSON') || message.includes('parse')) {
-        signal = 'parse_error';
-      } else if (message.includes('Network') || message.includes('connection') || message.includes('fetch')) {
-        signal = 'network_error';
+      if (error.name === "AbortError" || message.includes("timeout")) {
+        signal = "timeout_error";
+      } else if (message.includes("JSON") || message.includes("parse")) {
+        signal = "parse_error";
+      } else if (
+        message.includes("Network") || message.includes("connection") || message.includes("fetch")
+      ) {
+        signal = "network_error";
       }
     }
-    
+
     const wrathError = new WrathError(message, {
       code: 0,
-      status: 'error',
+      status: "error",
       message: message,
-      signal: signal
+      signal: signal,
     });
-    
+
     throw wrathError;
   }
 }
@@ -118,30 +120,30 @@ export const createSeeker: CreateSeeker = <TSeeker extends Seeker<any>>(
   return new Proxy({} as TSeeker, {
     get(target: any, ritualName: string | symbol) {
       // 忽略Symbol属性和特殊属性
-      if (typeof ritualName === 'symbol' || ritualName.startsWith('_')) {
+      if (typeof ritualName === "symbol" || ritualName.startsWith("_")) {
         return undefined;
       }
-      
+
       // 为每个方法调用生成实现，支持多参数
       return async (...args: any[]) => {
         // 每次调用时获取最新的doctrine配置
         const doctrine = await getDoctrine(doctrineOverrides);
-        
+
         const spell = argsToSpell(args);
-        
+
         const whisper: Whisper = {
           eidolon: eidolonName,
           ritual: ritualName,
-          spell
+          spell,
         };
 
         return executeWhisper(whisper, doctrine);
       };
     },
-    
+
     // 防止属性设置
     set() {
       return false;
     },
   });
-}; 
+};

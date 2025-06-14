@@ -172,8 +172,7 @@ export interface ExampleDialogue {
 /**
  * 上下文预设内容接口
  */
-export interface ContextPresetContent
-  extends ActivatablePreset, MacroEnabledPreset {
+export interface ContextPresetContent extends ActivatablePreset, MacroEnabledPreset {
   // 核心模板配置
   /** 上下文模板内容 */
   content?: string;
@@ -231,8 +230,7 @@ export interface ContextPreset extends BasePreset, ContextPresetContent {}
 /**
  * 系统提示词预设内容接口
  */
-export interface SystemPromptPresetContent
-  extends ActivatablePreset, MacroEnabledPreset {
+export interface SystemPromptPresetContent extends ActivatablePreset, MacroEnabledPreset {
   /** 系统提示词内容 */
   content: string;
 
@@ -256,8 +254,7 @@ export interface SystemPromptPresetContent
 /**
  * 完整的系统提示词预设接口
  */
-export interface SystemPromptPreset
-  extends BasePreset, SystemPromptPresetContent {}
+export interface SystemPromptPreset extends BasePreset, SystemPromptPresetContent {}
 
 // ================================
 // 宏定义相关
@@ -289,8 +286,7 @@ export type Preset =
 /**
  * 根据预设类型获取对应的预设接口
  */
-export type PresetByType<T extends PresetType> = T extends PresetType.INSTRUCT
-  ? InstructPreset
+export type PresetByType<T extends PresetType> = T extends PresetType.INSTRUCT ? InstructPreset
   : T extends PresetType.CONTEXT ? ContextPreset
   : T extends PresetType.SYSTEM_PROMPT ? SystemPromptPreset
   : T extends PresetType.MACROS ? MacroDescription

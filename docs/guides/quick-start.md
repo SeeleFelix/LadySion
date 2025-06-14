@@ -286,12 +286,9 @@ sudo sysctl -p
 
 完成快速开始后，建议继续学习：
 
-1. **架构理解**:
-   阅读[后端架构](../architecture/backend.md)和[前端架构](../architecture/frontend.md)
-2. **开发指南**:
-   查看[开发环境配置](./development-setup.md)和[代码规范](./coding-standards.md)
-3. **技术文档**:
-   了解[OpenRouter集成](../technical/openrouter-guide.md)等技术细节
+1. **架构理解**: 阅读[后端架构](../architecture/backend.md)和[前端架构](../architecture/frontend.md)
+2. **开发指南**: 查看[开发环境配置](./development-setup.md)和[代码规范](./coding-standards.md)
+3. **技术文档**: 了解[OpenRouter集成](../technical/openrouter-guide.md)等技术细节
 4. **API文档**: 熟悉[REST API](../api/rest-api.md)接口
 
 ## 🎯 快速任务

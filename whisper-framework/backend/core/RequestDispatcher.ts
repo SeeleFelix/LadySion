@@ -33,7 +33,7 @@ export class RequestDispatcher {
         if (!this.registry.hasMethod(context.eidolon, context.ritual)) {
           return this.formatter.formatNotFoundError(
             context.eidolon,
-            context.ritual
+            context.ritual,
           );
         }
 
@@ -44,12 +44,11 @@ export class RequestDispatcher {
         const result = await this.registry.invoke(
           context.eidolon,
           context.ritual,
-          args
+          args,
         );
 
         // ✨ 格式化成功响应
         return this.formatter.formatSuccess(result);
-
       } catch (error) {
         // 🚨 统一错误处理
         return this.formatter.formatError(error);
@@ -118,7 +117,7 @@ export class RequestDispatcher {
     }> = [];
 
     const seekers = this.registry.getAllSeekers();
-    
+
     for (const seeker of seekers) {
       for (const method of seeker.methods) {
         routes.push({
@@ -153,65 +152,65 @@ export class RequestDispatcher {
           requestBody: {
             required: true,
             content: {
-              'application/json': {
+              "application/json": {
                 schema: {
-                  type: 'object',
+                  type: "object",
                   properties: {
                     spell: {
-                      type: 'object',
+                      type: "object",
                       properties: {
                         args: {
-                          type: 'array',
-                          description: '方法参数列表',
-                          items: {}
-                        }
+                          type: "array",
+                          description: "方法参数列表",
+                          items: {},
+                        },
                       },
-                      required: ['args']
-                    }
+                      required: ["args"],
+                    },
                   },
-                  required: ['spell']
-                }
-              }
-            }
+                  required: ["spell"],
+                },
+              },
+            },
           },
           responses: {
             200: {
-              description: '成功响应',
+              description: "成功响应",
               content: {
-                'application/json': {
+                "application/json": {
                   schema: {
-                    type: 'object',
+                    type: "object",
                     properties: {
                       eidolon: {
-                        description: '返回的业务数据'
+                        description: "返回的业务数据",
                       },
                       omen: {
-                        type: 'object',
+                        type: "object",
                         properties: {
-                          code: { type: 'number' },
-                          status: { type: 'string' },
-                          message: { type: 'string' }
-                        }
+                          code: { type: "number" },
+                          status: { type: "string" },
+                          message: { type: "string" },
+                        },
                       },
-                      timestamp: { type: 'number' }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
+                      timestamp: { type: "number" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
       };
     }
 
     return {
-      openapi: '3.0.0',
+      openapi: "3.0.0",
       info: {
-        title: 'Whisper API',
-        version: '1.0.0',
-        description: 'Auto-generated API documentation for Whisper services'
+        title: "Whisper API",
+        version: "1.0.0",
+        description: "Auto-generated API documentation for Whisper services",
       },
-      paths
+      paths,
     };
   }
-} 
+}

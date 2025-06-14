@@ -149,11 +149,7 @@ const users = await legacyResource.findAll();
 ### 获取配置
 
 ```typescript
-import {
-  debugConfig,
-  getRealtimeConfig,
-  getResourceConfig,
-} from "@/typescript-resource-api";
+import { debugConfig, getRealtimeConfig, getResourceConfig } from "@/typescript-resource-api";
 
 // 获取最终的资源配置（合并所有层级）
 const config = getResourceConfig({
@@ -309,8 +305,7 @@ validateConfig();
 
 ### Q: 为什么默认使用相对路径？
 
-**A**:
-符合前端最佳实践，开发和生产环境都可以使用代理，避免CORS问题，配置更简洁。
+**A**: 符合前端最佳实践，开发和生产环境都可以使用代理，避免CORS问题，配置更简洁。
 
 ### Q: 什么时候使用完整URL？
 

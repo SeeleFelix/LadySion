@@ -22,14 +22,14 @@ export default defineConfig({
   optimizeDeps: {
     include: [
       "vue",
-      "vue-router", 
+      "vue-router",
       "pinia",
       "element-plus",
       "@element-plus/icons-vue",
       "@fortawesome/fontawesome-svg-core",
-      "@fortawesome/free-solid-svg-icons", 
+      "@fortawesome/free-solid-svg-icons",
       "@fortawesome/vue-fontawesome",
-      "axios"
+      "axios",
     ],
   },
-}); 
+});

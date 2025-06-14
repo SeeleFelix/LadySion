@@ -2,7 +2,7 @@
 
 export enum ExecutionStatus {
   Success = "success",
-  Error = "error"
+  Error = "error",
 }
 
 export interface FateEcho {

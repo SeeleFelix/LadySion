@@ -9,16 +9,16 @@
 export interface IAnimaPlugin {
   readonly name: string;
   readonly version: string;
-  
+
   // 类型系统接口
   getSupportedTypes(): string[];
   validateValue(value: unknown, typeName: string): boolean;
   createDefaultValue(typeName: string): unknown;
-  
-  // 节点系统接口  
+
+  // 节点系统接口
   getSupportedNodes(): string[];
   executeNode(nodeName: string, inputs: Record<string, unknown>): Promise<Record<string, unknown>>;
-  
+
   // 插件元数据
   getPluginDefinition(): PluginDefinition;
 }
@@ -38,7 +38,7 @@ export interface PluginDefinition {
 
 export interface TypeDefinition {
   name: string;
-  kind: 'primitive' | 'composite' | 'semantic';
+  kind: "primitive" | "composite" | "semantic";
   baseType?: string;
   fields?: Record<string, string>;
   validation?: string[];
@@ -48,7 +48,7 @@ export interface NodeDefinition {
   name: string;
   inputs: Record<string, string>;
   outputs: Record<string, string>;
-  mode: 'Concurrent' | 'Sequential';
+  mode: "Concurrent" | "Sequential";
   description?: string;
 }
 
@@ -67,51 +67,55 @@ export interface ExecutionContext {
  */
 export class PluginRegistry {
   private plugins = new Map<string, IAnimaPlugin>();
-  
+
   /**
    * 注册插件
    */
   register(plugin: IAnimaPlugin): void {
     console.log(`🔌 注册插件: ${plugin.name} v${plugin.version}`);
-    
+
     if (this.plugins.has(plugin.name)) {
       throw new Error(`Plugin ${plugin.name} already registered`);
     }
-    
+
     this.plugins.set(plugin.name, plugin);
   }
-  
+
   /**
    * 获取插件
    */
   getPlugin(name: string): IAnimaPlugin | undefined {
     return this.plugins.get(name);
   }
-  
+
   /**
    * 列出所有插件
    */
   listPlugins(): string[] {
     return Array.from(this.plugins.keys());
   }
-  
+
   /**
    * 执行节点
    */
-  async executeNode(pluginName: string, nodeName: string, inputs: Record<string, unknown>): Promise<Record<string, unknown>> {
+  async executeNode(
+    pluginName: string,
+    nodeName: string,
+    inputs: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> {
     const plugin = this.getPlugin(pluginName);
     if (!plugin) {
       throw new Error(`Plugin not found: ${pluginName}`);
     }
-    
+
     if (!plugin.getSupportedNodes().includes(nodeName)) {
       throw new Error(`Node ${nodeName} not supported by plugin ${pluginName}`);
     }
-    
+
     console.log(`⚙️ 执行节点: ${pluginName}.${nodeName}`, inputs);
     return await plugin.executeNode(nodeName, inputs);
   }
-  
+
   /**
    * 验证类型值
    */
@@ -120,7 +124,7 @@ export class PluginRegistry {
     if (!plugin) {
       throw new Error(`Plugin not found: ${pluginName}`);
     }
-    
+
     return plugin.validateValue(value, typeName);
   }
 }
@@ -155,11 +159,11 @@ export interface WeaveConnection {
  */
 export enum ExecutionStatus {
   Success = "success",
-  Error = "error"
+  Error = "error",
 }
 
 export interface FateEcho {
   status: ExecutionStatus;
   outputs: string;
   getOutputs(): Record<string, unknown>;
-} 
+}

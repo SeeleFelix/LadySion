@@ -60,9 +60,8 @@
 
 ### 3.1 用例(Use Cases)
 
-**聊天相关**: `SendMessageUseCase`, `GetConversationHistoryUseCase`,
-`CreateConversationUseCase` **角色管理**: `CreateCharacterUseCase`,
-`UpdateCharacterUseCase`, `ListCharactersUseCase`\
+**聊天相关**: `SendMessageUseCase`, `GetConversationHistoryUseCase`, `CreateConversationUseCase`
+**角色管理**: `CreateCharacterUseCase`, `UpdateCharacterUseCase`, `ListCharactersUseCase`\
 **预设管理**: `ApplyPresetUseCase`, `CreatePresetUseCase`, `ImportPresetUseCase`
 
 ### 3.2 应用服务

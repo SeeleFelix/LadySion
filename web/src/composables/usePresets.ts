@@ -246,11 +246,9 @@ export function usePresets() {
     clearError,
 
     // 工具函数
-    getPresetNames: (type: PresetType) =>
-      getPresetsByType(type).map((p) => p.name),
+    getPresetNames: (type: PresetType) => getPresetsByType(type).map((p) => p.name),
     hasPresets: (type: PresetType) => getPresetsByType(type).length > 0,
-    getDefaultPreset: (type: PresetType) =>
-      getPresetsByType(type).find((p) => p.isDefault),
+    getDefaultPreset: (type: PresetType) => getPresetsByType(type).find((p) => p.isDefault),
   };
 }
 

@@ -1,12 +1,12 @@
 // Basic Plugin - 插件自己定义类型和节点
 // anima文件是从这里自动生成的
 
-import type { 
-  IAnimaPlugin, 
-  PluginDefinition, 
+import type {
   ExecutionContext,
+  IAnimaPlugin,
+  NodeDefinition,
+  PluginDefinition,
   TypeDefinition,
-  NodeDefinition
 } from "../../framework/core.ts";
 
 /**
@@ -39,38 +39,38 @@ export class BasicPlugin implements IAnimaPlugin {
       Signal: {
         name: "Signal",
         kind: "primitive",
-        baseType: "boolean"
+        baseType: "boolean",
       },
       Int: {
-        name: "Int", 
+        name: "Int",
         kind: "primitive",
-        baseType: "number"
+        baseType: "number",
       },
       Bool: {
         name: "Bool",
-        kind: "primitive", 
-        baseType: "boolean"
+        kind: "primitive",
+        baseType: "boolean",
       },
       String: {
         name: "String",
         kind: "primitive",
-        baseType: "string"
+        baseType: "string",
       },
       UUID: {
         name: "UUID",
         kind: "semantic",
         baseType: "string",
-        validation: ["uuid-format"]
+        validation: ["uuid-format"],
       },
       Prompt: {
         name: "Prompt",
         kind: "composite",
         fields: {
           id: "basic.String",
-          name: "basic.String", 
-          content: "basic.String"
-        }
-      }
+          name: "basic.String",
+          content: "basic.String",
+        },
+      },
     };
 
     // 定义节点
@@ -80,73 +80,73 @@ export class BasicPlugin implements IAnimaPlugin {
         inputs: {},
         outputs: {
           signal: "basic.Signal",
-          execution_id: "basic.UUID"
+          execution_id: "basic.UUID",
         },
         mode: "Concurrent",
-        description: "图执行的起始节点"
+        description: "图执行的起始节点",
       },
       GetTimestamp: {
         name: "GetTimestamp",
         inputs: {
-          trigger: "basic.Signal"
+          trigger: "basic.Signal",
         },
         outputs: {
           timestamp: "basic.Int",
-          done: "basic.Signal"
+          done: "basic.Signal",
         },
         mode: "Concurrent",
-        description: "获取当前时间戳"
+        description: "获取当前时间戳",
       },
       IsEven: {
         name: "IsEven",
         inputs: {
           number: "basic.Int",
-          trigger: "basic.Signal"
+          trigger: "basic.Signal",
         },
         outputs: {
           result: "basic.Bool",
-          done: "basic.Signal"
+          done: "basic.Signal",
         },
         mode: "Concurrent",
-        description: "判断数字是否为偶数"
+        description: "判断数字是否为偶数",
       },
       FormatNumber: {
         name: "FormatNumber",
         inputs: {
           number: "basic.Int",
-          trigger: "basic.Signal"
+          trigger: "basic.Signal",
         },
         outputs: {
           formatted: "basic.String",
-          done: "basic.Signal"
+          done: "basic.Signal",
         },
         mode: "Concurrent",
-        description: "格式化数字为字符串"
+        description: "格式化数字为字符串",
       },
       CreatePrompt: {
         name: "CreatePrompt",
         inputs: {
           name: "basic.String",
           content: "basic.String",
-          trigger: "basic.Signal"
+          trigger: "basic.Signal",
         },
         outputs: {
           prompt: "basic.Prompt",
-          done: "basic.Signal"
+          done: "basic.Signal",
         },
         mode: "Concurrent",
-        description: "创建Prompt对象"
-      }
+        description: "创建Prompt对象",
+      },
     };
 
     return {
       metadata: {
         name: "basic",
         version: "1.0.0",
-        description: "Basic plugin providing fundamental types and operations"
+        description: "Basic plugin providing fundamental types and operations",
       },
       types,
-      nodes
+      nodes,
     };
   }
 
@@ -176,19 +176,19 @@ export class BasicPlugin implements IAnimaPlugin {
    */
   validateValue(value: unknown, typeName: string): boolean {
     console.log(`🔍 验证类型: ${typeName} =`, value);
-    
+
     switch (typeName) {
-      case 'Signal':
-        return typeof value === 'boolean';
-      case 'Int':
-        return typeof value === 'number' && Number.isInteger(value);
-      case 'Bool':
-        return typeof value === 'boolean';
-      case 'String':
-        return typeof value === 'string';
-      case 'UUID':
-        return typeof value === 'string' && this.isValidUUID(value);
-      case 'Prompt':
+      case "Signal":
+        return typeof value === "boolean";
+      case "Int":
+        return typeof value === "number" && Number.isInteger(value);
+      case "Bool":
+        return typeof value === "boolean";
+      case "String":
+        return typeof value === "string";
+      case "UUID":
+        return typeof value === "string" && this.isValidUUID(value);
+      case "Prompt":
         return this.validatePromptType(value);
       default:
         console.warn(`⚠️ 未知类型: ${typeName}, 默认通过验证`);
@@ -201,21 +201,21 @@ export class BasicPlugin implements IAnimaPlugin {
    */
   createDefaultValue(typeName: string): unknown {
     switch (typeName) {
-      case 'Signal':
+      case "Signal":
         return false;
-      case 'Int':
+      case "Int":
         return 0;
-      case 'Bool':
+      case "Bool":
         return false;
-      case 'String':
+      case "String":
         return "";
-      case 'UUID':
+      case "UUID":
         return crypto.randomUUID();
-      case 'Prompt':
+      case "Prompt":
         return {
           id: crypto.randomUUID(),
           name: "",
-          content: ""
+          content: "",
         };
       default:
         throw new Error(`Cannot create default value for unknown type: ${typeName}`);
@@ -225,19 +225,22 @@ export class BasicPlugin implements IAnimaPlugin {
   /**
    * 执行节点
    */
-  async executeNode(nodeName: string, inputs: Record<string, unknown>): Promise<Record<string, unknown>> {
+  async executeNode(
+    nodeName: string,
+    inputs: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> {
     console.log(`⚙️ Basic插件执行节点: ${nodeName}`, inputs);
-    
+
     switch (nodeName) {
-      case 'Start':
+      case "Start":
         return this.executeStart(inputs);
-      case 'GetTimestamp':
+      case "GetTimestamp":
         return this.executeGetTimestamp(inputs);
-      case 'IsEven':
+      case "IsEven":
         return this.executeIsEven(inputs);
-      case 'FormatNumber':
+      case "FormatNumber":
         return this.executeFormatNumber(inputs);
-      case 'CreatePrompt':
+      case "CreatePrompt":
         return this.executeCreatePrompt(inputs);
       default:
         throw new Error(`Unknown node: ${nodeName}`);
@@ -248,115 +251,115 @@ export class BasicPlugin implements IAnimaPlugin {
 
   private executeStart(inputs: Record<string, unknown>): Record<string, unknown> {
     console.log("🚀 执行Start节点");
-    
+
     const executionId = crypto.randomUUID();
-    
+
     const result = {
       signal: true,
-      execution_id: executionId
+      execution_id: executionId,
     };
-    
+
     console.log("✅ Start节点完成:", result);
     return result;
   }
 
   private executeGetTimestamp(inputs: Record<string, unknown>): Record<string, unknown> {
     console.log("⏰ 执行GetTimestamp节点");
-    
+
     // 验证输入
-    if (!('trigger' in inputs)) {
-      throw new Error('GetTimestamp node requires trigger input');
+    if (!("trigger" in inputs)) {
+      throw new Error("GetTimestamp node requires trigger input");
     }
-    
+
     const timestamp = Math.floor(Date.now() / 1000);
-    
+
     const result = {
       timestamp: timestamp,
-      done: true
+      done: true,
     };
-    
+
     console.log("✅ GetTimestamp节点完成:", result);
     return result;
   }
 
   private executeIsEven(inputs: Record<string, unknown>): Record<string, unknown> {
     console.log("🔢 执行IsEven节点");
-    
+
     // 验证输入
-    if (!('number' in inputs) || typeof inputs.number !== 'number') {
-      throw new Error('IsEven node requires number input of type Int');
+    if (!("number" in inputs) || typeof inputs.number !== "number") {
+      throw new Error("IsEven node requires number input of type Int");
     }
-    
-    if (!('trigger' in inputs)) {
-      throw new Error('IsEven node requires trigger input');
+
+    if (!("trigger" in inputs)) {
+      throw new Error("IsEven node requires trigger input");
     }
-    
+
     const number = inputs.number as number;
     const isEven = number % 2 === 0;
-    
+
     const result = {
       result: isEven,
-      done: true
+      done: true,
     };
-    
+
     console.log("✅ IsEven节点完成:", result);
     return result;
   }
 
   private executeFormatNumber(inputs: Record<string, unknown>): Record<string, unknown> {
     console.log("📝 执行FormatNumber节点");
-    
+
     // 验证输入
-    if (!('number' in inputs) || typeof inputs.number !== 'number') {
-      throw new Error('FormatNumber node requires number input of type Int');
+    if (!("number" in inputs) || typeof inputs.number !== "number") {
+      throw new Error("FormatNumber node requires number input of type Int");
     }
-    
-    if (!('trigger' in inputs)) {
-      throw new Error('FormatNumber node requires trigger input');
+
+    if (!("trigger" in inputs)) {
+      throw new Error("FormatNumber node requires trigger input");
     }
-    
+
     const number = inputs.number as number;
     const formatted = `Number: ${number}`;
-    
+
     const result = {
       formatted: formatted,
-      done: true
+      done: true,
     };
-    
+
     console.log("✅ FormatNumber节点完成:", result);
     return result;
   }
 
   private executeCreatePrompt(inputs: Record<string, unknown>): Record<string, unknown> {
     console.log("📋 执行CreatePrompt节点");
-    
+
     // 验证输入
-    if (!('name' in inputs) || typeof inputs.name !== 'string') {
-      throw new Error('CreatePrompt node requires name input of type String');
+    if (!("name" in inputs) || typeof inputs.name !== "string") {
+      throw new Error("CreatePrompt node requires name input of type String");
     }
-    
-    if (!('content' in inputs) || typeof inputs.content !== 'string') {
-      throw new Error('CreatePrompt node requires content input of type String');
+
+    if (!("content" in inputs) || typeof inputs.content !== "string") {
+      throw new Error("CreatePrompt node requires content input of type String");
     }
-    
-    if (!('trigger' in inputs)) {
-      throw new Error('CreatePrompt node requires trigger input');
+
+    if (!("trigger" in inputs)) {
+      throw new Error("CreatePrompt node requires trigger input");
     }
-    
+
     const name = inputs.name as string;
     const content = inputs.content as string;
-    
+
     const prompt = {
       id: crypto.randomUUID(),
       name: name,
-      content: content
+      content: content,
     };
-    
+
     const result = {
       prompt: prompt,
-      done: true
+      done: true,
     };
-    
+
     console.log("✅ CreatePrompt节点完成:", result);
     return result;
   }
@@ -369,14 +372,14 @@ export class BasicPlugin implements IAnimaPlugin {
   }
 
   private validatePromptType(value: unknown): boolean {
-    if (typeof value !== 'object' || value === null) return false;
-    
+    if (typeof value !== "object" || value === null) return false;
+
     const obj = value as Record<string, unknown>;
-    
+
     return (
-      'id' in obj && typeof obj.id === 'string' && this.isValidUUID(obj.id) &&
-      'name' in obj && typeof obj.name === 'string' &&
-      'content' in obj && typeof obj.content === 'string'
+      "id" in obj && typeof obj.id === "string" && this.isValidUUID(obj.id) &&
+      "name" in obj && typeof obj.name === "string" &&
+      "content" in obj && typeof obj.content === "string"
     );
   }
-} 
+}

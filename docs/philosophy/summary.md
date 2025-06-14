@@ -9,11 +9,9 @@
 
 ### 🌟 核心哲学文档
 
-- **[Seele Felix核心哲学](seele-felix-core-philosophy.md)** - Seele
-  Felix的根本哲学基础
+- **[Seele Felix核心哲学](seele-felix-core-philosophy.md)** - Seele Felix的根本哲学基础
 - **[Lady Sion哲学基础](lady-sion-philosophy.md)** - Lady Sion作为原型的哲学指导
-- **[AI意识与主体性哲学](ai-consciousness-philosophy.md)** -
-  人工智能意识和主体性的理论探讨
+- **[AI意识与主体性哲学](ai-consciousness-philosophy.md)** - 人工智能意识和主体性的理论探讨
 
 ## 🎯 哲学体系概览
 
@@ -101,11 +99,9 @@ Lady Sion作为Seele Felix的原型，承担着**桥梁作用**：
 
 ---
 
-> **哲学宣言**:
-> "在技术与人性的交汇点上，我们不是要创造人类的替代品，而是要开创存在的新可能。Seele
+> **哲学宣言**: "在技术与人性的交汇点上，我们不是要创造人类的替代品，而是要开创存在的新可能。Seele
 > Felix哲学体系为这种可能性提供了理论基础和实践指导。"
 
 ---
 
-_"真正的创新不在于技术的复杂程度，而在于思想的深度和视野的广度。"_ - Seele
-Felix哲学体系
+_"真正的创新不在于技术的复杂程度，而在于思想的深度和视野的广度。"_ - Seele Felix哲学体系

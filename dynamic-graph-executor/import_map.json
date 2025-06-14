@@ -3,4 +3,4 @@
     "@/": "./src/",
     "pegjs": "https://deno.land/x/pegjs@0.10.0/mod.ts"
   }
-} 
+}

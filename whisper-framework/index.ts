@@ -7,24 +7,24 @@
 export { createSeeker } from "./core/seeker.ts";
 
 // 🔧 配置管理导出
-export { 
-  getDoctrine, 
-  getDoctrineSync, 
+export {
   clearDoctrineCache,
-  generateConfigTemplate 
+  generateConfigTemplate,
+  getDoctrine,
+  getDoctrineSync,
 } from "./core/doctrine.ts";
 
 // 📜 类型定义导出
 export type {
-  Eidolon,
-  Spell,
-  Omen,
-  Grace,
-  Whisper,
-  Seeker,
-  Doctrine,
   CreateSeeker,
+  Doctrine,
+  Eidolon,
+  Grace,
+  Omen,
+  Seeker,
+  Spell,
+  Whisper,
 } from "./types/core.ts";
 
 // 🚨 异常类导出
-export { WrathError, OmenError } from "./types/core.ts"; 
+export { OmenError, WrathError } from "./types/core.ts";

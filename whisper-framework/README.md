@@ -36,7 +36,7 @@ interface UserSeeker extends Seeker<UserEidolon> {
 ### 2. 创建seeker实例（在scripture/index.ts中）
 
 ```typescript
-import { createSeeker } from '@/whisper-framework';
+import { createSeeker } from "@/whisper-framework";
 
 // 🔮 所有脏活都在这里：配置、环境、认证等
 const config = {
@@ -44,8 +44,8 @@ const config = {
   timeout: 30000,
   headers: {
     "Content-Type": "application/json",
-    "Authorization": "Bearer token"
-  }
+    "Authorization": "Bearer token",
+  },
 };
 
 // ✨ 创建clean的seeker实例
@@ -55,7 +55,7 @@ export const userSeeker = createSeeker<UserSeeker>("User", config);
 ### 3. 前端使用（超级干净）
 
 ```typescript
-import { userSeeker } from '@/scripture';
+import { userSeeker } from "@/scripture";
 
 // 🎯 直接调用，支持多参数
 const user = await userSeeker.findById("123");
@@ -131,4 +131,4 @@ deno test --allow-all
 - **Scripture（圣典）**：业务定义包
 - **Grace（神恩）**：响应数据
 - **Omen（神启）**：状态码
-- **Wrath（神怒）**：错误异常 
+- **Wrath（神怒）**：错误异常

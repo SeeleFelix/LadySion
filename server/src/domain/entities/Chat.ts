@@ -75,9 +75,7 @@ export class Chat {
   }
 
   get lastMessage(): Message | null {
-    return this._messages.length > 0
-      ? this._messages[this._messages.length - 1]
-      : null;
+    return this._messages.length > 0 ? this._messages[this._messages.length - 1] : null;
   }
 
   // 业务方法

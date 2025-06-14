@@ -3,7 +3,7 @@
  * 展示真实场景中的使用方法和最佳实践
  */
 
-import { assertEquals, assert } from "jsr:@std/assert@1";
+import { assert, assertEquals } from "jsr:@std/assert@1";
 import { Router } from "oak/mod.ts";
 import { setupWhisperRoutes } from "../core/factory.ts";
 import type { SeekerImplementation } from "../types/backend.ts";
@@ -47,21 +47,21 @@ interface UserSeeker extends Seeker<UserEidolon> {
   create(username: string, email: string, age: number): Promise<UserEidolon>;
   update(id: string, data: Partial<UserEidolon>): Promise<UserEidolon>;
   delete(id: string): Promise<void>;
-  
+
   // 复杂查询
   search(
     query: string,
     filters: { minAge?: number; maxAge?: number; hasProfile?: boolean },
-    pagination: { page: number; size: number }
+    pagination: { page: number; size: number },
   ): Promise<UserEidolon[]>;
-  
+
   // 业务逻辑
   updateProfile(
     userId: string,
-    profile: Partial<UserEidolon['profile']>,
-    notify?: boolean
+    profile: Partial<UserEidolon["profile"]>,
+    notify?: boolean,
   ): Promise<UserEidolon>;
-  
+
   // 统计信息
   getStats(): Promise<{
     totalUsers: number;
@@ -77,7 +77,7 @@ interface PostSeeker extends Seeker<PostEidolon> {
     title: string,
     content: string,
     authorId: string,
-    tags: string[]
+    tags: string[],
   ): Promise<PostEidolon>;
   publish(id: string): Promise<PostEidolon>;
   searchByTag(tag: string): Promise<PostEidolon[]>;
@@ -87,7 +87,7 @@ interface PostSeeker extends Seeker<PostEidolon> {
 class UserSeekerService implements UserSeeker, SeekerImplementation {
   private users = new Map<string, UserEidolon>();
   private emailIndex = new Map<string, string>(); // email -> id
-  
+
   constructor() {
     // 初始化测试数据
     this.initTestData();
@@ -102,7 +102,7 @@ class UserSeekerService implements UserSeeker, SeekerImplementation {
         age: 25,
         profile: { firstName: "玲", lastName: "珑", avatar: "avatar1.jpg" },
         createdAt: "2024-01-01T00:00:00Z",
-        updatedAt: "2024-01-01T00:00:00Z"
+        updatedAt: "2024-01-01T00:00:00Z",
       },
       {
         id: "2",
@@ -111,7 +111,7 @@ class UserSeekerService implements UserSeeker, SeekerImplementation {
         age: 23,
         profile: { firstName: "茜", lastName: "子" },
         createdAt: "2024-01-02T00:00:00Z",
-        updatedAt: "2024-01-02T00:00:00Z"
+        updatedAt: "2024-01-02T00:00:00Z",
       },
       {
         id: "3",
@@ -119,8 +119,8 @@ class UserSeekerService implements UserSeeker, SeekerImplementation {
         email: "xiaoming@example.com",
         age: 30,
         createdAt: "2024-01-03T00:00:00Z",
-        updatedAt: "2024-01-03T00:00:00Z"
-      }
+        updatedAt: "2024-01-03T00:00:00Z",
+      },
     ];
 
     for (const user of users) {
@@ -136,7 +136,7 @@ class UserSeekerService implements UserSeeker, SeekerImplementation {
         code: 404,
         status: "error",
         message: `用户 ${id} 不存在`,
-        signal: "user_not_found"
+        signal: "user_not_found",
       });
     }
     return { ...user }; // 返回副本
@@ -149,7 +149,7 @@ class UserSeekerService implements UserSeeker, SeekerImplementation {
         code: 404,
         status: "error",
         message: `邮箱 ${email} 对应的用户不存在`,
-        signal: "user_not_found"
+        signal: "user_not_found",
       });
     }
     return this.findById(userId);
@@ -162,16 +162,16 @@ class UserSeekerService implements UserSeeker, SeekerImplementation {
         code: 400,
         status: "error",
         message: "年龄必须在 0-150 之间",
-        signal: "invalid_age"
+        signal: "invalid_age",
       });
     }
 
-    if (!email.includes('@')) {
+    if (!email.includes("@")) {
       throw new OmenError("邮箱格式无效", {
         code: 400,
         status: "error",
         message: "请提供有效的邮箱地址",
-        signal: "invalid_email"
+        signal: "invalid_email",
       });
     }
 
@@ -180,7 +180,7 @@ class UserSeekerService implements UserSeeker, SeekerImplementation {
         code: 409,
         status: "error",
         message: `邮箱 ${email} 已被使用`,
-        signal: "email_exists"
+        signal: "email_exists",
       });
     }
 
@@ -192,18 +192,18 @@ class UserSeekerService implements UserSeeker, SeekerImplementation {
       email,
       age,
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
     };
 
     this.users.set(id, user);
     this.emailIndex.set(email, id);
-    
+
     return { ...user };
   }
 
   async update(id: string, data: Partial<UserEidolon>): Promise<UserEidolon> {
     const user = await this.findById(id);
-    
+
     // 如果更新邮箱，需要检查重复
     if (data.email && data.email !== user.email) {
       if (this.emailIndex.has(data.email)) {
@@ -211,7 +211,7 @@ class UserSeekerService implements UserSeeker, SeekerImplementation {
           code: 409,
           status: "error",
           message: `邮箱 ${data.email} 已被使用`,
-          signal: "email_exists"
+          signal: "email_exists",
         });
       }
       // 更新邮箱索引
@@ -223,7 +223,7 @@ class UserSeekerService implements UserSeeker, SeekerImplementation {
       ...user,
       ...data,
       id, // 确保 ID 不被修改
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
 
     this.users.set(id, updated);
@@ -239,14 +239,14 @@ class UserSeekerService implements UserSeeker, SeekerImplementation {
   async search(
     query: string,
     filters: { minAge?: number; maxAge?: number; hasProfile?: boolean },
-    pagination: { page: number; size: number }
+    pagination: { page: number; size: number },
   ): Promise<UserEidolon[]> {
     let results = Array.from(this.users.values());
 
     // 关键词过滤
     if (query) {
       const lowerQuery = query.toLowerCase();
-      results = results.filter(user => 
+      results = results.filter((user) =>
         user.username.toLowerCase().includes(lowerQuery) ||
         user.email.toLowerCase().includes(lowerQuery) ||
         (user.profile?.firstName && user.profile.firstName.toLowerCase().includes(lowerQuery)) ||
@@ -256,38 +256,36 @@ class UserSeekerService implements UserSeeker, SeekerImplementation {
 
     // 年龄过滤
     if (filters.minAge !== undefined) {
-      results = results.filter(user => user.age >= filters.minAge!);
+      results = results.filter((user) => user.age >= filters.minAge!);
     }
     if (filters.maxAge !== undefined) {
-      results = results.filter(user => user.age <= filters.maxAge!);
+      results = results.filter((user) => user.age <= filters.maxAge!);
     }
 
     // 是否有个人资料过滤
     if (filters.hasProfile !== undefined) {
-      results = results.filter(user => 
-        filters.hasProfile ? !!user.profile : !user.profile
-      );
+      results = results.filter((user) => filters.hasProfile ? !!user.profile : !user.profile);
     }
 
     // 分页
     const start = pagination.page * pagination.size;
     const end = start + pagination.size;
 
-    return results.slice(start, end).map(user => ({ ...user }));
+    return results.slice(start, end).map((user) => ({ ...user }));
   }
 
   async updateProfile(
     userId: string,
-    profile: Partial<UserEidolon['profile']>,
-    notify: boolean = false
+    profile: Partial<UserEidolon["profile"]>,
+    notify: boolean = false,
   ): Promise<UserEidolon> {
     const user = await this.findById(userId);
-    
+
     const updatedProfile = {
-      firstName: user.profile?.firstName || '',
-      lastName: user.profile?.lastName || '',
+      firstName: user.profile?.firstName || "",
+      lastName: user.profile?.lastName || "",
       avatar: user.profile?.avatar,
-      ...profile
+      ...profile,
     };
 
     const updated = await this.update(userId, { profile: updatedProfile });
@@ -306,13 +304,13 @@ class UserSeekerService implements UserSeeker, SeekerImplementation {
   }> {
     const users = Array.from(this.users.values());
     const totalUsers = users.length;
-    const activeUsers = users.filter(user => !!user.profile).length;
+    const activeUsers = users.filter((user) => !!user.profile).length;
     const averageAge = users.reduce((sum, user) => sum + user.age, 0) / totalUsers;
 
     return {
       totalUsers,
       activeUsers,
-      averageAge: Math.round(averageAge * 100) / 100
+      averageAge: Math.round(averageAge * 100) / 100,
     };
   }
 }
@@ -328,7 +326,7 @@ class PostSeekerService implements PostSeeker, SeekerImplementation {
         code: 404,
         status: "error",
         message: `文章 ${id} 不存在`,
-        signal: "post_not_found"
+        signal: "post_not_found",
       });
     }
     return { ...post };
@@ -336,15 +334,15 @@ class PostSeekerService implements PostSeeker, SeekerImplementation {
 
   async findByAuthor(authorId: string): Promise<PostEidolon[]> {
     return Array.from(this.posts.values())
-      .filter(post => post.authorId === authorId)
-      .map(post => ({ ...post }));
+      .filter((post) => post.authorId === authorId)
+      .map((post) => ({ ...post }));
   }
 
   async create(
     title: string,
     content: string,
     authorId: string,
-    tags: string[]
+    tags: string[],
   ): Promise<PostEidolon> {
     const id = Date.now().toString();
     const post: PostEidolon = {
@@ -354,11 +352,11 @@ class PostSeekerService implements PostSeeker, SeekerImplementation {
       authorId,
       tags,
       published: false,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
 
     this.posts.set(id, post);
-    
+
     // 更新标签索引
     for (const tag of tags) {
       if (!this.tagIndex.has(tag)) {
@@ -380,9 +378,9 @@ class PostSeekerService implements PostSeeker, SeekerImplementation {
   async searchByTag(tag: string): Promise<PostEidolon[]> {
     const postIds = this.tagIndex.get(tag) || new Set();
     return Array.from(postIds)
-      .map(id => this.posts.get(id)!)
-      .filter(post => post.published) // 只返回已发布的
-      .map(post => ({ ...post }));
+      .map((id) => this.posts.get(id)!)
+      .filter((post) => post.published) // 只返回已发布的
+      .map((post) => ({ ...post }));
   }
 }
 
@@ -398,7 +396,7 @@ Deno.test("🏢 真实场景：用户管理系统", async () => {
 
   setupWhisperRoutes(router, {
     "User": userSeeker,
-    "Post": postSeeker
+    "Post": postSeeker,
   });
 
   console.log("✅ 用户管理系统 Whisper 服务已启动");
@@ -434,14 +432,14 @@ Deno.test("👤 用户 CRUD 完整流程", async () => {
   const withProfile = await userSeeker.updateProfile(newUser.id!, {
     firstName: "新",
     lastName: "用户",
-    avatar: "new-avatar.jpg"
+    avatar: "new-avatar.jpg",
   }, true);
   assertEquals(withProfile.profile?.firstName, "新");
   assertEquals(withProfile.profile?.lastName, "用户");
 
   // 6. 删除用户
   await userSeeker.delete(newUser.id!);
-  
+
   // 验证删除成功
   try {
     await userSeeker.findById(newUser.id!);
@@ -463,35 +461,37 @@ Deno.test("🔍 用户搜索和过滤", async () => {
   // 2. 年龄过滤
   const ageResults = await userSeeker.search("", { minAge: 25, maxAge: 30 }, { page: 0, size: 10 });
   assert(ageResults.length >= 2);
-  assert(ageResults.every(user => user.age >= 25 && user.age <= 30));
+  assert(ageResults.every((user) => user.age >= 25 && user.age <= 30));
 
   // 3. 是否有个人资料过滤
   const profileResults = await userSeeker.search("", { hasProfile: true }, { page: 0, size: 10 });
-  assert(profileResults.every(user => !!user.profile));
+  assert(profileResults.every((user) => !!user.profile));
 
   // 4. 分页测试
   const page1 = await userSeeker.search("", {}, { page: 0, size: 2 });
   const page2 = await userSeeker.search("", {}, { page: 1, size: 2 });
   assertEquals(page1.length, 2);
   assert(page2.length >= 0);
-  
+
   // 确保分页结果不重复
-  const page1Ids = page1.map(u => u.id);
-  const page2Ids = page2.map(u => u.id);
-  const intersection = page1Ids.filter(id => page2Ids.includes(id));
+  const page1Ids = page1.map((u) => u.id);
+  const page2Ids = page2.map((u) => u.id);
+  const intersection = page1Ids.filter((id) => page2Ids.includes(id));
   assertEquals(intersection.length, 0);
 });
 
 Deno.test("📊 统计信息", async () => {
   const userSeeker = new UserSeekerService();
-  
+
   const stats = await userSeeker.getStats();
-  
+
   assertEquals(stats.totalUsers, 3);
   assertEquals(stats.activeUsers, 2); // 有 profile 的用户
   assert(stats.averageAge > 0);
-  
-  console.log(`📊 用户统计: 总数 ${stats.totalUsers}, 活跃 ${stats.activeUsers}, 平均年龄 ${stats.averageAge}`);
+
+  console.log(
+    `📊 用户统计: 总数 ${stats.totalUsers}, 活跃 ${stats.activeUsers}, 平均年龄 ${stats.averageAge}`,
+  );
 });
 
 Deno.test("🚨 业务异常处理", async () => {
@@ -545,9 +545,9 @@ Deno.test("📝 文章管理功能", async () => {
     "我的第一篇文章",
     "这是文章内容...",
     "1", // 玲珑的 ID
-    ["技术", "分享"]
+    ["技术", "分享"],
   );
-  
+
   assert(post.id);
   assertEquals(post.title, "我的第一篇文章");
   assertEquals(post.published, false);
@@ -568,4 +568,4 @@ Deno.test("📝 文章管理功能", async () => {
   assertEquals(techPosts[0].published, true);
 });
 
-console.log("🎯 Whisper 后端框架使用示例测试完成！"); 
+console.log("🎯 Whisper 后端框架使用示例测试完成！");

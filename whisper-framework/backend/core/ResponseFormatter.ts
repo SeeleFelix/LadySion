@@ -10,7 +10,6 @@ import { OmenError, WrathError } from "../../types/core.ts";
  * 🌟 响应格式化器
  */
 export class ResponseFormatter {
-  
   /**
    * ✅ 格式化成功响应
    */
@@ -21,9 +20,9 @@ export class ResponseFormatter {
         code: 200,
         status: "success",
         message: "操作成功",
-        signal: "success"
+        signal: "success",
       },
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
   }
 
@@ -48,7 +47,7 @@ export class ResponseFormatter {
     return {
       eidolon: null,
       omen: error.omen,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
   }
 
@@ -59,7 +58,7 @@ export class ResponseFormatter {
     return {
       eidolon: null,
       omen: error.omen,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
   }
 
@@ -68,16 +67,16 @@ export class ResponseFormatter {
    */
   private formatUnknownError(error: any): Grace<null> {
     const message = error instanceof Error ? error.message : String(error);
-    
+
     return {
       eidolon: null,
       omen: {
         code: 500,
         status: "error",
         message: `内部服务器错误: ${message}`,
-        signal: "internal_error"
+        signal: "internal_error",
       },
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
   }
 
@@ -91,9 +90,9 @@ export class ResponseFormatter {
         code: 404,
         status: "error",
         message: `未找到 ${eidolon}.${ritual} 方法`,
-        signal: "method_not_found"
+        signal: "method_not_found",
       },
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
   }
 
@@ -107,9 +106,9 @@ export class ResponseFormatter {
         code: 401,
         status: "error",
         message,
-        signal: "auth_failed"
+        signal: "auth_failed",
       },
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
   }
 
@@ -123,9 +122,9 @@ export class ResponseFormatter {
         code: 403,
         status: "error",
         message,
-        signal: "permission_denied"
+        signal: "permission_denied",
       },
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
   }
 
@@ -133,16 +132,16 @@ export class ResponseFormatter {
    * 📊 格式化验证错误
    */
   formatValidationError(message: string, details?: any): Grace<null> {
-    const detailsText = details ? ` - ${JSON.stringify(details)}` : '';
+    const detailsText = details ? ` - ${JSON.stringify(details)}` : "";
     return {
       eidolon: null,
       omen: {
         code: 400,
         status: "error",
         message: `请求验证失败: ${message}${detailsText}`,
-        signal: "validation_error"
+        signal: "validation_error",
       },
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
   }
 
@@ -156,9 +155,9 @@ export class ResponseFormatter {
         code: 408,
         status: "error",
         message: `请求超时 (${timeout}ms)`,
-        signal: "timeout_error"
+        signal: "timeout_error",
       },
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
   }
 
@@ -166,9 +165,7 @@ export class ResponseFormatter {
    * 📈 格式化限流错误
    */
   formatRateLimitError(retryAfter?: number): Grace<null> {
-    const message = retryAfter 
-      ? `请求频率过高，请在 ${retryAfter} 秒后重试`
-      : "请求频率过高";
+    const message = retryAfter ? `请求频率过高，请在 ${retryAfter} 秒后重试` : "请求频率过高";
 
     return {
       eidolon: null,
@@ -176,9 +173,9 @@ export class ResponseFormatter {
         code: 429,
         status: "error",
         message,
-        signal: "rate_limit_exceeded"
+        signal: "rate_limit_exceeded",
       },
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
   }
 
@@ -189,7 +186,7 @@ export class ResponseFormatter {
     return {
       eidolon: data,
       omen,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
   }
 
@@ -203,7 +200,7 @@ export class ResponseFormatter {
       size: number;
       total: number;
       totalPages: number;
-    }
+    },
   ): Grace<{
     items: T[];
     pagination: typeof pagination;
@@ -211,15 +208,15 @@ export class ResponseFormatter {
     return {
       eidolon: {
         items: data,
-        pagination
+        pagination,
       },
       omen: {
         code: 200,
         status: "success",
         message: `获取第 ${pagination.page + 1} 页数据成功`,
-        signal: "paged_success"
+        signal: "paged_success",
       },
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
   }
-} 
+}

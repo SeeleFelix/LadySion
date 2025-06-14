@@ -5,7 +5,7 @@
 
 /// <reference lib="deno.ns" />
 
-import { assertEquals, assert } from "std/assert/mod.ts";
+import { assert, assertEquals } from "std/assert/mod.ts";
 import { createSeeker } from "../index.ts";
 import type { Eidolon, Seeker } from "../index.ts";
 import { OmenError, WrathError } from "../index.ts";
@@ -29,7 +29,7 @@ function setupFetchMock() {
   fetchMock = {
     calls: [] as any[],
     response: undefined as any,
-    
+
     mockHttpSuccess(grace: any) {
       this.response = {
         ok: true,
@@ -38,7 +38,7 @@ function setupFetchMock() {
       };
       return this;
     },
-    
+
     mockHttpError(status: number, message: string) {
       this.response = {
         ok: false,
@@ -48,13 +48,13 @@ function setupFetchMock() {
       };
       return this;
     },
-    
+
     mockNetworkError() {
       this.response = Promise.reject(new Error("Network connection failed"));
       return this;
-    }
+    },
   };
-  
+
   globalThis.fetch = ((...args: any[]) => {
     fetchMock.calls.push(args);
     return Promise.resolve(fetchMock.response);
@@ -64,16 +64,16 @@ function setupFetchMock() {
 Deno.test("🌟 成功场景：HTTP 200 + omen.code 200", async () => {
   setupFetchMock();
   const userSeeker = createSeeker<UserSeeker>("User");
-  
+
   // When: 业务操作成功
   fetchMock.mockHttpSuccess({
     eidolon: { id: "123", name: "玲珑", email: "test@example.com" },
     omen: { code: 200, status: "success", message: "查找成功" },
-    timestamp: Date.now()
+    timestamp: Date.now(),
   });
-  
+
   const user = await userSeeker.findById("123");
-  
+
   // Then: 应该正常返回数据
   assertEquals(user.name, "玲珑");
   assertEquals(user.email, "test@example.com");
@@ -82,14 +82,14 @@ Deno.test("🌟 成功场景：HTTP 200 + omen.code 200", async () => {
 Deno.test("📋 OmenError：HTTP 200 + omen.code 404 - 应该抛出OmenError", async () => {
   setupFetchMock();
   const userSeeker = createSeeker<UserSeeker>("User");
-  
+
   // When: 业务层面的错误（用户不存在）
   fetchMock.mockHttpSuccess({
     eidolon: null,
     omen: { code: 404, status: "error", message: "用户不存在" },
-    timestamp: Date.now()
+    timestamp: Date.now(),
   });
-  
+
   // Then: 应该抛出OmenError，业务代码可以处理
   try {
     await userSeeker.findById("nonexistent");
@@ -105,14 +105,14 @@ Deno.test("📋 OmenError：HTTP 200 + omen.code 404 - 应该抛出OmenError", a
 Deno.test("📋 OmenError：HTTP 200 + omen.code 401 - 权限错误", async () => {
   setupFetchMock();
   const userSeeker = createSeeker<UserSeeker>("User");
-  
+
   // When: 权限不足
   fetchMock.mockHttpSuccess({
     eidolon: null,
     omen: { code: 401, status: "error", message: "权限不足" },
-    timestamp: Date.now()
+    timestamp: Date.now(),
   });
-  
+
   // Then: 应该抛出OmenError
   try {
     await userSeeker.findById("secret");
@@ -127,14 +127,14 @@ Deno.test("📋 OmenError：HTTP 200 + omen.code 401 - 权限错误", async () =
 Deno.test("📋 OmenError：HTTP 200 + omen.code 422 - 验证错误", async () => {
   setupFetchMock();
   const userSeeker = createSeeker<UserSeeker>("User");
-  
+
   // When: 数据验证失败
   fetchMock.mockHttpSuccess({
     eidolon: null,
     omen: { code: 422, status: "error", message: "邮箱格式不正确" },
-    timestamp: Date.now()
+    timestamp: Date.now(),
   });
-  
+
   // Then: 应该抛出OmenError
   try {
     await userSeeker.create("测试", "invalid-email");
@@ -149,10 +149,10 @@ Deno.test("📋 OmenError：HTTP 200 + omen.code 422 - 验证错误", async () =
 Deno.test("🔥 WrathError：HTTP 400错误 - 应该抛出WrathError", async () => {
   setupFetchMock();
   const userSeeker = createSeeker<UserSeeker>("User");
-  
+
   // When: HTTP 400错误（系统层面错误）
   fetchMock.mockHttpError(400, "Bad Request");
-  
+
   // Then: 应该抛出WrathError
   try {
     await userSeeker.findById("123");
@@ -168,10 +168,10 @@ Deno.test("🔥 WrathError：HTTP 400错误 - 应该抛出WrathError", async () 
 Deno.test("🔥 WrathError：HTTP 500错误 - 应该抛出WrathError", async () => {
   setupFetchMock();
   const userSeeker = createSeeker<UserSeeker>("User");
-  
+
   // When: HTTP 500错误（服务器错误）
   fetchMock.mockHttpError(500, "Internal Server Error");
-  
+
   // Then: 应该抛出WrathError
   try {
     await userSeeker.findById("123");
@@ -187,10 +187,10 @@ Deno.test("🔥 WrathError：HTTP 500错误 - 应该抛出WrathError", async () 
 Deno.test("🌐 WrathError：网络错误 - 应该抛出WrathError", async () => {
   setupFetchMock();
   const userSeeker = createSeeker<UserSeeker>("User");
-  
+
   // When: 网络连接失败
   fetchMock.mockNetworkError();
-  
+
   // Then: 应该抛出WrathError
   try {
     await userSeeker.findById("123");
@@ -205,14 +205,16 @@ Deno.test("🌐 WrathError：网络错误 - 应该抛出WrathError", async () =>
 Deno.test("🔧 WrathError：JSON解析错误 - 应该抛出WrathError", async () => {
   setupFetchMock();
   const userSeeker = createSeeker<UserSeeker>("User");
-  
+
   // When: 服务器返回无效JSON
   fetchMock.response = {
     ok: true,
     status: 200,
-    json: async () => { throw new Error("Invalid JSON"); }
+    json: async () => {
+      throw new Error("Invalid JSON");
+    },
   };
-  
+
   // Then: 应该抛出WrathError
   try {
     await userSeeker.findById("123");
@@ -227,9 +229,9 @@ Deno.test("🔧 WrathError：JSON解析错误 - 应该抛出WrathError", async (
 Deno.test("⏰ WrathError：请求超时 - 应该抛出WrathError", async () => {
   setupFetchMock();
   const userSeeker = createSeeker<UserSeeker>("User", {
-    timeout: 50 // 很短的超时时间
+    timeout: 50, // 很短的超时时间
   });
-  
+
   // When: 模拟AbortError
   globalThis.fetch = ((...args: any[]) => {
     fetchMock.calls.push(args);
@@ -237,7 +239,7 @@ Deno.test("⏰ WrathError：请求超时 - 应该抛出WrathError", async () => 
     error.name = "AbortError";
     return Promise.reject(error);
   }) as any;
-  
+
   // Then: 应该抛出WrathError
   try {
     await userSeeker.findById("123");
@@ -252,14 +254,14 @@ Deno.test("⏰ WrathError：请求超时 - 应该抛出WrathError", async () => 
 Deno.test("💼 业务代码异常处理示例", async () => {
   setupFetchMock();
   const userSeeker = createSeeker<UserSeeker>("User");
-  
+
   // 模拟用户不存在的场景
   fetchMock.mockHttpSuccess({
     eidolon: null,
     omen: { code: 404, status: "error", message: "用户不存在" },
-    timestamp: Date.now()
+    timestamp: Date.now(),
   });
-  
+
   // When: 业务代码处理OmenError
   let user = null;
   try {
@@ -278,7 +280,7 @@ Deno.test("💼 业务代码异常处理示例", async () => {
       throw error;
     }
   }
-  
+
   // Then: 业务逻辑正常继续
   assertEquals(user, null);
 });
@@ -286,17 +288,17 @@ Deno.test("💼 业务代码异常处理示例", async () => {
 Deno.test("🎯 架构验证：错误类型分类正确", async () => {
   setupFetchMock();
   const userSeeker = createSeeker<UserSeeker>("User");
-  
+
   // 测试所有业务错误都抛出OmenError
   const businessErrorCodes = [404, 401, 403, 422, 409, 429];
-  
+
   for (const code of businessErrorCodes) {
     fetchMock.mockHttpSuccess({
       eidolon: null,
       omen: { code, status: "error", message: `业务错误${code}` },
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
-    
+
     try {
       await userSeeker.findById("test");
       assert(false, `code ${code} 应该抛出OmenError`);
@@ -305,13 +307,13 @@ Deno.test("🎯 架构验证：错误类型分类正确", async () => {
       assertEquals(error.omen.code, code);
     }
   }
-  
+
   // 测试系统错误都抛出WrathError
   const systemErrorCodes = [400, 500, 502, 503];
-  
+
   for (const code of systemErrorCodes) {
     fetchMock.mockHttpError(code, `System Error ${code}`);
-    
+
     try {
       await userSeeker.findById("test");
       assert(false, `HTTP ${code} 应该抛出WrathError`);
@@ -320,4 +322,4 @@ Deno.test("🎯 架构验证：错误类型分类正确", async () => {
       assertEquals(error.omen.code, code);
     }
   }
-}); 
+});

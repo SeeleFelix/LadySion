@@ -9,9 +9,7 @@ export async function validationMiddleware(
   next: () => Promise<unknown>,
 ) {
   // 验证请求体大小
-  const body = context.request.hasBody
-    ? await context.request.body.json()
-    : undefined;
+  const body = context.request.hasBody ? await context.request.body.json() : undefined;
   if (body && JSON.stringify(body).length > 1024 * 1024) { // 1MB限制
     context.response.status = 413;
     context.response.body = {

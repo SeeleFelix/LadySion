@@ -57,9 +57,7 @@ export class SQLitePresetRepository implements PresetRepository {
       "SELECT id, name, description, data FROM presets WHERE type = ? ORDER BY name",
       [type],
     );
-    return rows.map((row) =>
-      JSON.parse(row.data as string) as Preset
-    );
+    return rows.map((row) => JSON.parse(row.data as string) as Preset);
   }
 
   /**

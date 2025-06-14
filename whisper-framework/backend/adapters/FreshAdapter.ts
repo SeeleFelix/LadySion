@@ -5,9 +5,9 @@
 
 import type {
   HttpAdapter,
-  WhisperServerConfig,
   RequestContext,
   RouteHandler,
+  WhisperServerConfig,
 } from "../types/backend.ts";
 
 /**
@@ -22,7 +22,7 @@ export class FreshAdapter implements HttpAdapter {
    */
   async mount(app: any, config: WhisperServerConfig): Promise<void> {
     console.log(`🌊 Fresh 适配器: 准备挂载 Whisper 路由`);
-    
+
     // Fresh 的路由注册方式会有所不同
     // 这里只是示例结构
   }
@@ -36,10 +36,10 @@ export class FreshAdapter implements HttpAdapter {
       try {
         // 🔍 解析请求上下文
         const context = await this.parseContext(req, ctx);
-        
+
         // 🚀 调用 Whisper 处理器
         const grace = await handler(context);
-        
+
         // ✨ 返回 Fresh 响应
         return new Response(JSON.stringify(grace), {
           status: this.getHttpStatusFromOmen(grace.omen.code),
@@ -47,24 +47,26 @@ export class FreshAdapter implements HttpAdapter {
             "Content-Type": "application/json",
           },
         });
-        
       } catch (error) {
         // 🚨 处理适配器级别的错误
         console.error("Fresh 适配器错误:", error);
-        
-        return new Response(JSON.stringify({
-          eidolon: null,
-          omen: {
-            code: 500,
-            status: "error",
-            message: `适配器错误: ${error instanceof Error ? error.message : String(error)}`,
-            signal: "adapter_error"
+
+        return new Response(
+          JSON.stringify({
+            eidolon: null,
+            omen: {
+              code: 500,
+              status: "error",
+              message: `适配器错误: ${error instanceof Error ? error.message : String(error)}`,
+              signal: "adapter_error",
+            },
+            timestamp: Date.now(),
+          }),
+          {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
           },
-          timestamp: Date.now()
-        }), {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        });
+        );
       }
     };
   }
@@ -74,13 +76,13 @@ export class FreshAdapter implements HttpAdapter {
    */
   private async parseContext(req: Request, ctx: any): Promise<RequestContext> {
     const url = new URL(req.url);
-    const pathParts = url.pathname.split('/').filter(Boolean);
-    
+    const pathParts = url.pathname.split("/").filter(Boolean);
+
     // 从路径中解析 eidolon 和 ritual
     // 假设路径格式: /api/whisper/{eidolon}/{ritual}
     const eidolon = pathParts[pathParts.length - 2];
     const ritual = pathParts[pathParts.length - 1];
-    
+
     if (!eidolon || !ritual) {
       throw new Error("缺少 eidolon 或 ritual 参数");
     }
@@ -90,7 +92,7 @@ export class FreshAdapter implements HttpAdapter {
     try {
       const body = await req.json();
       spell = body.spell;
-      
+
       if (!spell) {
         throw new Error("请求体中缺少 spell 参数");
       }
@@ -115,11 +117,11 @@ export class FreshAdapter implements HttpAdapter {
    */
   private extractHeaders(req: Request): Record<string, string> {
     const headers: Record<string, string> = {};
-    
+
     for (const [name, value] of req.headers.entries()) {
       headers[name.toLowerCase()] = value;
     }
-    
+
     return headers;
   }
 
@@ -129,18 +131,18 @@ export class FreshAdapter implements HttpAdapter {
   private getClientIP(req: Request, ctx: any): string | undefined {
     // Fresh 中获取客户端 IP 的方式
     const possibleHeaders = [
-      'x-forwarded-for',
-      'x-real-ip',
-      'x-client-ip',
+      "x-forwarded-for",
+      "x-real-ip",
+      "x-client-ip",
     ];
-    
+
     for (const header of possibleHeaders) {
       const value = req.headers.get(header);
       if (value) {
-        return value.split(',')[0].trim();
+        return value.split(",")[0].trim();
       }
     }
-    
+
     // Fresh 特定的IP获取方式
     return ctx?.remoteAddr?.hostname;
   }
@@ -153,11 +155,11 @@ export class FreshAdapter implements HttpAdapter {
     if (omenCode >= 100 && omenCode < 600) {
       return omenCode;
     }
-    
+
     if (omenCode >= 1000) {
       return 200;
     }
-    
+
     return 500;
   }
 }
@@ -175,9 +177,9 @@ export function createFreshWhisperRoute(handler: RouteHandler) {
  */
 export function integrateFreshWhisper(app: any, seekers: Record<string, any>) {
   console.log("🌊 正在集成 Fresh Whisper 支持...");
-  
+
   // 这里会根据 Fresh 的实际 API 进行集成
   // 每个框架的集成方式都不同，这就是适配器模式的价值
-  
+
   console.log(`📊 已集成 ${Object.keys(seekers).length} 个 Seeker`);
-} 
+}

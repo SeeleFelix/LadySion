@@ -1,9 +1,4 @@
-import {
-  CharacterId,
-  ChatId,
-  MessageId,
-  MessageRole,
-} from "@/shared/types/index.ts";
+import { CharacterId, ChatId, MessageId, MessageRole } from "@/shared/types/index.ts";
 
 // 发送消息命令
 export interface SendMessageCommand {

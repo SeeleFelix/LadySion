@@ -1,18 +1,18 @@
 // 插件注册和管理系统
 // 实现一比一的anima定义到TypeScript实现的映射
 
-import type { AnimaDefinition, TypeDefinition, NodeDefinition } from "../graph/parser.ts";
+import type { AnimaDefinition, NodeDefinition, TypeDefinition } from "../graph/parser.ts";
 
 // 插件运行时接口
 export interface PluginRuntime {
   readonly name: string;
   readonly version: string;
-  
+
   // 类型系统
   getTypeDefinition(typeName: string): TypeDefinition | undefined;
   validateValue(value: unknown, typeName: string): boolean;
   castValue(value: unknown, fromType: string, toType: string): unknown;
-  
+
   // 节点执行
   getNodeDefinition(nodeName: string): NodeDefinition | undefined;
   executeNode(nodeName: string, inputs: Record<string, unknown>): Promise<Record<string, unknown>>;
@@ -65,11 +65,11 @@ export abstract class BasePlugin implements PluginRuntime {
     if (!typeDef) return false;
 
     switch (typeDef.kind) {
-      case 'primitive':
+      case "primitive":
         return this.validatePrimitive(value, typeName);
-      case 'semantic':
+      case "semantic":
         return this.validateSemantic(value, typeDef);
-      case 'composite':
+      case "composite":
         return this.validateComposite(value, typeDef);
       default:
         return false;
@@ -79,16 +79,16 @@ export abstract class BasePlugin implements PluginRuntime {
   castValue(value: unknown, fromType: string, toType: string): unknown {
     // 实现类型转换逻辑
     if (fromType === toType) return value;
-    
+
     const fromDef = this.getTypeDefinition(fromType);
     const toDef = this.getTypeDefinition(toType);
-    
+
     if (!fromDef || !toDef) {
       throw new Error(`Cannot cast from ${fromType} to ${toType}: type not found`);
     }
 
     // 语义类型转换逻辑
-    if (fromDef.kind === 'semantic' && toDef.kind === 'semantic') {
+    if (fromDef.kind === "semantic" && toDef.kind === "semantic") {
       if (fromDef.baseType === toDef.baseType) {
         // 同样的底层类型，但不同的语义含义，需要显式转换
         return this.performSemanticCast(value, fromType, toType);
@@ -98,7 +98,10 @@ export abstract class BasePlugin implements PluginRuntime {
     throw new Error(`Unsupported cast from ${fromType} to ${toType}`);
   }
 
-  async executeNode(nodeName: string, inputs: Record<string, unknown>): Promise<Record<string, unknown>> {
+  async executeNode(
+    nodeName: string,
+    inputs: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> {
     const implementation = this.nodeImplementations[nodeName];
     if (!implementation) {
       throw new Error(`Node implementation not found: ${nodeName}`);
@@ -116,15 +119,15 @@ export abstract class BasePlugin implements PluginRuntime {
   // 辅助方法
   private validatePrimitive(value: unknown, typeName: string): boolean {
     switch (typeName) {
-      case 'basic.Int':
+      case "basic.Int":
         return Number.isInteger(value);
-      case 'basic.Bool':
-        return typeof value === 'boolean';
-      case 'basic.String':
-        return typeof value === 'string';
-      case 'basic.UUID':
-        return typeof value === 'string' && this.isValidUUID(value as string);
-      case 'basic.Signal':
+      case "basic.Bool":
+        return typeof value === "boolean";
+      case "basic.String":
+        return typeof value === "string";
+      case "basic.UUID":
+        return typeof value === "string" && this.isValidUUID(value as string);
+      case "basic.Signal":
         return value === null || value === undefined;
       default:
         return false;
@@ -146,10 +149,10 @@ export abstract class BasePlugin implements PluginRuntime {
   }
 
   private validateComposite(value: unknown, typeDef: TypeDefinition): boolean {
-    if (typeof value !== 'object' || value === null) return false;
+    if (typeof value !== "object" || value === null) return false;
 
     const obj = value as Record<string, unknown>;
-    
+
     if (!typeDef.fields) return false;
 
     // 检查所有必需字段
@@ -195,7 +198,11 @@ export class PluginRegistry {
     return Array.from(this.plugins.keys());
   }
 
-  async executeNode(pluginName: string, nodeName: string, inputs: Record<string, unknown>): Promise<Record<string, unknown>> {
+  async executeNode(
+    pluginName: string,
+    nodeName: string,
+    inputs: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> {
     const plugin = this.getPlugin(pluginName);
     if (!plugin) {
       throw new Error(`Plugin not found: ${pluginName}`);
@@ -203,4 +210,4 @@ export class PluginRegistry {
 
     return await plugin.executeNode(nodeName, inputs);
   }
-} 
+}

@@ -59,13 +59,13 @@ docs/
 
 **目标**: 具体的技术实现和开发指导
 
-| 文档类型           | 说明                                | 文档                                                               |
-| ------------------ | ----------------------------------- | ------------------------------------------------------------------ |
+| 文档类型            | 说明                                | 文档                                                               |
+| ------------------- | ----------------------------------- | ------------------------------------------------------------------ |
 | Whisper框架快速指南 | Whisper框架简明使用指导             | [whisper-quick-start.md](technical/whisper-quick-start.md)         |
-| LangGraph指南      | LangGraph框架使用指南               | [langgraph-guide.md](technical/langgraph-guide.md)                 |
-| OpenRouter指南     | OpenRouter集成和配置指南            | [openrouter-guide.md](technical/openrouter-guide.md)               |
-| TRA配置管理指南    | TypeScript Resource API配置系统指南 | [tra-configuration-guide.md](technical/tra-configuration-guide.md) |
-| 索引文件指南       | 项目文件索引和导航指南              | [index-files-guide.md](technical/index-files-guide.md)             |
+| LangGraph指南       | LangGraph框架使用指南               | [langgraph-guide.md](technical/langgraph-guide.md)                 |
+| OpenRouter指南      | OpenRouter集成和配置指南            | [openrouter-guide.md](technical/openrouter-guide.md)               |
+| TRA配置管理指南     | TypeScript Resource API配置系统指南 | [tra-configuration-guide.md](technical/tra-configuration-guide.md) |
+| 索引文件指南        | 项目文件索引和导航指南              | [index-files-guide.md](technical/index-files-guide.md)             |
 
 ## 📖 操作指南 (Guides)
 

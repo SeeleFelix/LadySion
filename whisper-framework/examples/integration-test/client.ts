@@ -37,18 +37,22 @@ interface ProjectEidolon {
 interface TaskSeeker extends Seeker<TaskEidolon> {
   // 测试辅助方法
   initTestData(): Promise<void>;
-  
+
   // 基础 CRUD
   findById(id: string): Promise<TaskEidolon>;
-  create(title: string, description: string, priority: "low" | "medium" | "high"): Promise<TaskEidolon>;
+  create(
+    title: string,
+    description: string,
+    priority: "low" | "medium" | "high",
+  ): Promise<TaskEidolon>;
   update(id: string, data: Partial<TaskEidolon>): Promise<TaskEidolon>;
   delete(id: string): Promise<void>;
-  
+
   // 业务方法
   complete(id: string): Promise<TaskEidolon>;
   addTags(id: string, tags: string[]): Promise<TaskEidolon>;
   searchByTag(tag: string): Promise<TaskEidolon[]>;
-  
+
   // 复杂查询
   search(
     query: string,
@@ -57,9 +61,9 @@ interface TaskSeeker extends Seeker<TaskEidolon> {
       priority?: "low" | "medium" | "high";
       tags?: string[];
     },
-    pagination: { page: number; size: number }
+    pagination: { page: number; size: number },
   ): Promise<TaskEidolon[]>;
-  
+
   // 统计方法
   getStats(): Promise<{
     total: number;
@@ -71,7 +75,7 @@ interface TaskSeeker extends Seeker<TaskEidolon> {
 interface ProjectSeeker extends Seeker<ProjectEidolon> {
   // 测试辅助方法
   initTestData(): Promise<void>;
-  
+
   findById(id: string): Promise<ProjectEidolon>;
   create(name: string, description: string): Promise<ProjectEidolon>;
   updateStatus(id: string, status: "planning" | "active" | "completed"): Promise<ProjectEidolon>;
@@ -88,8 +92,8 @@ export function createTestClient(baseUrl: string = "http://localhost:8080") {
     whisperPath: "/api/whisper",
     timeout: 30000,
     headers: {
-      "Content-Type": "application/json"
-    }
+      "Content-Type": "application/json",
+    },
   });
 
   const projectSeeker = createSeeker<ProjectSeeker>("Project", {
@@ -97,8 +101,8 @@ export function createTestClient(baseUrl: string = "http://localhost:8080") {
     whisperPath: "/api/whisper",
     timeout: 30000,
     headers: {
-      "Content-Type": "application/json"
-    }
+      "Content-Type": "application/json",
+    },
   });
 
   return { taskSeeker, projectSeeker };
@@ -109,8 +113,8 @@ export function createTestClient(baseUrl: string = "http://localhost:8080") {
 // ================================
 
 export class TaskManagerClient {
-  public taskSeeker: TaskSeeker;  // 改为 public 以便测试访问
-  public projectSeeker: ProjectSeeker;  // 改为 public 以便测试访问
+  public taskSeeker: TaskSeeker; // 改为 public 以便测试访问
+  public projectSeeker: ProjectSeeker; // 改为 public 以便测试访问
 
   constructor(baseUrl?: string) {
     const client = createTestClient(baseUrl);
@@ -127,7 +131,11 @@ export class TaskManagerClient {
   }
 
   // 📋 任务管理操作
-  async createTask(title: string, description: string, priority: "low" | "medium" | "high"): Promise<TaskEidolon> {
+  async createTask(
+    title: string,
+    description: string,
+    priority: "low" | "medium" | "high",
+  ): Promise<TaskEidolon> {
     console.log(`📝 创建任务: ${title}`);
     const task = await this.taskSeeker.create(title, description, priority);
     console.log(`✅ 任务创建成功: ID=${task.id}`);
@@ -155,7 +163,11 @@ export class TaskManagerClient {
     return task;
   }
 
-  async searchTasks(query: string, filters: any = {}, pagination = { page: 0, size: 10 }): Promise<TaskEidolon[]> {
+  async searchTasks(
+    query: string,
+    filters: any = {},
+    pagination = { page: 0, size: 10 },
+  ): Promise<TaskEidolon[]> {
     console.log(`🔍 搜索任务: "${query}"`);
     const tasks = await this.taskSeeker.search(query, filters, pagination);
     console.log(`✅ 找到 ${tasks.length} 个任务`);
@@ -204,7 +216,10 @@ export class TaskManagerClient {
     return projects;
   }
 
-  async updateProjectStatus(id: string, status: "planning" | "active" | "completed"): Promise<ProjectEidolon> {
+  async updateProjectStatus(
+    id: string,
+    status: "planning" | "active" | "completed",
+  ): Promise<ProjectEidolon> {
     console.log(`🔄 更新项目状态: ${id} -> ${status}`);
     const project = await this.projectSeeker.updateStatus(id, status);
     console.log(`✅ 项目状态更新成功: ${project.name} -> ${project.status}`);
@@ -216,78 +231,78 @@ export class TaskManagerClient {
     projectId: string,
     title: string,
     description: string,
-    priority: "low" | "medium" | "high"
+    priority: "low" | "medium" | "high",
   ): Promise<{ project: ProjectEidolon; task: TaskEidolon }> {
     console.log(`🔗 在项目 ${projectId} 中创建任务: ${title}`);
-    
+
     // 1. 验证项目存在
     const project = await this.getProject(projectId);
-    
+
     // 2. 创建任务
     const task = await this.createTask(title, description, priority);
-    
+
     // 3. 添加项目标签
     await this.addTaskTags(task.id!, [`项目:${project.name}`]);
-    
+
     console.log(`✅ 复合操作完成: 任务 ${task.id} 已关联到项目 ${project.name}`);
-    
+
     return { project, task };
   }
 
   // 🎯 完整工作流示例
   async demonstrateCompleteWorkflow(): Promise<void> {
     console.log(`\n🎯 ===== 开始完整工作流演示 =====`);
-    
+
     try {
       // 1. 创建项目
       const project = await this.createProject(
         "Whisper 集成测试项目",
-        "演示 Whisper 框架的完整功能"
+        "演示 Whisper 框架的完整功能",
       );
-      
+
       // 2. 创建多个任务
       const task1 = await this.createTask(
         "设计系统架构",
         "设计 Whisper 框架的整体架构",
-        "high"
+        "high",
       );
-      
+
       const task2 = await this.createTask(
         "实现核心功能",
         "实现 Seeker 和 Whisper 的核心逻辑",
-        "high"
+        "high",
       );
-      
+
       const task3 = await this.createTask(
         "编写文档",
         "编写详细的使用文档和示例",
-        "medium"
+        "medium",
       );
-      
+
       // 3. 添加标签
       await this.addTaskTags(task1.id!, ["架构", "设计", "高优先级"]);
       await this.addTaskTags(task2.id!, ["开发", "核心", "高优先级"]);
       await this.addTaskTags(task3.id!, ["文档", "示例", "中优先级"]);
-      
+
       // 4. 完成一些任务
       await this.completeTask(task1.id!);
       await this.completeTask(task2.id!);
-      
+
       // 5. 更新任务描述
       await this.updateTask(task3.id!, {
         description: "编写详细的使用文档、API 文档和最佳实践示例",
-        priority: "high"
+        priority: "high",
       });
-      
+
       // 6. 搜索和统计
       const highPriorityTasks = await this.searchTasks("", { priority: "high" });
       const completedTasks = await this.searchTasks("", { completed: true });
       const stats = await this.getTaskStats();
-      
+
       // 7. 项目状态管理
       await this.updateProjectStatus(project.id!, "active");
       const allProjects = await this.getAllProjects();
-      
+
       // 8. 结果汇总
       console.log(`\n📊 工作流完成汇总:`);
       console.log(`- 创建项目: ${project.name}`);
@@ -295,9 +310,8 @@ export class TaskManagerClient {
       console.log(`- 已完成任务: ${completedTasks.length} 个`);
       console.log(`- 项目总数: ${allProjects.length} 个`);
       console.log(`- 任务统计: 总计 ${stats.total}, 已完成 ${stats.completed}`);
-      
+
       console.log(`\n🎉 ===== 工作流演示完成 =====`);
-      
     } catch (error) {
       console.error(`❌ 工作流执行失败:`, error);
       throw error;
@@ -311,20 +325,20 @@ export class TaskManagerClient {
 
 export async function quickIntegrationTest(baseUrl?: string): Promise<boolean> {
   console.log(`🧪 开始快速集成测试...`);
-  
+
   try {
     const client = new TaskManagerClient(baseUrl);
-    
+
     // 测试基本连通性
     await client.getTaskStats();
     console.log(`✅ 连通性测试通过`);
-    
+
     // 测试 CRUD 操作
     const task = await client.createTask("集成测试任务", "验证端到端通信", "low");
     await client.getTask(task.id!);
     await client.deleteTask(task.id!);
     console.log(`✅ CRUD 测试通过`);
-    
+
     return true;
   } catch (error) {
     console.error(`❌ 集成测试失败:`, error);
@@ -335,12 +349,12 @@ export async function quickIntegrationTest(baseUrl?: string): Promise<boolean> {
 // 如果直接运行这个文件，执行演示
 if (import.meta.main) {
   console.log(`🎯 Whisper 框架客户端演示`);
-  
+
   const client = new TaskManagerClient();
-  
+
   // 执行快速测试
   const success = await quickIntegrationTest();
-  
+
   if (success) {
     console.log(`\n🎉 快速测试通过，开始完整演示...`);
     await client.demonstrateCompleteWorkflow();
@@ -348,4 +362,4 @@ if (import.meta.main) {
     console.log(`\n❌ 快速测试失败，请检查服务器是否运行`);
     Deno.exit(1);
   }
-} 
+}

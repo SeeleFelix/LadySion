@@ -15,7 +15,7 @@ export interface AnimaDefinition {
 
 export interface TypeDefinition {
   name: string;
-  kind: 'primitive' | 'composite' | 'semantic';
+  kind: "primitive" | "composite" | "semantic";
   baseType?: string; // 对于semantic types，指向底层类型
   fields?: Record<string, string>; // 对于composite types
   validation?: string[]; // 验证规则
@@ -80,4 +80,4 @@ export class GraphParser implements ParserGrammar {
     console.log("🎯 GraphParser.parseWeave 调用真实DSL解析器");
     return this.dslParser.parseWeave(content);
   }
-} 
+}

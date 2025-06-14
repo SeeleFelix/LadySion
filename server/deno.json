@@ -1,0 +1,17 @@
+{
+  "name": "lady-sion-server",
+  "tasks": {
+    "start": "deno run -A src/main.ts",
+    "dev": "deno run -A --watch src/main.ts",
+    "build": "deno check src/main.ts",
+    "test": "deno test --allow-read --allow-write --allow-net --allow-env"
+  },
+  "exports": {
+    ".": "./src/main.ts"
+  },
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "lib": ["deno.ns", "es2022"]
+  }
+}

@@ -315,9 +315,7 @@ class PresetService extends BaseApiService {
    * 获取预设分类
    */
   async getCategories(type?: PresetType): Promise<string[]> {
-    const endpoint = type
-      ? `/presets/${type}/categories`
-      : "/presets/categories";
+    const endpoint = type ? `/presets/${type}/categories` : "/presets/categories";
     return this.get<string[]>(endpoint);
   }
 

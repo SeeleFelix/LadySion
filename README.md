@@ -4,12 +4,13 @@
 
 ## 📋 概述
 
-Lady Sion 是基于 **纯Deno生态** 的现代化 AI 聊天应用，采用领域驱动设计(DDD)架构和monorepo管理，提供类似 SillyTavern 的用户体验。
+Lady Sion 是基于 **纯Deno生态** 的现代化 AI
+聊天应用，采用领域驱动设计(DDD)架构和monorepo管理，提供类似 SillyTavern 的用户体验。
 
 ## 🎯 核心特性
 
 - **纯Deno生态**: 全栈使用 Deno，无Node.js依赖
-- **Monorepo架构**: 统一的依赖管理和构建流程  
+- **Monorepo架构**: 统一的依赖管理和构建流程
 - **领域驱动设计**: 后端采用 DDD 架构模式
 - **现代前端**: Vue 3 + TypeScript + Element Plus + Vite
 - **AI 聊天体验**: 流畅的 AI 对话交互
@@ -42,12 +43,13 @@ deno task start:frontend # 前端服务
 ### 访问应用
 
 - **前端应用**: http://localhost:5173
-- **后端API**: http://localhost:3000  
+- **后端API**: http://localhost:3000
 - **健康检查**: http://localhost:3000/api/v1/health
 
 ## 🛠️ 技术栈
 
 ### 后端 (Deno)
+
 - **运行时**: Deno v1.40+
 - **Web框架**: Oak v15
 - **数据库**: SQLite v3.9.1
@@ -55,6 +57,7 @@ deno task start:frontend # 前端服务
 - **API风格**: RESTful
 
 ### 前端 (Deno + Vite)
+
 - **构建工具**: Vite v5.1.4 (运行在Deno上)
 - **框架**: Vue 3.4.21
 - **路由**: Vue Router 4.3.0
@@ -110,36 +113,40 @@ deno task lint            # 代码检查
 ## 📚 文档导航
 
 ### 核心文档
-| 文档 | 状态 | 描述 |
-|------|------|------|
-| [项目愿景](./docs/strategic/vision-mission.md) | ✅ 完成 | 项目目标和核心理念 |
+
+| 文档                                            | 状态    | 描述                   |
+| ----------------------------------------------- | ------- | ---------------------- |
+| [项目愿景](./docs/strategic/vision-mission.md)  | ✅ 完成 | 项目目标和核心理念     |
 | [系统概览](./docs/strategic/system-overview.md) | ✅ 完成 | 系统整体架构和技术选择 |
 
-### 架构设计  
-| 文档 | 状态 | 描述 |
-|------|------|------|
-| [后端架构](./docs/architecture/backend.md) | ✅ 完成 | 后端DDD架构设计 |
+### 架构设计
+
+| 文档                                        | 状态    | 描述             |
+| ------------------------------------------- | ------- | ---------------- |
+| [后端架构](./docs/architecture/backend.md)  | ✅ 完成 | 后端DDD架构设计  |
 | [前端架构](./docs/architecture/frontend.md) | ✅ 完成 | 前端Vue3架构设计 |
 
 ### 开发指南
-| 文档 | 状态 | 描述 |
-|------|------|------|
-| [快速开始](./docs/guides/quick-start.md) | ✅ 完成 | 5分钟快速搭建开发环境 |
+
+| 文档                                                           | 状态    | 描述                    |
+| -------------------------------------------------------------- | ------- | ----------------------- |
+| [快速开始](./docs/guides/quick-start.md)                       | ✅ 完成 | 5分钟快速搭建开发环境   |
 | [Whisper框架快速指南](./docs/technical/whisper-quick-start.md) | ✅ 完成 | Whisper框架简明使用指导 |
-| [ESLint配置](./docs/guides/eslint-setup.md) | ✅ 完成 | 代码质量工具配置 |
+| [ESLint配置](./docs/guides/eslint-setup.md)                    | ✅ 完成 | 代码质量工具配置        |
 
 ### 设计哲学
-| 文档 | 状态 | 描述 |
-|------|------|------|
-| [Seele Felix核心哲学](./docs/philosophy/seele-felix-core-philosophy.md) | ✅ 完成 | 核心理念体系 |
-| [Lady Sion哲学](./docs/philosophy/lady-sion-philosophy.md) | ✅ 完成 | 设计哲学和理念 |
+
+| 文档                                                                    | 状态    | 描述           |
+| ----------------------------------------------------------------------- | ------- | -------------- |
+| [Seele Felix核心哲学](./docs/philosophy/seele-felix-core-philosophy.md) | ✅ 完成 | 核心理念体系   |
+| [Lady Sion哲学](./docs/philosophy/lady-sion-philosophy.md)              | ✅ 完成 | 设计哲学和理念 |
 
 完整的文档索引请查看 [文档中心](./docs/README.md)
 
 ## ✅ 项目状态
 
 - ✅ **后端服务**: Deno + Oak，编译无错误，运行正常
-- ✅ **前端应用**: Deno + Vite + Vue3，编译无错误，运行正常  
+- ✅ **前端应用**: Deno + Vite + Vue3，编译无错误，运行正常
 - ✅ **依赖管理**: 纯Deno npm包管理，统一配置
 - ✅ **Monorepo**: 根目录统一管理，一键启动
 - ✅ **类型系统**: 全栈TypeScript，类型安全
@@ -169,7 +176,7 @@ deno task lint            # 代码检查
 
 ## 📄 许可证
 
-NO LICENSE  
+NO LICENSE\
 任何贡献者都可以获取此项目的授权，非贡献者禁止使用，不惜一切代价追究非授权者的使用！包括但不限于法律，暴力甚至谋杀！
 
 ---
@@ -177,4 +184,5 @@ NO LICENSE
 **🎯 核心理念**:
 创造一个介于纯AI助手与理想化智能体之间的过渡形态，探索AI的人格化表达和深度协作能力。
 
-📚 **[查看完整文档](./docs/README.md)** | 🚀 **[快速开始](./docs/guides/quick-start.md)** | 🏗️ **[架构设计](./docs/architecture/)** | 💭 **[设计哲学](./docs/philosophy/lady-sion-philosophy.md)**
+📚 **[查看完整文档](./docs/README.md)** | 🚀 **[快速开始](./docs/guides/quick-start.md)** | 🏗️
+**[架构设计](./docs/architecture/)** | 💭 **[设计哲学](./docs/philosophy/lady-sion-philosophy.md)**

@@ -27,13 +27,13 @@ interface UserSeeker extends Seeker<UserEidolon> {
   create(username: string, email: string, age: number): Promise<UserEidolon>;
   updateProfile(
     userId: string,
-    profile: Partial<UserEidolon['profile']>,
-    notify?: boolean
+    profile: Partial<UserEidolon["profile"]>,
+    notify?: boolean,
   ): Promise<UserEidolon>;
   search(
     query: string,
     filters: { minAge?: number; maxAge?: number },
-    pagination: { page: number; size: number }
+    pagination: { page: number; size: number },
   ): Promise<UserEidolon[]>;
   getStatistics(): Promise<{ totalUsers: number; activeUsers: number }>;
   delete(id: string): Promise<void>;
@@ -42,7 +42,7 @@ interface UserSeeker extends Seeker<UserEidolon> {
 // 🎯 步骤3：实现 Seeker 服务（纯业务逻辑，无HTTP概念）
 class UserSeekerService implements UserSeeker, SeekerImplementation {
   private users: Map<string, UserEidolon> = new Map();
-  
+
   constructor() {
     // 初始化一些测试数据
     this.users.set("1", {
@@ -50,20 +50,20 @@ class UserSeekerService implements UserSeeker, SeekerImplementation {
       username: "玲珑",
       email: "lingling@example.com",
       age: 25,
-      profile: { firstName: "玲", lastName: "珑" }
+      profile: { firstName: "玲", lastName: "珑" },
     });
-    
+
     this.users.set("2", {
-      id: "2", 
+      id: "2",
       username: "茜茜",
       email: "xixi@example.com",
-      age: 23
+      age: 23,
     });
   }
 
   async findById(id: string): Promise<UserEidolon> {
     console.log(`🔍 查找用户: ${id}`);
-    
+
     const user = this.users.get(id);
     if (!user) {
       // 🚨 抛出业务异常（前端会收到 OmenError）
@@ -71,32 +71,32 @@ class UserSeekerService implements UserSeeker, SeekerImplementation {
         code: 404,
         status: "error",
         message: `用户 ${id} 不存在`,
-        signal: "user_not_found"
+        signal: "user_not_found",
       });
     }
-    
+
     return user;
   }
 
   async create(username: string, email: string, age: number): Promise<UserEidolon> {
     console.log(`➕ 创建用户: ${username}, ${email}, ${age}`);
-    
+
     // 业务验证
     if (age < 0 || age > 150) {
       throw new OmenError("年龄无效", {
         code: 400,
         status: "error",
         message: "年龄必须在 0-150 之间",
-        signal: "invalid_age"
+        signal: "invalid_age",
       });
     }
 
-    if (!email.includes('@')) {
+    if (!email.includes("@")) {
       throw new OmenError("邮箱格式无效", {
         code: 400,
-        status: "error", 
+        status: "error",
         message: "请提供有效的邮箱地址",
-        signal: "invalid_email"
+        signal: "invalid_email",
       });
     }
 
@@ -114,63 +114,63 @@ class UserSeekerService implements UserSeeker, SeekerImplementation {
 
   async updateProfile(
     userId: string,
-    profile: Partial<UserEidolon['profile']>,
-    notify: boolean = false
+    profile: Partial<UserEidolon["profile"]>,
+    notify: boolean = false,
   ): Promise<UserEidolon> {
     console.log(`📝 更新用户资料: ${userId}`, profile, { notify });
-    
+
     const user = await this.findById(userId); // 复用查找逻辑
-    
+
     user.profile = {
-      firstName: user.profile?.firstName || '',
-      lastName: user.profile?.lastName || '',
+      firstName: user.profile?.firstName || "",
+      lastName: user.profile?.lastName || "",
       ...profile,
     };
-    
+
     this.users.set(userId, user);
-    
+
     if (notify) {
       console.log(`📧 发送通知给用户: ${user.email}`);
     }
-    
+
     return user;
   }
 
   async search(
     query: string,
     filters: { minAge?: number; maxAge?: number },
-    pagination: { page: number; size: number }
+    pagination: { page: number; size: number },
   ): Promise<UserEidolon[]> {
     console.log(`🔍 搜索用户:`, { query, filters, pagination });
-    
+
     let results = Array.from(this.users.values());
-    
+
     // 关键词过滤
     if (query) {
-      results = results.filter(user => 
-        user.username.includes(query) || 
+      results = results.filter((user) =>
+        user.username.includes(query) ||
         user.email.includes(query)
       );
     }
-    
+
     // 年龄过滤
     if (filters.minAge !== undefined) {
-      results = results.filter(user => user.age >= filters.minAge!);
+      results = results.filter((user) => user.age >= filters.minAge!);
     }
     if (filters.maxAge !== undefined) {
-      results = results.filter(user => user.age <= filters.maxAge!);
+      results = results.filter((user) => user.age <= filters.maxAge!);
     }
-    
+
     // 分页
     const start = pagination.page * pagination.size;
     const end = start + pagination.size;
-    
+
     return results.slice(start, end);
   }
 
   async getStatistics(): Promise<{ totalUsers: number; activeUsers: number }> {
     console.log(`📊 获取用户统计`);
-    
+
     return {
       totalUsers: this.users.size,
       activeUsers: this.users.size, // 简化：假设所有用户都是活跃的
@@ -179,16 +179,16 @@ class UserSeekerService implements UserSeeker, SeekerImplementation {
 
   async delete(id: string): Promise<void> {
     console.log(`🗑️ 删除用户: ${id}`);
-    
+
     if (!this.users.has(id)) {
       throw new OmenError("用户不存在", {
         code: 404,
         status: "error",
         message: `用户 ${id} 不存在`,
-        signal: "user_not_found"
+        signal: "user_not_found",
       });
     }
-    
+
     this.users.delete(id);
   }
 }
@@ -219,7 +219,7 @@ class ProductSeekerService implements ProductSeeker, SeekerImplementation {
         code: 404,
         status: "error",
         message: `产品 ${id} 不存在`,
-        signal: "product_not_found"
+        signal: "product_not_found",
       });
     }
     return product;
@@ -227,13 +227,13 @@ class ProductSeekerService implements ProductSeeker, SeekerImplementation {
 
   async create(name: string, price: number) {
     console.log(`➕ 创建产品: ${name}, ¥${price}`);
-    
+
     if (price <= 0) {
       throw new OmenError("价格无效", {
         code: 400,
         status: "error",
         message: "价格必须大于0",
-        signal: "invalid_price"
+        signal: "invalid_price",
       });
     }
 
@@ -247,22 +247,22 @@ class ProductSeekerService implements ProductSeeker, SeekerImplementation {
 // 🚀 步骤5：集成到 Oak 应用
 export function setupExampleWhisperAPI(router: Router): void {
   console.log("🎉 设置示例 Whisper API...");
-  
+
   // 创建 Seeker 实例
   const seekers = {
     "User": new UserSeekerService(),
     "Product": new ProductSeekerService(),
   };
-  
+
   // 🔮 一行代码完成所有路由设置！
   setupWhisperRoutes(router, seekers, {
     whisperPath: "/api/whisper",
   });
-  
+
   console.log("✨ Whisper API 设置完成！");
   console.log("\n🎯 可用的 API 端点:");
   console.log("📍 POST /api/whisper/User/findById");
-  console.log("📍 POST /api/whisper/User/create"); 
+  console.log("📍 POST /api/whisper/User/create");
   console.log("📍 POST /api/whisper/User/updateProfile");
   console.log("📍 POST /api/whisper/User/search");
   console.log("📍 POST /api/whisper/User/getStatistics");
@@ -386,5 +386,5 @@ POST /api/whisper/Product/create
   },
   "timestamp": 1703123456789
 }
-`
-}; 
+`,
+};
