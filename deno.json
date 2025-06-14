@@ -1,9 +1,9 @@
 {
   "importMap": "./import_map.json",
   "nodeModulesDir": "auto",
-    "workspace": [
+  "workspace": [
     "./web",
-    "./server", 
+    "./server",
     "./anima-weave",
     "./whisper-framework",
     "./shared"

@@ -1,3 +1,3 @@
-import { regenerateAnimaFiles } from './src/mod.ts';
+import { regenerateAnimaFiles } from "./src/mod.ts";
 
-await regenerateAnimaFiles(); 
+await regenerateAnimaFiles();

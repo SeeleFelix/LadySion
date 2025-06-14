@@ -27,7 +27,10 @@ export class VesselManager {
   /**
    * 确保所需容器已加载
    */
-  async ensureRequiredVesselsLoaded(requiredVessels: Set<string>, sanctumPath: string): Promise<void> {
+  async ensureRequiredVesselsLoaded(
+    requiredVessels: Set<string>,
+    sanctumPath: string,
+  ): Promise<void> {
     // 检查并加载缺失的容器
     for (const vesselName of requiredVessels) {
       if (!this.registry.getVessel(vesselName)) {
@@ -73,9 +76,9 @@ export class VesselManager {
    */
   private async resolveVesselsPath(): Promise<string> {
     const possiblePaths = [
-      "src/vessels",                    // 从anima-weave目录运行
-      "anima-weave/src/vessels",        // 从根目录运行
-      "../anima-weave/src/vessels",     // 从其他子目录运行
+      "src/vessels", // 从anima-weave目录运行
+      "anima-weave/src/vessels", // 从根目录运行
+      "../anima-weave/src/vessels", // 从其他子目录运行
     ];
 
     for (const path of possiblePaths) {
@@ -98,7 +101,7 @@ export class VesselManager {
   private async resolveVesselModulePath(vesselName: string): Promise<string> {
     const cwd = Deno.cwd();
     const possiblePaths = [
-      `${cwd}/src/vessels/${vesselName}/vessel.ts`,           // 从anima-weave目录运行
+      `${cwd}/src/vessels/${vesselName}/vessel.ts`, // 从anima-weave目录运行
       `${cwd}/anima-weave/src/vessels/${vesselName}/vessel.ts`, // 从根目录运行
       `${cwd}/../anima-weave/src/vessels/${vesselName}/vessel.ts`, // 从其他子目录运行
     ];
@@ -226,7 +229,7 @@ export class VesselManager {
     for (const LabelClass of supportedLabels) {
       const labelInstance = new LabelClass(null);
       const convertibleLabels = labelInstance.getConvertibleLabels();
-      
+
       if (convertibleLabels.length > 0) {
         content += `${labelInstance.labelName} {\n`;
         for (const targetLabel of convertibleLabels) {
@@ -247,24 +250,24 @@ export class VesselManager {
       content += `${nodeInstance.nodeName} {\n`;
       content += `    mode Concurrent\n`; // 默认模式
       content += `    in {\n`;
-      
+
       // 输入端口
       for (const inputPort of nodeInstance.inputs) {
         const labelInstance = new inputPort.label(null);
         const fullTypeName = this.registry.getLabelFullTypeName(labelInstance);
         content += `        ${inputPort.name} ${fullTypeName}\n`;
       }
-      
+
       content += `    }\n`;
       content += `    out {\n`;
-      
+
       // 输出端口
       for (const outputPort of nodeInstance.outputs) {
         const labelInstance = new outputPort.label(null);
         const fullTypeName = this.registry.getLabelFullTypeName(labelInstance);
         content += `        ${outputPort.name} ${fullTypeName}\n`;
       }
-      
+
       content += `    }\n`;
       content += "}\n\n";
     }
@@ -273,6 +276,4 @@ export class VesselManager {
 
     return content;
   }
-
-
-} 
+}

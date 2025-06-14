@@ -2,11 +2,7 @@
 // 框架核心引擎，协调各个模块
 
 import { ExecutionStatus, VesselRegistry as Registry } from "./core.ts";
-import type {
-  FateEcho,
-  VesselRegistry,
-  WeaveGraph,
-} from "./core.ts";
+import type { FateEcho, VesselRegistry, WeaveGraph } from "./core.ts";
 import { WeaveParser } from "../parser/weave_parser.ts";
 import { VesselManager } from "./vessel_manager.ts";
 import { GraphValidator } from "./graph_validator.ts";
@@ -64,7 +60,7 @@ export class AnimaWeaveEngine {
       // 1. 读取weave文件
       const weaveContent = await this.readWeaveFile(sanctumPath, weaveName);
 
-      // 2. 解析图结构  
+      // 2. 解析图结构
       const graph = await this.parser.parseWeave(weaveContent);
 
       // 3. 静态检查阶段 - 类型检查、连接验证等
@@ -88,10 +84,13 @@ export class AnimaWeaveEngine {
         getExecutionTrace: () => result.executionTrace,
       };
     } catch (error) {
-      if (error instanceof Error && (error.message.includes("validation error") || (error as any).validationErrors)) {
+      if (
+        error instanceof Error &&
+        (error.message.includes("validation error") || (error as any).validationErrors)
+      ) {
         return ErrorHandler.handleValidationError(error);
       } else {
-      return this.errorHandler.createErrorFateEcho(error, sanctumPath, weaveName);
+        return this.errorHandler.createErrorFateEcho(error, sanctumPath, weaveName);
       }
     }
   }

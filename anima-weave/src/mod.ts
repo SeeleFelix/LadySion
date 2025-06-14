@@ -2,18 +2,25 @@
 // 主接口模块 - 框架入口
 
 import { AnimaWeaveEngine } from "./framework/engine.ts";
-import { ExecutionStatus, isStaticError, isRuntimeError, type FateEcho } from "./framework/core.ts";
-import type { ExecutionTrace, ExecutionNode } from "./framework/graph_executor.ts";
+import { ExecutionStatus, type FateEcho, isRuntimeError, isStaticError } from "./framework/core.ts";
+import type { ExecutionNode, ExecutionTrace } from "./framework/graph_executor.ts";
 
 // 重新导出核心接口
-export { ExecutionStatus, isStaticError, isRuntimeError, type FateEcho, type ExecutionTrace, type ExecutionNode };
+export {
+  type ExecutionNode,
+  ExecutionStatus,
+  type ExecutionTrace,
+  type FateEcho,
+  isRuntimeError,
+  isStaticError,
+};
 export type {
   AnimaVessel,
+  ErrorDetails,
+  SemanticValue,
   WeaveConnection,
   WeaveGraph,
   WeaveNode,
-  SemanticValue,
-  ErrorDetails,
 } from "./framework/core.ts";
 
 /**
@@ -38,10 +45,10 @@ export async function awakening(sanctumPath: string, weaveName: string): Promise
  */
 async function resolveSanctumPath(sanctumPath: string): Promise<string> {
   // 如果是绝对路径，直接返回
-  if (sanctumPath.startsWith('/')) {
+  if (sanctumPath.startsWith("/")) {
     return sanctumPath;
   }
-  
+
   // 尝试当前工作目录下的路径
   try {
     const currentPath = `${Deno.cwd()}/${sanctumPath}`;
@@ -50,7 +57,7 @@ async function resolveSanctumPath(sanctumPath: string): Promise<string> {
   } catch {
     // 当前路径无效，尝试其他可能的路径
   }
-  
+
   // 尝试anima-weave子目录下的路径（从根目录运行时）
   try {
     const animaWeavePath = `anima-weave/${sanctumPath}`;
@@ -60,7 +67,7 @@ async function resolveSanctumPath(sanctumPath: string): Promise<string> {
   } catch {
     // anima-weave路径也无效
   }
-  
+
   // 尝试上级目录的anima-weave路径（从其他子目录运行时）
   try {
     const parentAnimaWeavePath = `../anima-weave/${sanctumPath}`;
@@ -70,7 +77,7 @@ async function resolveSanctumPath(sanctumPath: string): Promise<string> {
   } catch {
     // 所有路径都无效
   }
-  
+
   // 如果所有尝试都失败，返回原始路径（让后续错误处理来处理）
   console.warn(`⚠️ 无法解析sanctum路径: ${sanctumPath}，使用原始路径`);
   return sanctumPath;

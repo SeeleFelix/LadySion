@@ -5,15 +5,15 @@
 export abstract class SemanticLabel {
   abstract readonly labelName: string;
   readonly value: any;
-  
+
   constructor(value: any) {
     this.value = value;
   }
-  
+
   getConvertibleLabels(): string[] {
     return [];
   }
-  
+
   convertTo(targetLabelName: string): any {
     throw new Error(`Conversion from ${this.labelName} to ${targetLabelName} not supported`);
   }
@@ -23,17 +23,17 @@ export class Port {
   readonly name: string;
   readonly label: new (value: any) => SemanticLabel;
   private _value?: SemanticLabel;
-  
+
   constructor(name: string, label: new (value: any) => SemanticLabel, value?: SemanticLabel) {
     this.name = name;
     this.label = label;
     this._value = value;
   }
-  
+
   getValue(): SemanticLabel | undefined {
     return this._value;
   }
-  
+
   setValue(value: SemanticLabel): Port {
     return new Port(this.name, this.label, value);
   }
@@ -44,7 +44,7 @@ export abstract class Node {
   abstract readonly inputs: Port[];
   abstract readonly outputs: Port[];
   abstract readonly description: string;
-  
+
   abstract execute(inputPorts: Port[]): Promise<Port[]> | Port[];
 }
 
@@ -54,11 +54,11 @@ export interface AnimaVessel {
   readonly name: string;
   readonly version: string;
   readonly description: string;
-  
+
   // 容器只提供Node类的列表
   getSupportedNodes(): Array<new () => Node>;
-  
-  // 容器只提供Label类的列表  
+
+  // 容器只提供Label类的列表
   getSupportedLabels(): Array<new (value: any) => SemanticLabel>;
 }
 
@@ -71,9 +71,9 @@ export class VesselRegistry {
     if (this.vessels.has(vessel.name)) {
       throw new Error(`Vessel ${vessel.name} already registered`);
     }
-    
+
     this.vessels.set(vessel.name, vessel);
-    
+
     // 收集容器的所有Node类
     const supportedNodes = vessel.getSupportedNodes();
     for (const NodeClass of supportedNodes) {
@@ -81,7 +81,7 @@ export class VesselRegistry {
       const fullNodeName = `${vessel.name}.${nodeInstance.nodeName}`;
       this.nodeClasses.set(fullNodeName, NodeClass);
     }
-    
+
     // 收集容器的所有Label类
     const supportedLabels = vessel.getSupportedLabels();
     for (const LabelClass of supportedLabels) {
@@ -103,11 +103,11 @@ export class VesselRegistry {
   async executeNode(vesselName: string, nodeName: string, inputPorts: Port[]): Promise<Port[]> {
     const fullNodeName = `${vesselName}.${nodeName}`;
     const NodeClass = this.nodeClasses.get(fullNodeName);
-    
+
     if (!NodeClass) {
       throw new Error(`Node not found: ${fullNodeName}`);
     }
-    
+
     const nodeInstance = new NodeClass();
     return await nodeInstance.execute(inputPorts);
   }
@@ -116,28 +116,31 @@ export class VesselRegistry {
   createLabel(vesselName: string, labelName: string, value: any): SemanticLabel {
     const fullLabelName = `${vesselName}.${labelName}`;
     const LabelClass = this.labelClasses.get(fullLabelName);
-    
+
     if (!LabelClass) {
       throw new Error(`Label not found: ${fullLabelName}`);
     }
-    
+
     return new LabelClass(value);
   }
 
   // 获取Node的元数据信息（通过实例化获取）
-  getNodeMetadata(vesselName: string, nodeName: string): { inputs: Port[], outputs: Port[], description: string } | undefined {
+  getNodeMetadata(
+    vesselName: string,
+    nodeName: string,
+  ): { inputs: Port[]; outputs: Port[]; description: string } | undefined {
     const fullNodeName = `${vesselName}.${nodeName}`;
     const NodeClass = this.nodeClasses.get(fullNodeName);
-    
+
     if (!NodeClass) {
       return undefined;
     }
-    
+
     const nodeInstance = new NodeClass();
     return {
       inputs: nodeInstance.inputs,
       outputs: nodeInstance.outputs,
-      description: nodeInstance.description
+      description: nodeInstance.description,
     };
   }
 
@@ -160,7 +163,7 @@ export class VesselRegistry {
     for (const vesselName of this.vessels.keys()) {
       const vessel = this.vessels.get(vesselName);
       if (!vessel) continue;
-      
+
       const supportedLabels = vessel.getSupportedLabels();
       for (const LabelClass of supportedLabels) {
         const testInstance = new LabelClass(null);
@@ -169,7 +172,7 @@ export class VesselRegistry {
         }
       }
     }
-    
+
     // 如果找不到类型定义，直接返回类型名（不加vessel前缀）
     return labelInstance.labelName;
   }
@@ -260,13 +263,13 @@ export interface FateEcho {
 }
 
 export function isStaticError(status: ExecutionStatus): boolean {
-  return status === ExecutionStatus.ParseError || 
-         status === ExecutionStatus.ValidationError || 
-         status === ExecutionStatus.ConfigError;
+  return status === ExecutionStatus.ParseError ||
+    status === ExecutionStatus.ValidationError ||
+    status === ExecutionStatus.ConfigError;
 }
 
 export function isRuntimeError(status: ExecutionStatus): boolean {
-  return status === ExecutionStatus.RuntimeError || 
-         status === ExecutionStatus.DataError || 
-         status === ExecutionStatus.FlowError;
+  return status === ExecutionStatus.RuntimeError ||
+    status === ExecutionStatus.DataError ||
+    status === ExecutionStatus.FlowError;
 }

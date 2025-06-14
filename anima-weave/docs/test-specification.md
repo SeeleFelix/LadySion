@@ -42,7 +42,7 @@
   Signal   UUID→Int     Int→Bool  Bool→String
   ```
 - **预期行为**: 每个节点产生正确的语义标签输出
-- **验证要点**: 
+- **验证要点**:
   - FateEcho.outputs包含所有终端节点输出
   - 每个输出值携带正确的语义标签：`basic.UUID`, `basic.Int`, `basic.Bool`, `basic.String`
   - JSON序列化保持语义标签结构：`{semantic_label: "basic.Type", value: actualValue}`

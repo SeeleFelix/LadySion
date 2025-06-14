@@ -1,21 +1,10 @@
 // OpenRouter Vessel - OpenRouter API 简单封装
 // 依赖于 basic 容器，提供 AI 模型调用能力
 
-import {
-  SemanticLabel,
-  Port,
-  Node,
-  AnimaVessel,
-} from "../../framework/core.ts";
+import { AnimaVessel, Node, Port, SemanticLabel } from "../../framework/core.ts";
 
 // 从 basic 容器导入需要的类型
-import {
-  SignalLabel,
-  StringLabel,
-  UUIDLabel,
-  PromptLabel,
-  PromptsLabel,
-} from "../basic/vessel.ts";
+import { PromptLabel, PromptsLabel, SignalLabel, StringLabel, UUIDLabel } from "../basic/vessel.ts";
 
 // ========== 节点定义 ==========
 
@@ -23,30 +12,30 @@ export class EnhancePromptNode extends Node {
   readonly nodeName = "EnhancePrompt";
   readonly inputs = [
     new Port("prompt", PromptLabel),
-    new Port("trigger", SignalLabel)
+    new Port("trigger", SignalLabel),
   ];
   readonly outputs = [
     new Port("prompts", PromptsLabel),
-    new Port("done", SignalLabel)
+    new Port("done", SignalLabel),
   ];
   readonly description = "增强单个Prompt为Prompts集合";
-  
+
   execute(inputPorts: Port[]): Port[] {
     // inputPorts[0] 对应 prompt, inputPorts[1] 对应 trigger
     const inputPrompt = inputPorts[0].getValue()!.value;
-    
+
     // 创建增强版本：原始 + 系统增强版本
     const enhancedPrompt = {
       id: new UUIDLabel(crypto.randomUUID()),
       name: new StringLabel(`Enhanced: ${inputPrompt.name.value}`),
-      content: new StringLabel(`System Enhancement: ${inputPrompt.content.value}`)
+      content: new StringLabel(`System Enhancement: ${inputPrompt.content.value}`),
     };
-    
+
     const prompts = [inputPrompt, enhancedPrompt];
-    
+
     return [
       this.outputs[0].setValue(new PromptsLabel(prompts)),
-      this.outputs[1].setValue(new SignalLabel(true))
+      this.outputs[1].setValue(new SignalLabel(true)),
     ];
   }
 }
@@ -55,24 +44,24 @@ export class MockOpenRouterCallNode extends Node {
   readonly nodeName = "MockOpenRouterCall";
   readonly inputs = [
     new Port("prompts", PromptsLabel),
-    new Port("trigger", SignalLabel)
+    new Port("trigger", SignalLabel),
   ];
   readonly outputs = [
     new Port("response", StringLabel),
-    new Port("done", SignalLabel)
+    new Port("done", SignalLabel),
   ];
   readonly description = "模拟 OpenRouter API 调用";
-  
+
   execute(inputPorts: Port[]): Port[] {
     // inputPorts[0] 对应 prompts, inputPorts[1] 对应 trigger
     const prompts = inputPorts[0].getValue()!.value;
-    
+
     // 虚假的 OpenRouter 响应
     const mockResponse = `Mock OpenRouter Response: Processed ${prompts.length} prompts`;
-    
+
     return [
       this.outputs[0].setValue(new StringLabel(mockResponse)),
-      this.outputs[1].setValue(new SignalLabel(true))
+      this.outputs[1].setValue(new SignalLabel(true)),
     ];
   }
 }
@@ -111,4 +100,4 @@ export class OpenrouterVessel implements AnimaVessel {
       MockOpenRouterCallNode,
     ];
   }
-} 
+}
