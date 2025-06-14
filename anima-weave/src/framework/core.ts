@@ -155,6 +155,14 @@ export interface WeaveConnection {
 }
 
 /**
+ * 语义标签感知的值表示
+ */
+export interface SemanticValue {
+  semantic_label: string;  // 如 "basic.UUID", "basic.Prompt"
+  value: unknown;          // 原始值或嵌套的SemanticValue结构
+}
+
+/**
  * 执行结果
  */
 export enum ExecutionStatus {
@@ -164,6 +172,7 @@ export enum ExecutionStatus {
 
 export interface FateEcho {
   status: ExecutionStatus;
-  outputs: string;
-  getOutputs(): Record<string, unknown>;
+  outputs: string;  // JSON序列化的SemanticValue结构
+  getOutputs(): Record<string, SemanticValue>;  // 返回语义标签感知的输出
+  getRawOutputs(): Record<string, unknown>;     // 返回原始值（向后兼容）
 }

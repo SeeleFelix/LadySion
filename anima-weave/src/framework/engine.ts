@@ -8,6 +8,7 @@ import type {
   NodeDefinition,
   PluginDefinition,
   PluginRegistry,
+  SemanticValue,
   TypeDefinition,
   WeaveConnection,
   WeaveGraph,
@@ -63,20 +64,28 @@ export class AnimaWeaveEngine {
 
       // 4. 执行图
       const result = await this.executeWeaveGraph(graph);
+      const rawResult = this.extractRawOutputs(result);
 
       return {
         status: ExecutionStatus.Success,
         outputs: JSON.stringify(result),
         getOutputs: () => result,
+        getRawOutputs: () => rawResult,
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.error("❌ 图执行失败:", errorMessage);
 
+      const errorSemanticValue: SemanticValue = {
+        semantic_label: "system.Error",
+        value: errorMessage
+      };
+
       return {
         status: ExecutionStatus.Error,
-        outputs: JSON.stringify({ error: errorMessage }),
-        getOutputs: () => ({ error: errorMessage }),
+        outputs: JSON.stringify({ error: errorSemanticValue }),
+        getOutputs: () => ({ error: errorSemanticValue }),
+        getRawOutputs: () => ({ error: errorMessage }),
       };
     }
   }
@@ -306,7 +315,7 @@ export class AnimaWeaveEngine {
   /**
    * 执行图
    */
-  private async executeWeaveGraph(graph: WeaveGraph): Promise<Record<string, unknown>> {
+  private async executeWeaveGraph(graph: WeaveGraph): Promise<Record<string, SemanticValue>> {
     console.log("🔄 开始执行图...");
 
     const nodeResults = new Map<string, Record<string, unknown>>();
@@ -332,7 +341,7 @@ export class AnimaWeaveEngine {
       console.log(`✅ 节点 ${nodeId} 执行完成:`, outputs);
     }
 
-    // 收集终端输出
+    // 收集终端输出（带语义标签）
     const terminalOutputs = this.collectTerminalOutputs(graph, nodeResults);
 
     console.log("🎯 图执行完成，终端输出:", terminalOutputs);
@@ -415,15 +424,17 @@ export class AnimaWeaveEngine {
   }
 
   /**
-   * 收集终端输出
+   * 收集终端输出（带语义标签信息）
    */
   private collectTerminalOutputs(
     graph: WeaveGraph,
     nodeResults: Map<string, Record<string, unknown>>,
-  ): Record<string, unknown> {
-    const terminalOutputs: Record<string, unknown> = {};
+  ): Record<string, SemanticValue> {
+    const terminalOutputs: Record<string, SemanticValue> = {};
 
     for (const [nodeId, results] of nodeResults) {
+      const node = graph.nodes[nodeId];
+      
       for (const [outputName, value] of Object.entries(results)) {
         const isConsumed = graph.connections.some((conn) =>
           conn.from.node === nodeId && conn.from.output === outputName
@@ -431,12 +442,134 @@ export class AnimaWeaveEngine {
 
         if (!isConsumed) {
           const key = `${nodeId}.${outputName}`;
-          terminalOutputs[key] = value;
+          
+          // 获取输出端口的语义标签
+          const semanticLabel = this.getOutputSemanticLabel(node, outputName);
+          
+          // 构建语义标签感知的值
+          const semanticValue = this.buildSemanticValue(semanticLabel, value);
+          
+          terminalOutputs[key] = semanticValue;
         }
       }
     }
 
     return terminalOutputs;
+  }
+
+  /**
+   * 获取节点输出端口的语义标签
+   */
+  private getOutputSemanticLabel(node: WeaveNode, outputName: string): string {
+    try {
+      const plugin = this.registry.getPlugin(node.plugin);
+      if (!plugin) {
+        console.warn(`⚠️ 插件未找到: ${node.plugin}`);
+        return "unknown";
+      }
+
+      const definition = plugin.getPluginDefinition();
+      const nodeDefinition = definition.nodes[node.type.split('.').pop() || ''];
+      
+      if (!nodeDefinition) {
+        console.warn(`⚠️ 节点定义未找到: ${node.type}`);
+        return "unknown";
+      }
+
+      const semanticLabel = nodeDefinition.outputs[outputName];
+      return semanticLabel || "unknown";
+    } catch (error) {
+      console.warn(`⚠️ 获取语义标签失败:`, error);
+      return "unknown";
+    }
+  }
+
+  /**
+   * 构建语义标签感知的值
+   */
+  private buildSemanticValue(semanticLabel: string, value: unknown): SemanticValue {
+    // 对于复合类型，需要递归构建嵌套结构
+    if (this.isCompositeType(semanticLabel) && typeof value === 'object' && value !== null) {
+      const compositeValue: Record<string, SemanticValue> = {};
+      const typeDefinition = this.getTypeDefinition(semanticLabel);
+      
+      if (typeDefinition && typeDefinition.fields) {
+        for (const [fieldName, fieldValue] of Object.entries(value as Record<string, unknown>)) {
+          const fieldSemanticLabel = typeDefinition.fields[fieldName];
+          if (fieldSemanticLabel) {
+            compositeValue[fieldName] = this.buildSemanticValue(fieldSemanticLabel, fieldValue);
+          }
+        }
+      }
+      
+      return {
+        semantic_label: semanticLabel,
+        value: compositeValue
+      };
+    }
+
+    // 对于基础类型，直接包装
+    return {
+      semantic_label: semanticLabel,
+      value: value
+    };
+  }
+
+  /**
+   * 检查是否为复合类型
+   */
+  private isCompositeType(semanticLabel: string): boolean {
+    const typeDefinition = this.getTypeDefinition(semanticLabel);
+    return typeDefinition?.kind === "composite" && !!typeDefinition.fields;
+  }
+
+  /**
+   * 获取类型定义
+   */
+  private getTypeDefinition(semanticLabel: string): TypeDefinition | undefined {
+    try {
+      const [pluginName, typeName] = semanticLabel.split('.');
+      const plugin = this.registry.getPlugin(pluginName);
+      if (!plugin) return undefined;
+
+      const definition = plugin.getPluginDefinition();
+      return definition.semantic_labels[typeName];
+    } catch (error) {
+      return undefined;
+    }
+  }
+
+  /**
+   * 将语义标签感知的输出转换为原始值（向后兼容）
+   */
+  private extractRawOutputs(semanticOutputs: Record<string, SemanticValue>): Record<string, unknown> {
+    const rawOutputs: Record<string, unknown> = {};
+    
+    for (const [key, semanticValue] of Object.entries(semanticOutputs)) {
+      rawOutputs[key] = this.extractRawValue(semanticValue);
+    }
+    
+    return rawOutputs;
+  }
+
+  /**
+   * 从语义标签值中提取原始值
+   */
+  private extractRawValue(semanticValue: SemanticValue): unknown {
+    if (typeof semanticValue.value === 'object' && semanticValue.value !== null) {
+      // 检查是否为嵌套的语义标签结构
+      const firstValue = Object.values(semanticValue.value)[0];
+      if (firstValue && typeof firstValue === 'object' && 'semantic_label' in firstValue) {
+        // 这是嵌套的语义标签结构，递归提取
+        const rawObject: Record<string, unknown> = {};
+        for (const [fieldName, fieldSemanticValue] of Object.entries(semanticValue.value as Record<string, SemanticValue>)) {
+          rawObject[fieldName] = this.extractRawValue(fieldSemanticValue);
+        }
+        return rawObject;
+      }
+    }
+    
+    return semanticValue.value;
   }
 
   /**
