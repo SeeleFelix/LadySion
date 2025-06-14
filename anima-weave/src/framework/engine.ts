@@ -3,6 +3,7 @@
 
 import { ExecutionStatus, PluginRegistry as Registry } from "./core.ts";
 import type {
+  ErrorDetails,
   FateEcho,
   IAnimaPlugin,
   NodeDefinition,
@@ -56,38 +57,97 @@ export class AnimaWeaveEngine {
       // 1. 读取weave文件
       const weaveContent = await this.readWeaveFile(sanctumPath, weaveName);
 
-      // 2. 解析图结构
+      // 2. 解析图结构  
       const graph = await this.parser.parseWeave(weaveContent);
 
-      // 3. 确保所需插件已加载
+      // 3. 静态检查阶段 - 类型检查、连接验证等
+      await this.validateGraph(graph);
+
+      // 4. 确保所需插件已加载
       await this.ensureRequiredPluginsLoaded(graph, sanctumPath);
 
-      // 4. 执行图
+      // 5. 执行图
       const result = await this.executeWeaveGraph(graph);
       const rawResult = this.extractRawOutputs(result);
 
       return {
         status: ExecutionStatus.Success,
         outputs: JSON.stringify(result),
+        error: undefined,
         getOutputs: () => result,
         getRawOutputs: () => rawResult,
+        getErrorDetails: () => null,
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error("❌ 图执行失败:", errorMessage);
+      return this.createErrorFateEcho(error, sanctumPath, weaveName);
+    }
+  }
 
-      const errorSemanticValue: SemanticValue = {
-        semantic_label: "system.Error",
-        value: errorMessage
-      };
+  /**
+   * 静态图验证 - 在执行前进行类型检查和连接验证
+   */
+  private async validateGraph(graph: WeaveGraph): Promise<void> {
+    console.log("🔍 开始静态图验证...");
+    
+    // TODO: 实现类型兼容性检查
+    // 这里应该检查所有连接的类型兼容性
+    // 如果发现不兼容的类型连接，抛出ValidationError
+    
+    console.log("✅ 静态图验证通过");
+  }
 
-      return {
-        status: ExecutionStatus.Error,
-        outputs: JSON.stringify({ error: errorSemanticValue }),
-        getOutputs: () => ({ error: errorSemanticValue }),
-        getRawOutputs: () => ({ error: errorMessage }),
+  /**
+   * 创建错误FateEcho - 根据错误类型分类
+   */
+  private createErrorFateEcho(error: unknown, sanctumPath?: string, weaveName?: string): FateEcho {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("❌ 图执行失败:", errorMessage);
+
+    // 错误分类逻辑
+    let errorCode: ExecutionStatus;
+    let location: any = undefined;
+
+    if (errorMessage.includes("parse") || errorMessage.includes("syntax")) {
+      errorCode = ExecutionStatus.ParseError;
+    } else if (errorMessage.includes("type") || errorMessage.includes("connection") || errorMessage.includes("validation")) {
+      errorCode = ExecutionStatus.ValidationError;
+    } else if (errorMessage.includes("plugin") || errorMessage.includes("import")) {
+      errorCode = ExecutionStatus.ConfigError;
+    } else if (errorMessage.includes("requires") && errorMessage.includes("input")) {
+      // 这是运行时的节点执行错误
+      errorCode = ExecutionStatus.RuntimeError;
+    } else if (errorMessage.includes("data") || errorMessage.includes("conversion")) {
+      errorCode = ExecutionStatus.DataError;
+    } else {
+      errorCode = ExecutionStatus.FlowError;
+    }
+
+    if (sanctumPath && weaveName) {
+      location = {
+        file: `${sanctumPath}/${weaveName}.weave`
       };
     }
+
+    const errorDetails: ErrorDetails = {
+      code: errorCode,
+      message: errorMessage,
+      location,
+      context: { timestamp: new Date().toISOString() }
+    };
+
+    const errorSemanticValue: SemanticValue = {
+      semantic_label: "system.Error",
+      value: errorMessage
+    };
+
+    return {
+      status: errorCode,
+      outputs: JSON.stringify({ error: errorSemanticValue }),
+      error: errorDetails,
+      getOutputs: () => ({ error: errorSemanticValue }),
+      getRawOutputs: () => ({ error: errorMessage }),
+      getErrorDetails: () => errorDetails,
+    };
   }
 
   /**

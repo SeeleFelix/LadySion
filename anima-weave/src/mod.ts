@@ -2,10 +2,10 @@
 // 主接口模块 - 框架入口
 
 import { AnimaWeaveEngine } from "./framework/engine.ts";
-import { ExecutionStatus, type FateEcho } from "./framework/core.ts";
+import { ExecutionStatus, isStaticError, isRuntimeError, type FateEcho } from "./framework/core.ts";
 
 // 重新导出核心接口
-export { ExecutionStatus, type FateEcho };
+export { ExecutionStatus, isStaticError, isRuntimeError, type FateEcho };
 export type {
   ExecutionContext,
   IAnimaPlugin,

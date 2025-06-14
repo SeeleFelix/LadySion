@@ -163,16 +163,57 @@ export interface SemanticValue {
 }
 
 /**
- * 执行结果
+ * 执行结果状态
  */
 export enum ExecutionStatus {
   Success = "success",
-  Error = "error",
+  ParseError = "parse_error",      // DSL语法解析错误
+  ValidationError = "validation_error", // 静态检查错误（类型、连接、DAG等）
+  ConfigError = "config_error",    // 配置和导入错误
+  RuntimeError = "runtime_error",  // 节点执行失败
+  DataError = "data_error",        // 数据转换和处理错误
+  FlowError = "flow_error",        // 控制流和状态错误
 }
 
+/**
+ * 错误详情
+ */
+export interface ErrorDetails {
+  code: ExecutionStatus;
+  message: string;
+  location?: {
+    file?: string;
+    line?: number;
+    column?: number;
+    node?: string;
+    connection?: string;
+  };
+  context?: Record<string, unknown>;
+}
+
+/**
+ * 执行结果 - 带详细错误分类
+ */
 export interface FateEcho {
   status: ExecutionStatus;
-  outputs: string;  // JSON序列化的SemanticValue结构
+  outputs: string;  // 成功时：JSON序列化的SemanticValue结构；失败时：错误详情JSON
+  error?: ErrorDetails; // 错误时的详细信息
   getOutputs(): Record<string, SemanticValue>;  // 返回语义标签感知的输出
   getRawOutputs(): Record<string, unknown>;     // 返回原始值（向后兼容）
+  getErrorDetails(): ErrorDetails | null;      // 获取错误详情
+}
+
+/**
+ * 错误辅助函数
+ */
+export function isStaticError(status: ExecutionStatus): boolean {
+  return status === ExecutionStatus.ParseError || 
+         status === ExecutionStatus.ValidationError || 
+         status === ExecutionStatus.ConfigError;
+}
+
+export function isRuntimeError(status: ExecutionStatus): boolean {
+  return status === ExecutionStatus.RuntimeError || 
+         status === ExecutionStatus.DataError || 
+         status === ExecutionStatus.FlowError;
 }
