@@ -196,6 +196,69 @@ export class CreatePromptNode extends Node {
   }
 }
 
+export class StringFormatterNode extends Node {
+  readonly nodeName = "StringFormatter";
+  readonly inputs = [
+    new Port("input", UUIDLabel),  // 接收UUID输入
+    new Port("trigger", SignalLabel)
+  ];
+  readonly outputs = [
+    new Port("formatted", StringLabel),
+    new Port("done", SignalLabel)
+  ];
+  readonly description = "将输入格式化为字符串 - 验证DataPort定义";
+  
+  execute(inputPorts: Port[]): Port[] {
+    // 验证DataPort二元组: (port_id: "input", semantic_label: UUIDLabel) -> (port_id: "formatted", semantic_label: StringLabel)
+    const inputValue = inputPorts[0].getValue()!.value as string;
+    const formatted = `Formatted: ${inputValue}`;
+    
+    return [
+      this.outputs[0].setValue(new StringLabel(formatted)),
+      this.outputs[1].setValue(new SignalLabel(true))
+    ];
+  }
+}
+
+export class DataProcessorNode extends Node {
+  readonly nodeName = "DataProcessor";
+  readonly inputs = [
+    new Port("execute", SignalLabel)  // ControlPort: (port_id: "execute", semantic_label: SignalLabel)
+  ];
+  readonly outputs = [
+    new Port("result", StringLabel),
+    new Port("done", SignalLabel)     // ControlPort: (port_id: "done", semantic_label: SignalLabel)
+  ];
+  readonly description = "通用数据处理器 - 验证ControlPort定义";
+  
+  execute(inputPorts: Port[]): Port[] {
+    // 验证ControlPort二元组: 接收控制信号并产生控制信号
+    return [
+      this.outputs[0].setValue(new StringLabel("Processing completed")),
+      this.outputs[1].setValue(new SignalLabel(true))
+    ];
+  }
+}
+
+export class CompletionMarkerNode extends Node {
+  readonly nodeName = "CompletionMarker";
+  readonly inputs = [
+    new Port("trigger", SignalLabel)  // ControlPort验证
+  ];
+  readonly outputs = [
+    new Port("completed", SignalLabel),
+    new Port("timestamp", IntLabel)
+  ];
+  readonly description = "完成标记节点 - 验证端口ID唯一性";
+  
+  execute(inputPorts: Port[]): Port[] {
+    return [
+      this.outputs[0].setValue(new SignalLabel(true)),
+      this.outputs[1].setValue(new IntLabel(Date.now()))
+    ];
+  }
+}
+
 // ========== 容器实现 ==========
 
 /**
@@ -235,6 +298,9 @@ export class BasicVessel implements AnimaVessel {
       IsEvenNode,
       FormatNumberNode,
       CreatePromptNode,
+      StringFormatterNode,
+      DataProcessorNode,
+      CompletionMarkerNode,
     ];
   }
 }

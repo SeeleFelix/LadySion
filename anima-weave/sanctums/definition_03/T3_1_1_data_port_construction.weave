@@ -1,0 +1,20 @@
+-- import
+basic.anima
+--
+
+-- graph
+nodes {
+    starter basic.Start
+    formatter basic.StringFormatter
+}
+
+datas {
+    // 验证数据端口的二元组结构：(port_id: String, semantic_label: ℒ)
+    starter.execution_id -> formatter.input;
+}
+
+controls {
+    // 验证控制端口的二元组结构：(port_id: String, semantic_label: 𝒞)  
+    starter.signal -> formatter.trigger;
+}
+-- 
