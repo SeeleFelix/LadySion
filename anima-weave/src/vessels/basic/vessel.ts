@@ -133,10 +133,19 @@ export class PromptsLabel extends SemanticLabel {
   
   override convertTo(targetLabelName: string): any {
     if (targetLabelName === "Prompt") {
-      // 将Prompts转换为Prompt：取数组中的第一个
+      // 将Prompts转换为Prompt：合并所有prompts的内容
       const prompts = this.value;
       if (Array.isArray(prompts) && prompts.length > 0) {
-        return prompts[0];
+        // 合并所有prompt的内容
+        const mergedContent = prompts.map(prompt => prompt.content.value).join("\n");
+        const mergedName = prompts.map(prompt => prompt.name.value).join(" + ");
+        
+        // 创建合并后的prompt
+        return {
+          id: new UUIDLabel(crypto.randomUUID()),
+          name: new StringLabel(mergedName),
+          content: new StringLabel(mergedContent)
+        };
       }
       throw new Error("Cannot convert empty Prompts to Prompt");
     }

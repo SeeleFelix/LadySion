@@ -203,6 +203,33 @@ describe("定义4：语义标签兼容性关系 (Γ)", () => {
       assertExists(finalOutput, "链式转换最终应该产生String类型输出");
       assertEquals((finalOutput as any).semantic_label, "basic.String", "最终输出应该是String类型");
       
+      // 🎯 TDD核心断言：验证传递性转换的值正确性
+      const finalValue = (finalOutput as any).value as string;
+      
+      // 1. 验证值不为空（基本完整性）
+      assertEquals(finalValue.trim() === "", false, "传递性转换后的值不应该为空");
+      
+      // 2. 验证合并逻辑正确：应该包含原始内容和增强内容
+      const lines = finalValue.split('\n');
+      assertEquals(lines.length >= 2, true, "合并后的内容应该包含多行（原始+增强）");
+      
+      // 3. 验证包含"Formatted:"前缀（StringFormatter的格式化）
+      assertEquals(finalValue.startsWith("Formatted:"), true, "输出应该包含StringFormatter的格式化前缀");
+      
+      // 4. 验证包含"System Enhancement"（证明Prompts->Prompt合并成功）
+      assertEquals(finalValue.includes("System Enhancement"), true, "输出应该包含增强内容，证明Prompts合并成功");
+      
+      // 5. 验证传递性转换链：Prompts -> Prompt -> String
+      // 如果包含增强内容，说明Prompts成功转换为Prompt（合并操作）
+      // 如果有"Formatted:"前缀，说明Prompt成功转换为String（格式化操作）
+      assertEquals(
+        finalValue.includes("System Enhancement") && finalValue.startsWith("Formatted:"), 
+        true, 
+        "传递性转换链 Prompts->Prompt->String 必须完整执行"
+      );
+      
+      console.log(`✅ 传递性转换验证通过，最终值: "${finalValue}"`);
+      
       // 验证执行轨迹
       const trace = result.getExecutionTrace?.();
       assertExists(trace, "应该包含执行轨迹信息");
@@ -211,6 +238,7 @@ describe("定义4：语义标签兼容性关系 (Γ)", () => {
       console.log("  - Prompts -> prompt 转换存在 ✓");
       console.log("  - prompt -> string 转换存在 ✓"); 
       console.log("  - 链式转换 Prompts -> string 成功 ✓");
+      console.log("  - 值转换完整性验证通过 ✓");
     });
   });
 

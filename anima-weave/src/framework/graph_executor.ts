@@ -221,7 +221,8 @@ export class GraphExecutor {
         const sourcePort = sourceResults.find(port => port.name === connection.from.output);
         if (sourcePort) {
           const value = sourcePort.getValue();
-          inputs[connection.to.input] = value ? value.value : undefined;
+          // 传递完整的SemanticLabel实例，而不是只传递其内部的value
+          inputs[connection.to.input] = value || undefined;
         }
       }
     }
@@ -416,12 +417,13 @@ export class GraphExecutor {
     return value;
   }
 
-  /**
+    /**
    * 执行递归类型转换
    */
   private performRecursiveConversion(sourceLabel: any, targetLabelName: string): unknown {
     // 检查是否可以直接转换
     const convertibleLabels = sourceLabel.getConvertibleLabels();
+    
     if (convertibleLabels.includes(targetLabelName)) {
       return sourceLabel.convertTo(targetLabelName);
     }
