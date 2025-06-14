@@ -1,0 +1,27 @@
+-- import
+basic.anima
+--
+
+-- graph
+nodes {
+    starter basic.Start
+    timer basic.GetTimestamp
+    judge basic.IsEven
+    formatter basic.FormatNumber
+    prompter basic.CreatePrompt
+}
+
+datas {
+    timer.timestamp -> formatter.number;
+    timer.timestamp -> judge.number;
+    formatter.formatted -> prompter.name;
+    formatter.formatted -> prompter.content;
+}
+
+controls {
+    starter.signal -> timer.trigger;
+    timer.done -> judge.trigger;
+    timer.done -> formatter.trigger;
+    formatter.done -> prompter.trigger;
+}
+-- 

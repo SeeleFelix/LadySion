@@ -24,149 +24,103 @@
 
 ## 🗂️ 按数学定义组织的测试场景
 
-### 🎯 P0层：基础执行验证
-
-#### T0.1: 最小可执行图验证
-
-**测试场景 T0.1**: 基础执行引擎验证
-
-**核心任务**: 验证最基本的DSL执行能力和包引入机制
-
-**标准接口**: `awakening(sanctum: &str, genesis: &str) -> FateEcho`
-
-**T0.1.1**: 基础start节点执行
-
-- **圣所结构** (`sanctum/` - DSL源代码目录):
-  ```
-  sanctum/
-  ├── basic.anima          # basic包定义
-  └── genesis.weave     # 测试图
-  ```
-
-- **basic.anima内容**:
-  ```
-  -- types
-  Signal
-  UUID
-  --
-
-  -- nodes
-  Start {
-      mode Concurrent
-      in {}
-      out {
-          signal Signal
-          execution_id UUID
-      }
-  }
-  --
-  ```
-
-- **genesis.weave内容**:
-  ```
-  -- import
-  basic.anima
-  --
-
-  -- graph
-  nodes {
-      starter basic.Start
-  }
-  --
-  ```
-
-- **执行**: `awakening("./sanctum", "genesis")`
-- **预期结果**:
-  - FateEcho.status = Success
-  - FateEcho.outputs包含starter节点的输出值
-  - starter.signal有值（Signal类型）
-  - starter.execution_id有唯一UUID值
-- **验证**: 验证最基本的节点执行和输出生成
-
-**T0.1.2**: 执行唯一性验证
-
-- **输入DSL**: 与T0.1.1相同
-- **执行**: 连续执行两次相同的图
-- **预期结果**: 两次执行产生不同的execution_id
-- **验证**: 验证每次执行的唯一性
-
-**T0.1.3**: 包引入机制验证
-
-- **输入DSL**: 不包含import的图文件
-- **执行**: 尝试使用basic.Start但未import
-- **预期结果**: 执行失败，报告未找到类型错误
-- **验证**: 验证包引入机制的必要性
-
-**T0.1.4**: 基础错误处理验证
-
-- **输入DSL**: 引用不存在的节点类型
-- **执行**: 尝试执行无效图
-- **预期结果**: FateEcho.status = Error，包含明确错误信息
-- **验证**: 验证基础错误处理机制
-
-**关键验证点**:
-
-- 最基本的节点执行能力
-- 包引入和类型解析
-- 输出值的正确生成
-- 执行唯一性保证
-- 基础错误处理
-
----
-
 ### 📐 P1层：基础语法解析 (定义1-16)
 
 #### 定义1: 语义标签集合 ℒ
 
-**测试场景 T1.1**: 基础数据类型解析
+**测试场景 T1.1**: 语义标签在图执行中的传播验证
 
-**T1.1.1**: 单个基础类型在types section中解析
+**核心任务**: 验证语义标签集合ℒ在图执行过程中的正确识别、传播和序列化
 
-- **输入**: 包含完整types section的.anima文件：`-- types\nint\n--`
-- **预期**: 解析器识别types section并提取int类型
-- **验证**: 解析结果包含types_section，其中包含DataType::Int
+**标准接口**: `awakening(sanctum: &str, weave_filename: &str) -> FateEcho`
 
-**T1.1.2**: 多个基础类型在types section中解析
+**T1.1.1**: 基础语义标签执行传播
 
-- **输入**: 完整types section：`-- types\nint\nstring\ndouble\nbool\n--`
-- **预期**: 解析器识别所有四种基础类型
-- **验证**: 解析结果的types_section包含所有基础数据类型
+- **图设计**: 包含基础语义标签类型的完整计算链
+  ```
+  Start → GetTimestamp → IsEven → FormatNumber
+  Signal   UUID→Int     Int→Bool  Bool→String
+  ```
+- **预期行为**: 每个节点产生正确的语义标签输出
+- **验证要点**: 
+  - FateEcho.outputs包含所有终端节点输出
+  - 每个输出值携带正确的语义标签：`basic.UUID`, `basic.Int`, `basic.Bool`, `basic.String`
+  - JSON序列化保持语义标签结构：`{semantic_label: "basic.Type", value: actualValue}`
 
-**T1.1.3**: types section文件加载
+**T1.1.2**: 组合语义标签构造验证
 
-- **输入**: 包含types section的实际.anima文件
-- **预期**: 从文件系统正确加载并解析types section
-- **验证**: 文件I/O和types section解析流程正确
+- **图设计**: 构造复杂组合语义标签的计算流程
+  ```
+  Start → GetTimestamp → CreatePrompt
+  Signal   UUID         Prompt{id,name,content}
+  ```
+- **预期行为**: 组合类型的正确构造和嵌套语义标签传播
+- **验证要点**:
+  - Prompt对象的顶层语义标签：`basic.Prompt`
+  - 嵌套字段的语义标签保持：`id: basic.String`, `name: basic.String`, `content: basic.String`
+  - 组合类型的完整JSON序列化结构
 
-**T1.1.4**: 无效类型名称在types section中的错误处理
+**T1.1.3**: 语义标签类型转换验证
 
-- **输入**: types section中的无效类型：`-- types\ninvalid_type_name\n--`
-- **预期**: 解析器报告语法错误，指向无效的type_name
-- **验证**: 返回ParseError::InvalidTypeName
+- **图设计**: 涉及类型兼容性转换的计算链
+  ```
+  NumberGenerator → TypeConverter → StringFormatter
+  Int              Int→Double      Double→String
+  ```
+- **预期行为**: 兼容类型间的安全转换和语义标签更新
+- **验证要点**:
+  - 转换过程中语义标签的正确更新
+  - 转换后值的类型正确性
+  - 兼容性链的传递性验证
 
-**T1.1.5**: 空types section处理
+**T1.1.4**: 语义标签验证失败场景
 
-- **输入**: 空的types section：`-- types\n--`
-- **预期**: 解析成功，types section存在但类型集合为空
-- **验证**: 空types section的正确处理
+- **图设计**: 故意包含不兼容语义标签连接的图
+  ```
+  PromptCreator → NumberProcessor
+  Prompt        Int (不兼容)
+  ```
+- **预期行为**: 静态验证阶段拒绝不兼容连接
+- **验证要点**:
+  - FateEcho.status为ValidationError
+  - 错误信息明确指出语义标签不匹配
+  - 错误定位到具体的连接位置
 
-**T1.1.6**: 类型名称标识符规则验证
+**T1.1.5**: 语义标签集合完整性验证
 
-- **输入**: `-- types\nINT\nInt\nint\n_invalid\n123invalid\n--`
-- **预期**: 按标识符规则解析，字母开头，大小写敏感
-- **验证**: 标识符规则的正确实施
+- **图设计**: 包含basic插件所有支持语义标签的综合图
+- **预期行为**: 所有语义标签类型在图执行中的正确体现
+- **验证要点**:
+  - 基础类型：Int, Bool, String, UUID, Signal
+  - 语义类型：Prompt, Rules, UserInput
+  - 每种类型的序列化格式一致性
 
-**T1.1.7**: types section格式验证
+**T1.1.6**: 语义标签状态边界验证
 
-- **输入**: 带有额外空格的types section：`--  types  \n  int  \n  string  \n--`
-- **预期**: 解析器忽略WHITESPACE正确解析
-- **验证**: WHITESPACE处理规则正确
+- **图设计**: 测试语义标签的边界值和特殊状态
+- **预期行为**: 边界情况下语义标签的健壮性
+- **验证要点**:
+  - 空值的语义标签处理
+  - 默认值的语义标签分配
+  - 异常情况下的语义标签保持
 
-**T1.1.8**: 不完整types section错误处理
+**T1.1.7**: 语义标签序列化一致性验证
 
-- **输入**: 缺少结束标记：`-- types\nint\nstring`
-- **预期**: 解析器报告section_end缺失错误
-- **验证**: section语法结构验证正确
+- **图设计**: 同一图的多次执行结果比较
+- **预期行为**: 语义标签序列化格式的一致性
+- **验证要点**:
+  - 多次执行的语义标签格式稳定
+  - JSON序列化的标准化结构
+  - 语义标签字符串的规范性
+
+**T1.1.8**: 语义标签扩展性验证
+
+- **图设计**: 测试语义标签系统对新类型的支持能力
+- **预期行为**: 语义标签系统的可扩展性
+- **验证要点**:
+  - 新语义标签的动态注册
+  - 扩展类型的序列化支持
+  - 向后兼容性的保持
 
 #### 定义2: 控制信号类型 𝒞
 
