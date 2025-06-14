@@ -32,7 +32,7 @@ export interface PluginDefinition {
     version: string;
     description?: string;
   };
-  types: Record<string, TypeDefinition>;
+  semantic_labels: Record<string, TypeDefinition>;
   nodes: Record<string, NodeDefinition>;
 }
 

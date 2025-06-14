@@ -11,7 +11,7 @@ AnimaWeave_file = { SOI ~ file_content ~ EOI }
 
 file_content = { graph_file | definition_file }
 
-definition_file = { NEWLINE* ~ (import_section | types_section | nodes_section) ~ (NEWLINE+ ~ (import_section | types_section | nodes_section))* ~ NEWLINE* }
+definition_file = { NEWLINE* ~ (import_section | semantic_labels_section | nodes_section) ~ (NEWLINE+ ~ (import_section | semantic_labels_section | nodes_section))* ~ NEWLINE* }
 graph_file = { import_section? ~ NEWLINE* ~ graph_section }
 
 // ========== Import Section ==========
@@ -22,12 +22,12 @@ import_statement = { qualified_name ~ alias_map? ~ NEWLINE }
 alias_map = { "{" ~ NEWLINE ~ alias_mapping* ~ "}" }
 alias_mapping = { identifier ~ identifier ~ NEWLINE }
 
-// ========== Types Section ==========
-types_section = { section_header_types ~ type_definition* ~ section_end }
-section_header_types = { "--" ~ "types" ~ NEWLINE }
-type_definition = { type_name ~ ("{" ~ NEWLINE ~ convertible_types ~ "}")? ~ NEWLINE }
-type_name = { qualified_name }
-convertible_types = { (qualified_name ~ NEWLINE)* }
+// ========== Semantic Labels Section ==========
+semantic_labels_section = { section_header_semantic_labels ~ semantic_label_definition* ~ section_end }
+section_header_semantic_labels = { "--" ~ "semantic_labels" ~ NEWLINE }
+semantic_label_definition = { semantic_label_name ~ ("{" ~ NEWLINE ~ convertible_semantic_labels ~ "}")? ~ NEWLINE }
+semantic_label_name = { qualified_name }
+convertible_semantic_labels = { (qualified_name ~ NEWLINE)* }
 
 // ========== Nodes Section ==========
 nodes_section = { section_header_nodes ~ (NEWLINE* ~ node_definition)* ~ NEWLINE* ~ section_end }

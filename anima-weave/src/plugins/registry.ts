@@ -53,7 +53,7 @@ export abstract class BasePlugin implements PluginRuntime {
   protected abstract registerNodeImplementations(): void;
 
   getTypeDefinition(typeName: string): TypeDefinition | undefined {
-    return this.anima.types[typeName];
+    return this.anima.semantic_labels[typeName];
   }
 
   getNodeDefinition(nodeName: string): NodeDefinition | undefined {

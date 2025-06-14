@@ -4,7 +4,7 @@
 import { AnimaWeaveDSLParser } from "../parser/dsl_parser.ts";
 
 export interface AnimaDefinition {
-  types: Record<string, TypeDefinition>;
+  semantic_labels: Record<string, TypeDefinition>;
   nodes: Record<string, NodeDefinition>;
   metadata: {
     name: string;

@@ -202,7 +202,7 @@ export async function createBasicPlugin(): Promise<BasicPlugin> {
     const animaDefinition = parser.parseAnima(animaContent);
 
     console.log("✅ basic.anima解析成功:", animaDefinition.metadata.name);
-    console.log("📊 加载的类型数量:", Object.keys(animaDefinition.types).length);
+    console.log("📊 加载的语义标签数量:", Object.keys(animaDefinition.semantic_labels).length);
     console.log("🎯 加载的节点数量:", Object.keys(animaDefinition.nodes).length);
 
     return new BasicPlugin(animaDefinition);

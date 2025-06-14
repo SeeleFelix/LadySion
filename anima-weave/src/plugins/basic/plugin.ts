@@ -35,7 +35,7 @@ export class BasicPlugin implements IAnimaPlugin {
    */
   private createPluginDefinition(): PluginDefinition {
     // 定义基础类型
-    const types: Record<string, TypeDefinition> = {
+    const semanticLabels: Record<string, TypeDefinition> = {
       Signal: {
         name: "Signal",
         kind: "primitive",
@@ -145,7 +145,7 @@ export class BasicPlugin implements IAnimaPlugin {
         version: "1.0.0",
         description: "Basic plugin providing fundamental types and operations",
       },
-      types,
+      semantic_labels: semanticLabels,
       nodes,
     };
   }
@@ -161,7 +161,7 @@ export class BasicPlugin implements IAnimaPlugin {
    * 获取支持的类型
    */
   getSupportedTypes(): string[] {
-    return Object.keys(this.definition.types);
+    return Object.keys(this.definition.semantic_labels);
   }
 
   /**

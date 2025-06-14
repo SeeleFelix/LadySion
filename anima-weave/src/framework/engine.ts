@@ -198,7 +198,7 @@ export class AnimaWeaveEngine {
     let content = "-- types\n";
 
     // 生成类型定义
-    for (const [typeName, typeDef] of Object.entries(definition.types)) {
+    for (const [typeName, typeDef] of Object.entries(definition.semantic_labels)) {
       const typeDefinition = typeDef as TypeDefinition;
       if (typeDefinition.kind === "composite" && typeDefinition.fields) {
         content += `${typeName} {\n`;
