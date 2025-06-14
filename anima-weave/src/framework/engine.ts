@@ -292,7 +292,7 @@ export class AnimaWeaveEngine {
    */
   private async scanPluginModules(): Promise<void> {
     try {
-      const pluginsPath = "src/plugins";
+      const pluginsPath = await this.resolvePluginsPath();
 
       // 读取plugins目录
       for await (const dirEntry of Deno.readDir(pluginsPath)) {
@@ -320,6 +320,55 @@ export class AnimaWeaveEngine {
   }
 
   /**
+   * 智能解析插件目录路径
+   */
+  private async resolvePluginsPath(): Promise<string> {
+    const possiblePaths = [
+      "src/plugins",                    // 从anima-weave目录运行
+      "anima-weave/src/plugins",        // 从根目录运行
+      "../anima-weave/src/plugins",     // 从其他子目录运行
+    ];
+
+    for (const path of possiblePaths) {
+      try {
+        const fullPath = `${Deno.cwd()}/${path}`;
+        await Deno.stat(fullPath);
+        return path;
+      } catch {
+        // 路径不存在，尝试下一个
+      }
+    }
+
+    // 如果所有路径都不存在，返回默认路径
+    return "src/plugins";
+  }
+
+  /**
+   * 智能解析插件模块路径
+   */
+  private async resolvePluginModulePath(pluginName: string): Promise<string> {
+    const cwd = Deno.cwd();
+    const possiblePaths = [
+      `${cwd}/src/plugins/${pluginName}/plugin.ts`,           // 从anima-weave目录运行
+      `${cwd}/anima-weave/src/plugins/${pluginName}/plugin.ts`, // 从根目录运行
+      `${cwd}/../anima-weave/src/plugins/${pluginName}/plugin.ts`, // 从其他子目录运行
+    ];
+
+    for (const path of possiblePaths) {
+      try {
+        await Deno.stat(path);
+        // 返回file:// URL格式的绝对路径
+        return `file://${path}`;
+      } catch {
+        // 路径不存在，尝试下一个
+      }
+    }
+
+    // 如果所有路径都不存在，返回默认路径
+    return `file://${cwd}/src/plugins/${pluginName}/plugin.ts`;
+  }
+
+  /**
    * 加载单个插件模块
    */
   private async loadPluginModule(pluginName: string): Promise<void> {
@@ -327,7 +376,7 @@ export class AnimaWeaveEngine {
 
     try {
       // 动态导入插件的TypeScript实现 - 修复路径问题
-      const modulePath = `../plugins/${pluginName}/plugin.ts`;
+      const modulePath = await this.resolvePluginModulePath(pluginName);
       const pluginModule = await import(modulePath);
 
       // 创建插件实例 - 插件自己知道自己的定义
@@ -454,7 +503,7 @@ export class AnimaWeaveEngine {
 
     try {
       // 直接导入插件的TypeScript实现（插件自己定义能力）
-      const modulePath = `./src/plugins/${pluginName}/plugin.ts`;
+      const modulePath = await this.resolvePluginModulePath(pluginName);
       const pluginModule = await import(modulePath);
 
       // 创建插件实例 - 插件自己知道自己的定义
