@@ -34,7 +34,7 @@ describe("定义1：语义标签集合 (ℒ)", () => {
       // 语义标签不只是类型标记，更是计算意图的载体
       
       // Given: 执行包含基础语义标签的图
-      const result = await awakening("./sanctums", "type_system_foundation");
+      const result = await awakening("./sanctums/definition_01", "T1_1_1_type_system_foundation");
 
       // Then: 验证图执行成功
       assertEquals(result.status, ExecutionStatus.Success, "图执行应该成功");
@@ -75,7 +75,7 @@ describe("定义1：语义标签集合 (ℒ)", () => {
       // Prompt类型是一个很好的例子，展示了嵌套语义标签的威力
       
       // Given: 执行包含组合语义标签的图
-      const result = await awakening("./sanctums", "composite_type_test");
+      const result = await awakening("./sanctums/definition_01", "T1_1_2_composite_type_test");
 
       // Then: 验证执行成功
       assertEquals(result.status, ExecutionStatus.Success, "组合语义标签图执行应该成功");
@@ -119,7 +119,7 @@ describe("定义1：语义标签集合 (ℒ)", () => {
       // 我们需要确保转换过程中语义标签的正确传播和更新
       
       // Given: 执行包含类型转换的图
-      const result = await awakening("./sanctums", "t1_1_3_type_conversion");
+      const result = await awakening("./sanctums/definition_01", "T1_1_3_type_conversion");
 
       // Then: 验证执行成功
       assertEquals(result.status, ExecutionStatus.Success, "类型转换图执行应该成功");
@@ -154,7 +154,7 @@ describe("定义1：语义标签集合 (ℒ)", () => {
       console.log("🎯 期望: 静态检查阶段拒绝类型不匹配的图");
       
       // Given: 执行包含类型不匹配连接的图
-      const result = await awakening("./sanctums", "type_mismatch_test");
+      const result = await awakening("./sanctums/definition_01", "T1_1_4_type_mismatch_test");
 
       console.log("📊 实际结果状态:", result.status);
       console.log("📄 错误信息:", result.outputs);
@@ -192,7 +192,7 @@ describe("定义1：语义标签集合 (ℒ)", () => {
         
         // 验证错误发生的位置信息
         assertEquals(
-          errorDetails.location?.file?.includes("type_mismatch_test.weave"), 
+          errorDetails.location?.file?.includes("T1_1_4_type_mismatch_test.weave"), 
           true, 
           "错误应该定位到具体的weave文件"
         );
@@ -218,7 +218,7 @@ describe("定义1：语义标签集合 (ℒ)", () => {
       // 所有定义的基础类型都应该能正确工作
       
       // Given: 执行包含所有基础语义标签的图
-      const result = await awakening("./sanctums", "t1_1_5_completeness");
+      const result = await awakening("./sanctums/definition_01", "T1_1_5_completeness");
 
       // Then: 验证执行成功
       assertEquals(result.status, ExecutionStatus.Success, "完整性验证图执行应该成功");
@@ -267,7 +267,7 @@ describe("定义1：语义标签集合 (ℒ)", () => {
       // 我们需要确保语义标签系统在各种边界情况下都保持健壮
       
       // Given: 执行边界情况测试图
-      const result = await awakening("./sanctums", "t1_1_6_boundary_cases");
+      const result = await awakening("./sanctums/definition_01", "T1_1_6_boundary_cases");
 
       // Then: 验证执行成功（边界情况也应该正常处理）
       assertEquals(result.status, ExecutionStatus.Success, "边界情况图执行应该成功");
@@ -302,8 +302,8 @@ describe("定义1：语义标签集合 (ℒ)", () => {
       // 语义标签的序列化格式应该是稳定和可预测的
       
       // Given: 执行同一图多次
-      const result1 = await awakening("./sanctums", "t1_1_7_serialization_consistency");
-      const result2 = await awakening("./sanctums", "t1_1_7_serialization_consistency");
+      const result1 = await awakening("./sanctums/definition_01", "T1_1_7_serialization_consistency");
+      const result2 = await awakening("./sanctums/definition_01", "T1_1_7_serialization_consistency");
 
       // Then: 验证两次执行都成功
       assertEquals(result1.status, ExecutionStatus.Success, "第一次执行应该成功");
@@ -357,7 +357,7 @@ describe("定义1：语义标签集合 (ℒ)", () => {
       // 我们需要确保当前的设计能够支持未来的需求增长
       
       // Given: 使用基础语义标签验证扩展性基础
-      const result = await awakening("./sanctums", "type_system_foundation");
+      const result = await awakening("./sanctums/definition_01", "T1_1_1_type_system_foundation");
 
       // Then: 验证执行成功
       assertEquals(result.status, ExecutionStatus.Success, "扩展性基础验证图执行应该成功");
