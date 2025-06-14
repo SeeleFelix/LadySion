@@ -163,18 +163,59 @@ export class AnimaWeaveEngine {
       return true;
     }
     
-    // 基础类型兼容性规则
-    const compatibilityRules: Record<string, string[]> = {
-      "basic.String": ["basic.String"],
-      "basic.Int": ["basic.Int"],
-      "basic.Bool": ["basic.Bool"],
-      "basic.UUID": ["basic.UUID", "basic.String"], // UUID可以作为String使用
-      "basic.Signal": ["basic.Signal"],
-      "basic.Prompt": ["basic.Prompt"], // Prompt是复合类型，不能转换为基础类型
-    };
-    
-    const compatibleTypes = compatibilityRules[outputType] || [];
-    return compatibleTypes.includes(inputType);
+    // 🔧 重构：动态查询插件的类型兼容性规则，而不是硬编码basic.类型
+    try {
+      // 解析输出类型的插件名
+      const [outputPluginName] = outputType.split('.');
+      const outputPlugin = this.registry.getPlugin(outputPluginName);
+      
+      if (!outputPlugin) {
+        console.warn(`⚠️ 输出类型的插件未找到: ${outputPluginName}`);
+        return false;
+      }
+      
+      // 获取插件的类型兼容性规则
+      const compatibilityRules = this.getPluginTypeCompatibilityRules(outputPlugin);
+      const compatibleTypes = compatibilityRules[outputType] || [];
+      
+      return compatibleTypes.includes(inputType);
+    } catch (error) {
+      console.warn(`⚠️ 类型兼容性检查失败:`, error);
+      return false;
+    }
+  }
+
+  /**
+   * 获取插件的类型兼容性规则
+   */
+  private getPluginTypeCompatibilityRules(plugin: IAnimaPlugin): Record<string, string[]> {
+    try {
+      const definition = plugin.getPluginDefinition();
+      const rules: Record<string, string[]> = {};
+      
+      // 为每个语义标签建立兼容性规则
+      for (const [typeName, typeDef] of Object.entries(definition.semantic_labels)) {
+        const fullTypeName = `${definition.metadata.name}.${typeName}`;
+        const typeDefinition = typeDef as TypeDefinition;
+        
+        // 基础规则：类型与自己兼容
+        rules[fullTypeName] = [fullTypeName];
+        
+        // 特殊兼容性规则
+        if (typeName === "UUID") {
+          // UUID可以作为String使用
+          rules[fullTypeName].push(`${definition.metadata.name}.String`);
+        }
+        
+        // 可以在这里添加更多插件特定的兼容性规则
+        // 例如：不同插件间的类型兼容性
+      }
+      
+      return rules;
+    } catch (error) {
+      console.warn(`⚠️ 获取插件类型兼容性规则失败:`, error);
+      return {};
+    }
   }
 
   /**
@@ -528,10 +569,23 @@ export class AnimaWeaveEngine {
    * 判断连接是否为控制连接
    */
   private isControlConnection(connection: WeaveConnection, graph: WeaveGraph): boolean {
-    // 简单判断：如果输出端口名包含"signal"或"done"，认为是控制连接
-    // 更准确的方法是检查语义标签，但这里先用简单方法
-    const outputPort = connection.from.output;
-    return outputPort === "signal" || outputPort === "done" || outputPort === "trigger";
+    // 🔧 重构：通过语义标签判断控制连接，而不是硬编码端口名
+    try {
+      const sourceNode = graph.nodes[connection.from.node];
+      if (!sourceNode) return false;
+      
+      // 获取输出端口的语义标签
+      const semanticLabel = this.getOutputSemanticLabel(sourceNode, connection.from.output);
+      
+      // 控制连接的特征：语义标签以".Signal"结尾
+      // 这样可以支持任何插件的Signal类型，不只是basic.Signal
+      return semanticLabel.endsWith('.Signal');
+    } catch (error) {
+      console.warn(`⚠️ 判断控制连接失败:`, error);
+      // 降级到简单判断作为备选方案
+      const outputPort = connection.from.output;
+      return outputPort === "signal" || outputPort === "done" || outputPort === "trigger";
+    }
   }
 
   /**
