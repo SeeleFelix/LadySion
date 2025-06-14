@@ -1,10 +1,10 @@
 {
   "importMap": "./import_map.json",
   "nodeModulesDir": "auto",
-  "workspace": [
+    "workspace": [
     "./web",
-    "./server",
-    "./dynamic-graph-executor",
+    "./server", 
+    "./anima-weave",
     "./whisper-framework",
     "./shared"
   ],
@@ -23,11 +23,11 @@
 
     "// === 测试任务 ===": "",
     "test": "deno test --allow-read --allow-write --allow-net --allow-env",
-    "test:all": "deno task test:backend && deno task test:frontend && deno task test:whisper && deno task test:dynamic-graph",
+    "test:all": "deno task test:backend && deno task test:frontend && deno task test:whisper && deno task test:anima-weave",
     "test:backend": "deno test --allow-read --allow-write --allow-net --allow-env server/",
     "test:frontend": "cd web && deno task test",
     "test:whisper": "deno test --allow-read --allow-write --allow-net --allow-env whisper-framework/",
-    "test:dynamic-graph": "cd dynamic-graph-executor && deno task test",
+    "test:anima-weave": "cd anima-weave && deno task test",
     "test:integration": "deno test --allow-read --allow-write --allow-net --allow-env whisper-framework/examples/integration-test/",
 
     "// === 代码质量任务 ===": "",

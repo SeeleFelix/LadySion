@@ -5,7 +5,7 @@
     "@web/": "./web/src/",
     "@shared/": "./shared/",
     "@whisper/": "./whisper-framework/",
-    "@dynamic-graph/": "./dynamic-graph-executor/src/",
+    "@anima-weave/": "./anima-weave/src/",
 
     "@/shared/types": "./server/src/shared/types/index.ts",
     "@/shared/types/": "./server/src/shared/types/",
