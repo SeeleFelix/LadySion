@@ -1,0 +1,127 @@
+// AnimaWeave Basic Plugin Definition
+// 定义基础类型系统和核心节点
+
+plugin basic {
+  version = "1.0.0"
+  description = "Basic types and fundamental operations for AnimaWeave"
+}
+
+// ========== 基础类型定义 ==========
+
+// 原始类型
+type Int {
+  kind = primitive
+  description = "32-bit signed integer"
+}
+
+type Bool {
+  kind = primitive
+  description = "Boolean value"
+}
+
+type String {
+  kind = primitive
+  description = "UTF-8 string"
+}
+
+type UUID {
+  kind = semantic
+  base_type = String
+  validation = ["uuid_format"]
+  description = "Universally unique identifier"
+}
+
+type Signal {
+  kind = primitive
+  description = "Control flow signal (null value)"
+}
+
+// 语义类型
+type Prompt {
+  kind = composite
+  fields = {
+    id: UUID,
+    name: String,
+    content: String
+  }
+  description = "AI prompt with metadata"
+}
+
+type Rules {
+  kind = semantic
+  base_type = String
+  validation = ["non_empty"]
+  description = "Business rule definition"
+}
+
+type UserInput {
+  kind = semantic
+  base_type = String
+  validation = ["non_empty"]
+  description = "User provided input data"
+}
+
+// ========== 节点定义 ==========
+
+// 系统节点
+node Start {
+  inputs = {}
+  outputs = {
+    signal: Signal,
+    timestamp: UUID
+  }
+  implementation = "start"
+  description = "Graph execution starting point"
+}
+
+// 时间戳节点
+node GetTimestamp {
+  inputs = {
+    trigger: Signal
+  }
+  outputs = {
+    timestamp: String,
+    epoch: Int
+  }
+  implementation = "getTimestamp"
+  description = "Generate current timestamp"
+}
+
+// 数值判断节点
+node IsEven {
+  inputs = {
+    number: Int
+  }
+  outputs = {
+    result: Bool,
+    number: Int
+  }
+  implementation = "isEven"
+  description = "Check if number is even"
+}
+
+// 格式化节点
+node FormatNumber {
+  inputs = {
+    number: Int,
+    format: String
+  }
+  outputs = {
+    formatted: String
+  }
+  implementation = "formatNumber"
+  description = "Format number as string"
+}
+
+// Prompt创建节点
+node CreatePrompt {
+  inputs = {
+    name: String,
+    content: String
+  }
+  outputs = {
+    prompt: Prompt
+  }
+  implementation = "createPrompt"
+  description = "Create a new prompt object"
+} 

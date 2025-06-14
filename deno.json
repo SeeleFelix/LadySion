@@ -15,13 +15,14 @@
     "test:backend": "deno test --allow-read --allow-write --allow-net --allow-env server/",
     "test:whisper": "deno test --allow-read --allow-write --allow-net --allow-env whisper-framework/",
     "test:node-flow": "deno test --allow-read --allow-write node-flow/",
+    "test:dynamic-graph": "cd dynamic-graph-executor && deno task test",
     "test:frontend": "cd web && deno task test",
     "test:all": "deno test --allow-read --allow-write --allow-net --allow-env",
     "fmt": "deno fmt && cd web && deno fmt",
     "lint": "deno lint && cd web && deno lint",
     "setup": "cd web && deno install"
   },
-  "workspace": ["./web", "./node-flow"],
+  "workspace": ["./web", "./node-flow", "./dynamic-graph-executor"],
   "lint": {
     "rules": {
       "exclude": [

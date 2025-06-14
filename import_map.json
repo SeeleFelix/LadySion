@@ -42,6 +42,10 @@
     "axios": "npm:axios@1.6.7",
     "vite": "npm:vite@5.1.4",
     "@vitejs/plugin-vue": "npm:@vitejs/plugin-vue@5.0.4",
-    "vue-tsc": "npm:vue-tsc@2.0.6"
+    "vue-tsc": "npm:vue-tsc@2.0.6",
+    "peggy": "https://esm.sh/peggy",
+    "pegjs": "npm:pegjs@0.10.0",
+    "ts-pegjs": "npm:ts-pegjs@4.2.1",
+    "ohm-js": "npm:ohm-js@17.1.0"
   }
 }

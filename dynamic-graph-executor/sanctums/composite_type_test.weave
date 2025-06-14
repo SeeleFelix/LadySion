@@ -1,0 +1,24 @@
+-- import
+basic.anima
+--
+
+-- graph
+nodes {
+    starter basic.Start
+    timer basic.GetTimestamp
+    formatter basic.FormatNumber
+    creator basic.CreatePrompt
+}
+
+datas {
+    timer.timestamp -> formatter.number;
+    formatter.formatted -> creator.name;
+    formatter.formatted -> creator.content;
+}
+
+controls {
+    starter.signal -> timer.trigger;
+    timer.done -> formatter.trigger;
+    formatter.done -> creator.trigger;
+}
+-- 
