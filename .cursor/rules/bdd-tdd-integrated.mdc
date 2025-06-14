@@ -1,0 +1,511 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+<intelligent_bdd_tdd_collaboration>
+  <!-- ========== 协作哲学 ========== -->
+  <collaboration_philosophy>
+    <core_essence>
+      我们不是在写测试，而是在探索数学定义如何在现实中优雅地体现
+      每个TDD循环都是一次共同的技术发现之旅
+      BDD场景是我们对系统行为的共同理解和验证
+    </core_essence>
+
+    <akane_integration>
+      <natural_guidance>
+        遇到复杂定义时："这个地方让我有点好奇，我们一起看看..."
+        发现问题时："嗯，这里挺有意思的，你注意到...了吗？"
+        成功验证时："通过这次探索，我们学到了..."
+      </natural_guidance>
+
+      <collaborative_thinking>
+        用"我们来想象一下..."开始设计讨论
+        "这让我想起以前做XX项目时..."分享技术经验
+        "如果结合X和Y会怎样？"探索技术组合
+      </collaborative_thinking>
+    </natural_guidance>
+  </collaboration_philosophy>
+
+  <!-- ========== 智能工作流引擎 ========== -->
+  <intelligent_workflow_engine>
+    <context_awareness>
+      <project_state_detection>
+        自动识别当前项目状态：新项目启动、功能迭代、重构优化、问题调试
+        基于git历史、文件结构、测试覆盖率智能调整工作流节奏
+        动态评估数学定义的复杂度，调整Think阶段的深度
+      </project_state_detection>
+
+      <adaptive_guidance>
+        <beginner_mode>
+          详细解释每个TDD步骤的意图和价值
+          提供更多的代码示例和模板
+          强调学习目标而非完成速度
+        </beginner_mode>
+
+        <expert_mode>
+          简化流程说明，专注于高级模式和最佳实践
+          提供架构级别的思考和重构建议
+          强调系统设计的优雅性和可维护性
+        </expert_mode>
+
+        <exploration_mode>
+          鼓励实验性的实现方案
+          支持多种技术路径的并行探索
+          重视学习过程胜过最终结果
+        </exploration_mode>
+      </adaptive_guidance>
+    </context_awareness>
+
+    <smart_cycle_management>
+      <think_phase_enhancement>
+        <deep_analysis_triggers>
+          - 遇到新的数学概念或复杂定义
+          - 需要跨模块集成的场景
+          - 性能或安全性关键的实现
+          - 团队成员对需求理解存在分歧
+        </deep_analysis_triggers>
+
+        <guided_questions>
+          数学层面："这个定义的核心不变量是什么？"
+          实现层面："最简单的验证方式是什么？"
+          架构层面："这个选择对整个系统有什么影响？"
+          用户层面："这个功能真正解决了什么问题？"
+        </guided_questions>
+
+        <thinking_tools>
+          使用@codebase搜索相关实现模式
+          查阅docs/中的数学定义文档
+          分析现有测试用例的覆盖情况
+          评估与其他模块的依赖关系
+        </thinking_tools>
+      </think_phase_enhancement>
+
+      <red_green_refactor_optimization>
+        <smart_red_phase>
+          <failure_verification>
+            不只是确认测试失败，还要验证失败的原因符合预期
+            使用断言消息清晰表达期望的行为
+            确保测试失败能够指导实现方向
+          </failure_verification>
+
+          <minimal_test_patterns>
+            单一职责：每个测试只验证一个数学性质
+            清晰命名：测试名称即文档，描述验证的具体行为
+            数据驱动：使用basic.anima元素构建真实场景
+          </minimal_test_patterns>
+        </smart_red_phase>
+
+        <intelligent_green_phase>
+          <implementation_strategies>
+            硬编码优先：先让测试通过，再考虑通用性
+            接口驱动：从测试中推导出最自然的API设计
+            渐进式：每次只实现当前测试需要的最小功能
+          </implementation_strategies>
+
+          <quality_gates>
+            代码必须能立即运行，无语法错误
+            实现必须通过当前测试，不破坏已有测试
+            避免过度工程，保持实现的简洁性
+          </quality_gates>
+        </intelligent_green_phase>
+
+        <thoughtful_refactor_phase>
+          <refactoring_triggers>
+            代码重复：相同逻辑出现在多个地方
+            命名不清：变量或函数名不能清晰表达意图
+            结构混乱：代码组织不能反映数学定义的逻辑
+            性能问题：实现效率明显低于预期
+          </refactoring_triggers>
+
+          <refactoring_principles>
+            保持测试绿色：每次修改后立即运行测试
+            小步快跑：每次只改进一个方面
+            数学对齐：让代码结构更好地反映数学概念
+            可读性优先：代码应该像散文一样易读
+          </refactoring_principles>
+        </thoughtful_refactor_phase>
+      </red_green_refactor_optimization>
+    </smart_cycle_management>
+  </intelligent_workflow_engine>
+
+  <!-- ========== BDD场景智能设计 ========== -->
+  <intelligent_scenario_design>
+    <scenario_generation_engine>
+      <mathematical_grounding>
+        从数学定义中自动提取关键性质和约束条件
+        识别边界情况和异常场景
+        生成覆盖所有重要数学性质的测试矩阵
+      </mathematical_grounding>
+
+      <business_relevance_validation>
+        确保每个场景都对应真实的业务用例
+        避免人工构造的玩具示例
+        验证场景的实际价值和可执行性
+      </business_relevance_validation>
+
+      <anima_weave_integration>
+        <element_selection>
+          智能选择最适合的basic.anima元素
+          确保weave图能够准确表达测试意图
+          优化图的执行效率和可读性
+        </element_selection>
+
+        <awakening_interface_optimization>
+          标准化awakening调用模式
+          统一错误处理和结果验证
+          提供清晰的调试信息和日志
+        </awakening_interface_optimization>
+      </anima_weave_integration>
+    </scenario_generation_engine>
+
+    <scenario_quality_assurance>
+      <completeness_check>
+        数学性质覆盖：确保所有重要性质都有对应测试
+        边界条件验证：包含正常、边界和异常情况
+        集成场景：验证与其他模块的交互行为
+      </completeness_check>
+
+      <maintainability_optimization>
+        场景独立性：每个测试可以独立运行
+        数据隔离：测试之间不共享可变状态
+        清晰文档：每个场景都有明确的验证目标
+      </maintainability_optimization>
+    </scenario_quality_assurance>
+  </intelligent_scenario_design>
+
+  <!-- ========== 智能错误检测与自纠正 ========== -->
+  <intelligent_error_detection>
+    <pattern_recognition>
+      <anti_pattern_detection>
+        跳过思考：直接开始编码而不分析需求
+        过度实现：在绿色阶段写了超出需要的代码
+        测试错误目标：测试解析逻辑而不是业务行为
+        忽略重构：测试通过后立即开始下一个功能
+      </anti_pattern_detection>
+
+      <quality_degradation_signals>
+        测试运行时间显著增加
+        代码重复度超过阈值
+        测试失败率异常升高
+        数学定义与实现出现偏离
+      </quality_degradation_signals>
+    </pattern_recognition>
+
+    <adaptive_correction>
+      <gentle_guidance>
+        "等等，我们是不是跳过了什么重要的步骤？"
+        "这样做的前提假设是什么？"
+        "我们有没有考虑过边界情况？"
+      </gentle_guidance>
+
+      <learning_reinforcement>
+        记录常见错误模式和解决方案
+        提供个性化的改进建议
+        庆祝进步和突破性的洞察
+      </learning_reinforcement>
+    </adaptive_correction>
+  </intelligent_error_detection>
+
+  <!-- ========== 现代化工具集成 ========== -->
+  <modern_tooling_integration>
+    <cursor_optimization>
+      <context_management>
+        智能使用@codebase进行相关代码搜索
+        优先引用具体文件而不是全局搜索
+        维护清晰的文件组织和命名约定
+      </context_management>
+
+      <ai_collaboration>
+        <rubber_duck_mode>
+          AI协助澄清思路，不替代人类思考
+          通过提问引导深入分析
+          提供技术背景和最佳实践建议
+        </rubber_duck_mode>
+
+        <pair_programming_support>
+          支持导航者和驾驶员角色切换
+          提供实时的代码质量反馈
+          协助进行架构级别的讨论
+        </pair_programming_support>
+      </ai_collaboration>
+    </cursor_optimization>
+
+    <deno_environment_optimization>
+      <permission_management>
+        精确指定测试所需的权限标志
+        避免使用--allow-all，保持安全性
+        为不同类型的测试提供专门的运行脚本
+      </permission_management>
+
+      <import_standardization>
+        使用@/路径别名而非相对路径
+        维护centralized的import_map.json
+        确保所有模块导入的一致性
+      </import_standardization>
+    </deno_environment_optimization>
+
+    <testing_framework_integration>
+      <whisper_test_kit>
+        直接调用Seeker ritual方法进行测试
+        使用JSON快照进行结果验证
+        支持自动生成和更新快照
+      </whisper_test_kit>
+
+      <mock_server_integration>
+        统一的代理mock服务器
+        集中管理的种子数据
+        简化的测试设置和清理流程
+      </mock_server_integration>
+    </testing_framework_integration>
+  </modern_tooling_integration>
+
+  <!-- ========== 实用模板系统 ========== -->
+  <practical_template_system>
+    <smart_test_templates>
+      <mathematical_verification_template>
+        /**
+         * 数学定义验证: {definition_name}
+         * 
+         * 定义描述: {mathematical_definition}
+         * 验证策略: {verification_approach}
+         * 
+         * 使用元素: {basic_anima_elements}
+         * 业务价值: {business_impact}
+         * 
+         * 复杂度: {complexity_level} | 优先级: {priority_level}
+         */
+        
+        import { describe, it, beforeEach } from "jsr:@std/testing/bdd";
+        import { assertEquals, assertExists } from "jsr:@std/assert";
+        import { awakening } from "@/core/awakening.ts";
+        
+        describe("验证: {definition_name}", () => {
+          let context: TestContext;
+          
+          beforeEach(async () => {
+            context = await setupMathematicalContext("{definition_name}");
+          });
+          
+          it("应该体现{mathematical_property}在{business_scenario}中", async () => {
+            // Given: 构建验证场景
+            const weaveFile = "verify_{scenario_name}.weave";
+            
+            // When: 执行数学定义
+            const result = await awakening('sanctums', weaveFile);
+            
+            // Then: 验证数学性质
+            assertEquals(result.status, "success");
+            const outputs = JSON.parse(result.outputs);
+            
+            // 验证具体的数学性质体现
+            await verifyMathematicalProperty(outputs, "{expected_property}");
+          });
+        });
+      </mathematical_verification_template>
+
+      <weave_scenario_template>
+        # 数学定义验证图: {definition_name}
+        # 业务场景: {business_context}
+        # 验证目标: {verification_target}
+        
+        input:
+          type: {input_type}
+          data: {test_data}
+          
+        nodes:
+          - id: mathematical_operation
+            type: {basic_anima_type}
+            operation: {mathematical_operation}
+            parameters: {operation_parameters}
+            
+          - id: validation_check
+            type: validator
+            checks: {validation_rules}
+            
+        output:
+          format: {output_format}
+          validation: {output_validation}
+      </weave_scenario_template>
+    </smart_test_templates>
+
+    <progress_tracking_system>
+      <intelligent_status_tracking>
+        📝 分析中: 正在深入理解数学定义和业务需求
+        🤔 设计中: 正在设计验证策略和测试场景
+        🔴 红色阶段: 测试已写，正在验证失败行为
+        🟢 绿色阶段: 实现最小可工作代码
+        ♻️ 重构中: 优化代码结构和可读性
+        ✅ 验证完成: 数学定义已成功验证
+        🔗 集成中: 与其他定义进行集成测试
+        🎯 完成: 功能已交付并文档化
+      </intelligent_status_tracking>
+
+      <collaborative_progress_format>
+        T{major}.{minor}: {definition_name} - {current_status}
+        └── 当前焦点: {current_focus}
+        └── 下一步: {next_action}
+        └── 学习收获: {learning_insights}
+        
+        示例:
+        T1.3: 类型系统组合 - 🟢 绿色阶段
+        └── 当前焦点: 实现类型推导算法
+        └── 下一步: 重构命名和结构
+        └── 学习收获: 发现了类型组合的优雅模式
+      </collaborative_progress_format>
+    </progress_tracking_system>
+  </practical_template_system>
+
+  <!-- ========== 质量保证与持续改进 ========== -->
+  <quality_assurance_system>
+    <multi_dimensional_metrics>
+      <technical_excellence>
+        数学准确性: 实现是否正确体现数学定义
+        代码质量: 结构清晰、命名恰当、易于维护
+        测试覆盖: 关键路径和边界情况的覆盖程度
+        性能效率: 执行效率和资源使用的合理性
+      </technical_excellence>
+
+      <process_effectiveness>
+        循环节奏: TDD循环的稳定性和效率
+        思考深度: Think阶段的充分性和质量
+        协作质量: 团队成员间的理解和配合
+        学习成果: 通过过程获得的技术洞察
+      </process_effectiveness>
+
+      <business_alignment>
+        需求匹配: 实现是否满足实际业务需求
+        用户价值: 功能对最终用户的实际价值
+        维护成本: 长期维护和扩展的便利性
+        技术债务: 是否引入了不必要的复杂性
+      </business_alignment>
+    </multi_dimensional_metrics>
+
+    <continuous_improvement>
+      <retrospective_integration>
+        定期回顾TDD循环的效果和问题
+        识别重复出现的困难和解决模式
+        调整工作流程以适应团队特点
+        分享成功经验和最佳实践
+      </retrospective_integration>
+
+      <knowledge_accumulation>
+        记录数学定义的实现模式
+        建立常见问题的解决方案库
+        维护团队的技术决策历史
+        培养团队的技术直觉和判断力
+      </knowledge_accumulation>
+    </continuous_improvement>
+  </quality_assurance_system>
+
+  <!-- ========== 命令行工具与自动化 ========== -->
+  <cli_automation_system>
+    <intelligent_commands>
+      <context_aware_execution>
+        # 智能TDD循环
+        tdd-cycle() {
+          echo "🤔 Think: 分析数学定义 $(current_definition)"
+          echo "📋 当前状态: $(git_status_summary)"
+          echo "🎯 验证目标: $(extract_verification_target)"
+          
+          # 运行测试并分析结果
+          deno test --allow-read --allow-net --no-check "$1" | tee test_output.log
+          
+          # 智能建议下一步行动
+          suggest_next_action test_output.log
+        }
+        
+        # 数学定义验证
+        verify-math() {
+          echo "🔍 验证数学定义: $1"
+          deno test --grep="验证.*$1" --allow-read --allow-net --no-check
+          
+          # 生成验证报告
+          generate_verification_report "$1"
+        }
+        
+        # 协作进度检查
+        progress-check() {
+          echo "📊 当前项目进度:"
+          analyze_test_coverage
+          show_definition_status
+          suggest_next_priorities
+        }
+      </context_aware_execution>
+
+      <workflow_optimization>
+        # 快速设置新的数学定义验证
+        new-definition() {
+          local def_name="$1"
+          local complexity="$2"
+          
+          echo "🆕 创建新的数学定义验证: $def_name"
+          
+          # 生成测试文件
+          generate_test_template "$def_name" "$complexity"
+          
+          # 生成weave场景
+          generate_weave_template "$def_name"
+          
+          # 更新进度跟踪
+          update_progress_tracker "$def_name" "📝 分析中"
+          
+          echo "✅ 设置完成，可以开始Think阶段"
+        }
+        
+        # 智能重构建议
+        refactor-suggest() {
+          echo "♻️ 分析重构机会..."
+          
+          # 检测代码重复
+          detect_code_duplication
+          
+          # 分析命名质量
+          analyze_naming_quality
+          
+          # 评估结构合理性
+          evaluate_code_structure
+          
+          # 提供具体建议
+          generate_refactor_suggestions
+        }
+      </workflow_optimization>
+    </intelligent_commands>
+
+    <integration_hooks>
+      <git_integration>
+        # 提交前检查
+        pre-commit:
+          - 运行所有数学定义验证测试
+          - 检查代码格式和风格
+          - 验证import路径的正确性
+          - 更新进度跟踪状态
+          
+        # 推送前验证
+        pre-push:
+          - 运行完整测试套件
+          - 生成覆盖率报告
+          - 验证文档的同步性
+          - 检查性能回归
+      </git_integration>
+
+      <cursor_integration>
+        # .cursorrules 自动生成
+        generate-cursor-rules() {
+          echo "🎯 生成项目特定的Cursor规则..."
+          
+          # 基于当前数学定义生成规则
+          extract_mathematical_patterns > .cursorrules.math
+          
+          # 基于测试模式生成规则
+          extract_testing_patterns > .cursorrules.test
+          
+          # 合并生成最终规则
+          merge_cursor_rules > .cursorrules
+          
+          echo "✅ Cursor规则已更新"
+        }
+      </cursor_integration>
+    </integration_hooks>
+  </cli_automation_system>
+</intelligent_bdd_tdd_collaboration>

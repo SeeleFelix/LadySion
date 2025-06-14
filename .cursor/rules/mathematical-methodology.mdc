@@ -1,0 +1,239 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+<mathematical_methodology>
+  <purpose>
+    将冗长的自然语言规则转换为数学形式表达
+    提高信息密度，减少token消耗
+    提供精确性、可推导性，保持AI系统兼容性
+  </purpose>
+
+  <theoretical_foundation>
+    <mathematical_formalization>
+      基于一阶逻辑（First-Order Logic）标准
+      公理化方法：Hilbert-style axiomatization
+      签名理论：Model theory signature definition
+      类型理论：Simply typed lambda calculus
+    </mathematical_formalization>
+
+    <ai_best_practices>
+      XML结构化标签：提高解析准确性
+      并行工具调用：maximizing parallel tool calls
+      思考能力集成：thinking capabilities integration
+      清晰指令：clear instructions with examples
+    </ai_best_practices>
+
+    <information_theory>
+      Shannon信息论：信息熵最小化
+      Kolmogorov复杂度：最短描述长度
+      符号密度：Unicode数学符号的表达效率
+    </information_theory>
+  </theoretical_foundation>
+
+  <core_principles>
+    <transformation_goals>
+      信息密度压缩：3-4倍
+      逻辑可推导性：严格推理
+      AI兼容性：XML + 并行调用
+      配比：60% 数学表达 + 40% 最佳实践
+    </transformation_goals>
+
+    <quality_requirements>
+      符号必须先定义后使用
+      类型一致性：函数输入输出类型明确
+      公理完整性：覆盖所有重要约束
+      可推导性：能从公理推导出实用结论
+    </quality_requirements>
+  </core_principles>
+
+  <standardized_process>
+    <step_1_signature_definition>
+      <universe_sets>
+        定义问题域的基本集合
+        使用Unicode数学字母：𝒫, 𝔹, 𝔗, 𝔖
+        明确集合的含义和元素类型
+      </universe_sets>
+
+      <predicate_signature>
+        定义函数和谓词的类型签名
+        f: Domain → Codomain
+        P: Domain → {True, False}
+        R: Domain × Domain → {True, False}
+      </predicate_signature>
+
+      <atomic_predicates>
+        定义最基本的原子概念
+        AtomicConcept(x) ≡ precise_definition
+        CompoundConcept(x) ≡ combination_of_atomics
+      </atomic_predicates>
+    </step_1_signature_definition>
+
+    <step_2_axiom_system>
+      <fundamental_axioms>
+        A1: ∀x ∈ Domain: basic_property(x)
+        A2: ∀x,y ∈ Domain: relationship(x,y)
+        覆盖问题域的基本性质
+      </fundamental_axioms>
+
+      <domain_axioms>
+        D1: ∀x ∈ SpecificDomain: domain_rule(x)
+        D2: ∀x,y: constraint(x,y)
+        定义特定领域的约束和规则
+      </domain_axioms>
+
+      <constraint_axioms>
+        C1: ∀op ∈ Operations: precondition(op) → allowed(op)
+        C2: ∀x: safety_constraint(x)
+        定义安全性和约束条件
+      </constraint_axioms>
+    </step_2_axiom_system>
+
+    <step_3_operation_algebra>
+      <atomic_operations>
+        BasicOp(x) ≡ atomic_definition(x)
+        SafeOp(x,op) ≡ precondition(x) ∧ execute(op) ∧ postcondition(x)
+        定义最基本的操作单元
+      </atomic_operations>
+
+      <composite_operations>
+        CompositeOp() ≡ Op1() ∧ Op2() ∧ Op3()
+        Workflow() ≡ ∀x ∈ Domain: ProcessStep(x)
+        组合基本操作形成复杂工作流
+      </composite_operations>
+
+      <verification_theorems>
+        T1: ∀x: property(x) → conclusion(x)
+        T2: ∀workflow: correct_execution(workflow) → desired_outcome(workflow)
+        提供可验证的正确性保证
+      </verification_theorems>
+    </step_3_operation_algebra>
+
+    <step_4_ai_optimization>
+      <xml_integration>
+        包装在XML标签中提高解析准确性
+        添加具体使用示例
+        映射数学操作到AI工具调用
+      </xml_integration>
+
+      <practical_examples>
+        提供真实场景的应用示例
+        展示数学表达的实际价值
+        验证压缩效果和可读性
+      </practical_examples>
+    </step_4_ai_optimization>
+  </standardized_process>
+
+  <mathematical_symbols>
+    <set_theory>
+      𝒫, 𝔹, 𝔗, 𝔖 - 宇宙集合（Unicode数学字母）
+      ∈, ∉, ⊆, ⊇ - 集合关系
+      ∪, ∩, \ - 集合运算
+      ∀, ∃ - 量词
+    </set_theory>
+
+    <logic>
+      ≡ - 定义等价
+      →, ← - 蕴含
+      ∧, ∨, ¬ - 逻辑运算
+      ⟺ - 双向蕴含
+    </logic>
+
+    <functions>
+      f: A → B - 函数类型
+      ∘ - 函数复合
+      ≺ - 偏序关系
+    </functions>
+  </mathematical_symbols>
+
+  <rigorous_validation>
+    <mandatory_checks>
+      符号优先定义：所有符号使用前必须定义
+      类型一致性：函数参数类型明确匹配
+      公理完整性：覆盖所有重要约束
+      可推导性：能从公理推导出实用结论
+    </mandatory_checks>
+
+    <error_prevention>
+      避免未定义符号：直接使用未定义的谓词
+      避免类型不匹配：函数参数类型错误
+      避免循环定义：A定义依赖B，B定义依赖A
+      避免缺少基础公理：复合概念没有原子基础
+    </error_prevention>
+
+    <quality_metrics>
+      信息密度：|Information(d)| / |Symbols(d)| ≥ 3.0
+      逻辑一致性：∀theorem ∈ s: Derivable(theorem, axioms(s))
+      实用性：AI性能提升 ∧ 用户满意度提升
+    </quality_metrics>
+  </rigorous_validation>
+
+  <application_scenarios>
+    <suitable_for>
+      复杂工作流程规则
+      多步骤操作序列
+      严格约束系统
+      需要推理验证的场景
+      重复使用的规则模板
+    </suitable_for>
+
+    <not_suitable_for>
+      简单单步操作
+      纯描述性内容
+      高度上下文依赖的场景
+      一次性使用的简单规则
+    </not_suitable_for>
+  </application_scenarios>
+
+  <transformation_example>
+    <natural_language>
+      原始规则: "在操作前必须检查安全性，包括没有未完成的工作、不在主要分支上、已同步远程状态"
+    </natural_language>
+
+    <mathematical_form>
+      PreCondition(operation) ≡ Safe(current_state)
+      Safe(s) ≡ Clean(s) ∧ ¬Main(s) ∧ Synced(s)
+      Clean(s) ≡ ∀w ∈ Work(s): ¬Pending(w) ∨ Completed(w)
+      Main(s) ≡ Branch(s) ∈ {main, master, develop}
+      Synced(s) ≡ LocalState(s) = RemoteState(s)
+    </mathematical_form>
+
+    <verification>
+      压缩比: 3.2倍 ✓
+      严谨性: 所有谓词已定义 ✓
+      可推导性: 可证明Safe(s) → OperationAllowed(s) ✓
+      AI兼容: XML结构 + 并行调用 ✓
+    </verification>
+  </transformation_example>
+
+  <iterative_improvement>
+    <version_evolution>
+      Version₀ = NaturalLanguage(rules)
+      Version₁ = Transform(Version₀, mathematical_formalization)
+      Version₂ = ApplyRigor(Version₁, strict_definitions)
+      Versionₙ₊₁ = Improve(Versionₙ, learned_errors)
+    </version_evolution>
+
+    <convergence_criteria>
+      Converged(Vₙ) ≡ 
+        Density(Vₙ) ≥ 3.0 ∧ 
+        Rigor(Vₙ) = 1.0 ∧ 
+        UserSatisfaction(Vₙ) ≥ 0.9 ∧
+        ErrorRate(Vₙ) ≤ 0.05
+    </convergence_criteria>
+  </iterative_improvement>
+
+  <meta_application>
+    <self_reference>
+      MetaTheorem: ∀methodology M: 
+        ApplyToSelf(M) → ImprovedVersion(M') where Quality(M') > Quality(M)
+    </self_reference>
+
+    <recursive_improvement>
+      该方法论可以应用于自身的改进
+      通过形式化自己的规则来提高表达精度
+      形成自我完善的循环改进机制
+    </recursive_improvement>
+  </meta_application>
+</mathematical_methodology>
