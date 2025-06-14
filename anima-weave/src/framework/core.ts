@@ -48,59 +48,60 @@ export abstract class Node {
   abstract execute(inputPorts: Port[]): Promise<Port[]> | Port[];
 }
 
-// ========== 插件系统 ==========
+// ========== 容器系统 ==========
 
-export interface IAnimaPlugin {
+export interface AnimaVessel {
   readonly name: string;
   readonly version: string;
+  readonly description: string;
   
-  // 插件只提供Node类的列表
+  // 容器只提供Node类的列表
   getSupportedNodes(): Array<new () => Node>;
   
-  // 插件只提供Label类的列表  
+  // 容器只提供Label类的列表  
   getSupportedLabels(): Array<new (value: any) => SemanticLabel>;
 }
 
-export class PluginRegistry {
-  private plugins = new Map<string, IAnimaPlugin>();
+export class VesselRegistry {
+  private vessels = new Map<string, AnimaVessel>();
   private nodeClasses = new Map<string, new () => Node>(); // fullNodeName -> NodeClass
   private labelClasses = new Map<string, new (value: any) => SemanticLabel>(); // fullLabelName -> LabelClass
 
-  register(plugin: IAnimaPlugin): void {
-    if (this.plugins.has(plugin.name)) {
-      throw new Error(`Plugin ${plugin.name} already registered`);
+  register(vessel: AnimaVessel): void {
+    if (this.vessels.has(vessel.name)) {
+      throw new Error(`Vessel ${vessel.name} already registered`);
     }
     
-    this.plugins.set(plugin.name, plugin);
+    this.vessels.set(vessel.name, vessel);
     
-    // 收集插件的所有Node类
-    const supportedNodes = plugin.getSupportedNodes();
+    // 收集容器的所有Node类
+    const supportedNodes = vessel.getSupportedNodes();
     for (const NodeClass of supportedNodes) {
       const nodeInstance = new NodeClass(); // 临时实例获取nodeName
-      const fullNodeName = `${plugin.name}.${nodeInstance.nodeName}`;
+      const fullNodeName = `${vessel.name}.${nodeInstance.nodeName}`;
       this.nodeClasses.set(fullNodeName, NodeClass);
     }
     
-    // 收集插件的所有Label类
-    const supportedLabels = plugin.getSupportedLabels();
+    // 收集容器的所有Label类
+    const supportedLabels = vessel.getSupportedLabels();
     for (const LabelClass of supportedLabels) {
       const labelInstance = new LabelClass(null); // 临时实例获取labelName
-      const fullLabelName = `${plugin.name}.${labelInstance.labelName}`;
+      const fullLabelName = `${vessel.name}.${labelInstance.labelName}`;
       this.labelClasses.set(fullLabelName, LabelClass);
     }
   }
 
-  getPlugin(name: string): IAnimaPlugin | undefined {
-    return this.plugins.get(name);
+  getVessel(name: string): AnimaVessel | undefined {
+    return this.vessels.get(name);
   }
 
-  listPlugins(): string[] {
-    return Array.from(this.plugins.keys());
+  listVessels(): string[] {
+    return Array.from(this.vessels.keys());
   }
 
-  // 框架直接执行Node，不通过插件
-  async executeNode(pluginName: string, nodeName: string, inputPorts: Port[]): Promise<Port[]> {
-    const fullNodeName = `${pluginName}.${nodeName}`;
+  // 框架直接执行Node，不通过容器
+  async executeNode(vesselName: string, nodeName: string, inputPorts: Port[]): Promise<Port[]> {
+    const fullNodeName = `${vesselName}.${nodeName}`;
     const NodeClass = this.nodeClasses.get(fullNodeName);
     
     if (!NodeClass) {
@@ -111,9 +112,9 @@ export class PluginRegistry {
     return await nodeInstance.execute(inputPorts);
   }
 
-  // 框架直接创建Label，不通过插件
-  createLabel(pluginName: string, labelName: string, value: any): SemanticLabel {
-    const fullLabelName = `${pluginName}.${labelName}`;
+  // 框架直接创建Label，不通过容器
+  createLabel(vesselName: string, labelName: string, value: any): SemanticLabel {
+    const fullLabelName = `${vesselName}.${labelName}`;
     const LabelClass = this.labelClasses.get(fullLabelName);
     
     if (!LabelClass) {
@@ -124,8 +125,8 @@ export class PluginRegistry {
   }
 
   // 获取Node的元数据信息（通过实例化获取）
-  getNodeMetadata(pluginName: string, nodeName: string): { inputs: Port[], outputs: Port[], description: string } | undefined {
-    const fullNodeName = `${pluginName}.${nodeName}`;
+  getNodeMetadata(vesselName: string, nodeName: string): { inputs: Port[], outputs: Port[], description: string } | undefined {
+    const fullNodeName = `${vesselName}.${nodeName}`;
     const NodeClass = this.nodeClasses.get(fullNodeName);
     
     if (!NodeClass) {
@@ -141,8 +142,8 @@ export class PluginRegistry {
   }
 
   // 检查Node是否存在
-  hasNode(pluginName: string, nodeName: string): boolean {
-    const fullNodeName = `${pluginName}.${nodeName}`;
+  hasNode(vesselName: string, nodeName: string): boolean {
+    const fullNodeName = `${vesselName}.${nodeName}`;
     return this.nodeClasses.has(fullNodeName);
   }
 
@@ -167,7 +168,7 @@ export interface WeaveGraph {
 export interface WeaveNode {
   id: string;
   type: string;
-  plugin: string;
+  vessel: string;
   parameters?: Record<string, unknown>;
 }
 

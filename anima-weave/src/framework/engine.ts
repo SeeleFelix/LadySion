@@ -1,14 +1,14 @@
 // AnimaWeave 执行引擎
 // 框架核心引擎，协调各个模块
 
-import { ExecutionStatus, PluginRegistry as Registry } from "./core.ts";
+import { ExecutionStatus, VesselRegistry as Registry } from "./core.ts";
 import type {
   FateEcho,
-  PluginRegistry,
+  VesselRegistry,
   WeaveGraph,
 } from "./core.ts";
 import { WeaveParser } from "../parser/weave_parser.ts";
-import { PluginManager } from "./plugin_manager.ts";
+import { VesselManager } from "./vessel_manager.ts";
 import { GraphValidator } from "./graph_validator.ts";
 import { GraphExecutor } from "./graph_executor.ts";
 import { SemanticHandler } from "./semantic_handler.ts";
@@ -19,8 +19,8 @@ import { ErrorHandler } from "./error_handler.ts";
  */
 export class AnimaWeaveEngine {
   private parser: WeaveParser;
-  private registry: PluginRegistry;
-  private pluginManager: PluginManager;
+  private registry: VesselRegistry;
+  private vesselManager: VesselManager;
   private graphValidator: GraphValidator;
   private graphExecutor: GraphExecutor;
   private semanticHandler: SemanticHandler;
@@ -30,7 +30,7 @@ export class AnimaWeaveEngine {
   constructor() {
     this.parser = new WeaveParser();
     this.registry = new Registry();
-    this.pluginManager = new PluginManager(this.registry);
+    this.vesselManager = new VesselManager(this.registry);
     this.graphValidator = new GraphValidator(this.registry);
     this.graphExecutor = new GraphExecutor(this.registry);
     this.semanticHandler = new SemanticHandler();
@@ -38,15 +38,15 @@ export class AnimaWeaveEngine {
   }
 
   /**
-   * 初始化引擎 - 动态发现和加载插件
+   * 初始化引擎 - 动态发现和加载容器
    */
   async initialize(): Promise<void> {
     if (this.initialized) return;
 
     console.log("🚀 初始化AnimaWeave引擎...");
 
-    // 动态发现和加载插件
-    await this.pluginManager.discoverAndLoadPlugins();
+    // 动态发现和加载容器
+    await this.vesselManager.discoverAndLoadVessels();
 
     this.initialized = true;
     console.log("✅ AnimaWeave引擎初始化完成");
@@ -70,8 +70,8 @@ export class AnimaWeaveEngine {
       // 3. 静态检查阶段 - 类型检查、连接验证等
       await this.graphValidator.validateGraph(graph);
 
-      // 4. 确保所需插件已加载
-      await this.ensureRequiredPluginsLoaded(graph, sanctumPath);
+      // 4. 确保所需容器已加载
+      await this.ensureRequiredVesselsLoaded(graph, sanctumPath);
 
       // 5. 执行图
       const result = await this.graphExecutor.executeWeaveGraph(graph);
@@ -93,18 +93,18 @@ export class AnimaWeaveEngine {
 
 
   /**
-   * 确保所需插件已加载
+   * 确保所需容器已加载
    */
-  private async ensureRequiredPluginsLoaded(graph: WeaveGraph, sanctumPath: string): Promise<void> {
-    const requiredPlugins = new Set<string>();
+  private async ensureRequiredVesselsLoaded(graph: WeaveGraph, sanctumPath: string): Promise<void> {
+    const requiredVessels = new Set<string>();
 
-    // 从图中提取所需的插件
+    // 从图中提取所需的容器
     for (const node of Object.values(graph.nodes)) {
-      requiredPlugins.add(node.plugin);
+      requiredVessels.add(node.vessel);
     }
 
-    // 委托给插件管理器
-    await this.pluginManager.ensureRequiredPluginsLoaded(requiredPlugins, sanctumPath);
+    // 委托给容器管理器
+    await this.vesselManager.ensureRequiredVesselsLoaded(requiredVessels, sanctumPath);
   }
 
   /**
@@ -125,9 +125,9 @@ export class AnimaWeaveEngine {
   }
 
   /**
-   * 获取插件注册表（用于调试）
+   * 获取容器注册表（用于调试）
    */
-  getRegistry(): PluginRegistry {
+  getRegistry(): VesselRegistry {
     return this.registry;
   }
 

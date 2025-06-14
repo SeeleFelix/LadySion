@@ -74,9 +74,9 @@ export class WeaveParser {
 
   private processImportSection(section: any, graph: WeaveGraph) {
     for (const importItem of section.imports) {
-      // 只保存插件名，如 "basic.anima" -> "basic"
-      const pluginName = importItem.name.replace(".anima", "");
-      graph.imports.push(pluginName);
+      // 只保存容器名，如 "basic.anima" -> "basic"
+      const vesselName = importItem.name.replace(".anima", "");
+      graph.imports.push(vesselName);
     }
   }
 
@@ -99,13 +99,13 @@ export class WeaveParser {
 
   private processNodesData(nodes: any[], graph: WeaveGraph) {
     for (const node of nodes) {
-      // 解析 "basic.Start" 格式：basic是plugin，Start是type
-      const [plugin, type] = node.type.split(".");
+      // 解析 "basic.Start" 格式：basic是vessel，Start是type
+      const [vessel, type] = node.type.split(".");
 
       graph.nodes[node.id] = {
         id: node.id,
         type: type,
-        plugin: plugin,
+        vessel: vessel,
       };
     }
   }

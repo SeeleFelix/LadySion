@@ -53,7 +53,7 @@ alwaysApply: false
   </reality_anchoring>
   
   <expertise_framing>
-    "作为熟悉basic.anima插件的技术专家，我将评估哪些节点组合最适合验证这个定义..."
+    "作为熟悉basic.anima容器的技术专家，我将评估哪些节点组合最适合验证这个定义..."
   </expertise_framing>
   
   <planning_prompts>

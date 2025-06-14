@@ -1,11 +1,11 @@
-// Basic Plugin - 基础插件实现
+// Basic Vessel - 基础容器实现
 // 提供基础数据类型和基本操作节点
 
 import {
   SemanticLabel,
   Port,
   Node,
-  IAnimaPlugin,
+  AnimaVessel,
 } from "../../framework/core.ts";
 
 // ========== 语义标签定义 ==========
@@ -196,18 +196,19 @@ export class CreatePromptNode extends Node {
   }
 }
 
-// ========== 插件实现 ==========
+// ========== 容器实现 ==========
 
 /**
- * Basic插件实现
+ * Basic容器实现
  * 提供基础数据类型和基本操作节点
  */
-export class BasicPlugin implements IAnimaPlugin {
+export class BasicVessel implements AnimaVessel {
   readonly name = "basic";
   readonly version = "1.0.0";
+  readonly description = "提供基础数据类型和基本操作节点的核心容器";
 
   constructor() {
-    console.log(`🔌 初始化Basic插件 v${this.version}`);
+    console.log(`🔌 初始化Basic容器 v${this.version}`);
   }
 
   /**

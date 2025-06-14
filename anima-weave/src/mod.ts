@@ -7,7 +7,7 @@ import { ExecutionStatus, isStaticError, isRuntimeError, type FateEcho } from ".
 // 重新导出核心接口
 export { ExecutionStatus, isStaticError, isRuntimeError, type FateEcho };
 export type {
-  IAnimaPlugin,
+  AnimaVessel,
   WeaveConnection,
   WeaveGraph,
   WeaveNode,
@@ -82,6 +82,6 @@ export function createEngine(): AnimaWeaveEngine {
   return new AnimaWeaveEngine();
 }
 
-// 重新导出框架组件（供插件开发使用）
+// 重新导出框架组件（供容器开发使用）
 export { AnimaWeaveEngine } from "./framework/engine.ts";
-export { PluginRegistry } from "./framework/core.ts";
+export { VesselRegistry } from "./framework/core.ts";

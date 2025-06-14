@@ -22,7 +22,7 @@ export class ErrorHandler {
       errorCode = ExecutionStatus.ParseError;
     } else if (errorMessage.includes("type") || errorMessage.includes("connection") || errorMessage.includes("validation")) {
       errorCode = ExecutionStatus.ValidationError;
-    } else if (errorMessage.includes("plugin") || errorMessage.includes("import")) {
+    } else if (errorMessage.includes("vessel") || errorMessage.includes("import")) {
       errorCode = ExecutionStatus.ConfigError;
     } else if (errorMessage.includes("requires") && errorMessage.includes("input")) {
       // 这是运行时的节点执行错误

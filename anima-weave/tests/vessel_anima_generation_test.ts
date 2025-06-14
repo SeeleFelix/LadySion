@@ -1,12 +1,12 @@
 /**
- * # 插件Anima文件生成测试
+ * # 容器Anima文件生成测试
  * 
  * ## 测试目标
- * 验证PluginManager能够正确地从插件的Node和Label类生成anima文件，
+ * 验证VesselManager能够正确地从容器的Node和Label类生成anima文件，
  * 确保生成的anima文件格式正确，包含完整的类型和节点定义。
  * 
  * ## 协作探索记录
- * 这个测试验证了我们重构后的插件系统是否能正确生成AI可读的元数据文件。
+ * 这个测试验证了我们重构后的容器系统是否能正确生成AI可读的元数据文件。
  * 直接验证生成的anima文件内容，确保格式正确性。
  * 
  * @module
@@ -14,16 +14,16 @@
 
 import { describe, it, beforeEach, afterEach } from "jsr:@std/testing/bdd";
 import { assertEquals, assertExists, assertStringIncludes } from "jsr:@std/assert";
-import { PluginManager } from "../src/framework/plugin_manager.ts";
-import { PluginRegistry } from "../src/framework/core.ts";
+import { VesselManager } from "../src/framework/vessel_manager.ts";
+import { VesselRegistry } from "../src/framework/core.ts";
 
-describe("插件Anima文件生成测试", () => {
-  let pluginManager: PluginManager;
-  let registry: PluginRegistry;
+describe("容器Anima文件生成测试", () => {
+  let vesselManager: VesselManager;
+  let registry: VesselRegistry;
   
   beforeEach(() => {
-    registry = new PluginRegistry();
-    pluginManager = new PluginManager(registry);
+    registry = new VesselRegistry();
+    vesselManager = new VesselManager(registry);
   });
 
   afterEach(async () => {
@@ -35,16 +35,16 @@ describe("插件Anima文件生成测试", () => {
     }
   });
 
-  describe("基础插件anima文件生成", () => {
-    it("应该正确生成basic插件的anima文件", async () => {
-      console.log("🔍 开始测试basic插件anima文件生成");
+  describe("基础容器anima文件生成", () => {
+    it("应该正确生成basic容器的anima文件", async () => {
+      console.log("🔍 开始测试basic容器anima文件生成");
       
-      // Given: 加载basic插件
-      await pluginManager.discoverAndLoadPlugins();
+      // Given: 加载basic容器
+      await vesselManager.discoverAndLoadVessels();
       
-      // Then: 验证basic插件已加载
-      const loadedPlugins = registry.listPlugins();
-      assertEquals(loadedPlugins.includes("basic"), true, "basic插件应该已加载");
+      // Then: 验证basic容器已加载
+      const loadedVessels = registry.listVessels();
+      assertEquals(loadedVessels.includes("basic"), true, "basic容器应该已加载");
       
       // 验证anima文件已生成
       let animaContent: string;
@@ -81,7 +81,7 @@ describe("插件Anima文件生成测试", () => {
       assertStringIncludes(animaContent, "in {", "节点应该有输入端口定义");
       assertStringIncludes(animaContent, "out {", "节点应该有输出端口定义");
       
-      console.log("✅ basic插件anima文件生成验证通过");
+      console.log("✅ basic容器anima文件生成验证通过");
     });
   });
 
@@ -89,8 +89,8 @@ describe("插件Anima文件生成测试", () => {
     it("应该正确生成Start节点的完整定义", async () => {
       console.log("🔍 详细验证Start节点定义");
       
-      // Given: 加载插件并生成anima文件
-      await pluginManager.discoverAndLoadPlugins();
+      // Given: 加载容器并生成anima文件
+      await vesselManager.discoverAndLoadVessels();
       const animaContent = await Deno.readTextFile("sanctums/basic.anima");
       
       // 🎯 验证Start节点的完整结构
@@ -107,8 +107,8 @@ describe("插件Anima文件生成测试", () => {
     it("应该正确生成IsEven节点的输入输出定义", async () => {
       console.log("🔍 详细验证IsEven节点的输入输出");
       
-      // Given: 加载插件并生成anima文件
-      await pluginManager.discoverAndLoadPlugins();
+      // Given: 加载容器并生成anima文件
+      await vesselManager.discoverAndLoadVessels();
       const animaContent = await Deno.readTextFile("sanctums/basic.anima");
       
       // 验证输入端口
@@ -125,8 +125,8 @@ describe("插件Anima文件生成测试", () => {
     it("应该正确生成CreatePrompt节点的复杂类型定义", async () => {
       console.log("🔍 详细验证CreatePrompt节点的复杂类型");
       
-      // Given: 加载插件并生成anima文件
-      await pluginManager.discoverAndLoadPlugins();
+      // Given: 加载容器并生成anima文件
+      await vesselManager.discoverAndLoadVessels();
       const animaContent = await Deno.readTextFile("sanctums/basic.anima");
       
       // 验证输入端口（多个String类型）
@@ -147,7 +147,7 @@ describe("插件Anima文件生成测试", () => {
       console.log("🔍 验证anima文件格式规范");
       
       // Given: 生成anima文件
-      await pluginManager.discoverAndLoadPlugins();
+      await vesselManager.discoverAndLoadVessels();
       const animaContent = await Deno.readTextFile("sanctums/basic.anima");
       
       // 🎯 验证文件结构

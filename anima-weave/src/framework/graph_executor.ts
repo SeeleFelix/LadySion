@@ -1,14 +1,14 @@
 // AnimaWeave 图执行器
 // 负责执行调度、控制流管理、数据流处理等功能
 
-import type { WeaveGraph, WeaveConnection, WeaveNode, PluginRegistry, SemanticValue, Port } from "./core.ts";
+import type { WeaveGraph, WeaveConnection, WeaveNode, VesselRegistry, SemanticValue, Port } from "./core.ts";
 import { Port as PortClass } from "./core.ts";
 
 /**
  * 图执行器 - 处理图的动态执行
  */
 export class GraphExecutor {
-  constructor(private registry: PluginRegistry) {}
+  constructor(private registry: VesselRegistry) {}
 
   /**
    * 执行图
@@ -57,13 +57,13 @@ export class GraphExecutor {
         continue;
       }
       
-      console.log(`⚙️ 执行节点: ${nodeId} (${node.plugin}.${node.type})`);
+      console.log(`⚙️ 执行节点: ${nodeId} (${node.vessel}.${node.type})`);
 
       // 收集输入Port数组
       const inputPorts = this.collectNodeInputPorts(node, graph.connections, nodeResults);
 
       // 执行节点
-      const outputPorts = await this.registry.executeNode(node.plugin, node.type, inputPorts);
+      const outputPorts = await this.registry.executeNode(node.vessel, node.type, inputPorts);
 
       // 存储结果
       nodeResults.set(nodeId, outputPorts);
@@ -94,7 +94,7 @@ export class GraphExecutor {
       const semanticLabel = this.getOutputSemanticLabel(sourceNode, connection.from.output);
       
       // 控制连接的特征：语义标签以".Signal"结尾
-      // 这样可以支持任何插件的Signal类型，不只是basic.Signal
+      // 这样可以支持任何容器的Signal类型，不只是basic.Signal
       return semanticLabel.endsWith('.Signal');
     } catch (error) {
       console.warn(`⚠️ 判断控制连接失败:`, error);
@@ -216,9 +216,9 @@ export class GraphExecutor {
    */
   private getOutputSemanticLabel(node: WeaveNode, outputName: string): string {
     try {
-      const metadata = this.registry.getNodeMetadata(node.plugin, node.type);
+      const metadata = this.registry.getNodeMetadata(node.vessel, node.type);
       if (!metadata) {
-        console.warn(`⚠️ 节点元数据未找到: ${node.plugin}.${node.type}`);
+        console.warn(`⚠️ 节点元数据未找到: ${node.vessel}.${node.type}`);
         return "unknown";
       }
 
@@ -230,7 +230,7 @@ export class GraphExecutor {
 
       // 从Port的label构造器获取标签名称
       const labelInstance = new outputPort.label(null);
-      return `${node.plugin}.${labelInstance.labelName}`;
+      return `${node.vessel}.${labelInstance.labelName}`;
     } catch (error) {
       console.warn(`⚠️ 获取语义标签失败:`, error);
       return "unknown";
@@ -279,7 +279,7 @@ export class GraphExecutor {
    */
   private nodeRequiresTrigger(node: WeaveNode): boolean {
     try {
-      const metadata = this.registry.getNodeMetadata(node.plugin, node.type);
+      const metadata = this.registry.getNodeMetadata(node.vessel, node.type);
       if (!metadata) return false;
 
       // 检查节点是否有trigger输入端口
@@ -297,9 +297,9 @@ export class GraphExecutor {
     const ports: Port[] = [];
     
     // 获取节点元数据以了解输入端口的类型
-    const metadata = this.registry.getNodeMetadata(node.plugin, node.type);
+    const metadata = this.registry.getNodeMetadata(node.vessel, node.type);
     if (!metadata) {
-      throw new Error(`Node metadata not found: ${node.plugin}.${node.type}`);
+      throw new Error(`Node metadata not found: ${node.vessel}.${node.type}`);
     }
     
     // 为每个输入创建Port
