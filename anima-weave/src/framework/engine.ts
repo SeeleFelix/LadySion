@@ -89,11 +89,92 @@ export class AnimaWeaveEngine {
   private async validateGraph(graph: WeaveGraph): Promise<void> {
     console.log("🔍 开始静态图验证...");
     
-    // TODO: 实现类型兼容性检查
-    // 这里应该检查所有连接的类型兼容性
-    // 如果发现不兼容的类型连接，抛出ValidationError
+    // 检查所有数据连接的类型兼容性
+    for (const connection of graph.connections) {
+      if (connection.from && connection.to) {
+        await this.validateConnection(connection, graph);
+      }
+    }
     
     console.log("✅ 静态图验证通过");
+  }
+
+  /**
+   * 验证单个连接的类型兼容性
+   */
+  private async validateConnection(connection: WeaveConnection, graph: WeaveGraph): Promise<void> {
+    const fromNode = graph.nodes[connection.from.node];
+    const toNode = graph.nodes[connection.to.node];
+    
+    if (!fromNode || !toNode) {
+      throw new Error(`Connection validation failed: node not found`);
+    }
+
+    // 获取输出端口和输入端口的类型信息
+    const fromPlugin = this.registry.getPlugin(fromNode.plugin);
+    const toPlugin = this.registry.getPlugin(toNode.plugin);
+    
+    if (!fromPlugin || !toPlugin) {
+      throw new Error(`Plugin not found for connection validation`);
+    }
+
+    const fromDefinition = fromPlugin.getPluginDefinition();
+    const toDefinition = toPlugin.getPluginDefinition();
+    
+    // 从 "basic.Start" 中提取 "Start"
+    const fromNodeType = fromNode.type.includes('.') ? fromNode.type.split('.')[1] : fromNode.type;
+    const toNodeType = toNode.type.includes('.') ? toNode.type.split('.')[1] : toNode.type;
+    
+    const fromNodeDef = fromDefinition.nodes[fromNodeType];
+    const toNodeDef = toDefinition.nodes[toNodeType];
+    
+    console.log(`🔍 查找节点定义: ${fromNodeType} -> ${toNodeType}`);
+    console.log(`📋 可用节点:`, Object.keys(fromDefinition.nodes), Object.keys(toDefinition.nodes));
+    
+    if (!fromNodeDef || !toNodeDef) {
+      throw new Error(`Node definition not found for connection validation`);
+    }
+
+    // 获取端口类型
+    const outputType = fromNodeDef.outputs[connection.from.output];
+    const inputType = toNodeDef.inputs[connection.to.input];
+    
+    if (!outputType || !inputType) {
+      throw new Error(`Port not found: ${connection.from.output} -> ${connection.to.input}`);
+    }
+
+    // 类型兼容性检查
+    if (!this.areTypesCompatible(outputType, inputType)) {
+      const errorMessage = `Type mismatch in static validation: Cannot connect ${outputType} to ${inputType} (${connection.from.node}.${connection.from.output} -> ${connection.to.node}.${connection.to.input})`;
+      
+      console.log(`❌ 静态类型检查失败: ${errorMessage}`);
+      throw new Error(errorMessage);
+    }
+
+    console.log(`✅ 连接类型检查通过: ${outputType} -> ${inputType}`);
+  }
+
+  /**
+   * 检查两个类型是否兼容
+   */
+  private areTypesCompatible(outputType: string, inputType: string): boolean {
+    // 完全匹配
+    if (outputType === inputType) {
+      return true;
+    }
+    
+    // 基础类型兼容性规则
+    const compatibilityRules: Record<string, string[]> = {
+      "basic.String": ["basic.String"],
+      "basic.Int": ["basic.Int"],
+      "basic.Bool": ["basic.Bool"],
+      "basic.UUID": ["basic.UUID", "basic.String"], // UUID可以作为String使用
+      "basic.Signal": ["basic.Signal"],
+      "basic.Prompt": ["basic.Prompt"], // Prompt是复合类型，不能转换为基础类型
+    };
+    
+    const compatibleTypes = compatibilityRules[outputType] || [];
+    return compatibleTypes.includes(inputType);
   }
 
   /**

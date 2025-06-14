@@ -105,19 +105,18 @@ Deno.test("T1.2: 组合语义标签验证", async () => {
  * 验证哲学理念: "类型系统是计算正确性的守护者"
  * 数学定义: 不兼容类型连接应该在静态检查阶段被拒绝
  * 
- * 🎯 正确的验证场景:
- * - 创建包含类型不匹配连接的图
- * - basic.Prompt → basic.Int (不兼容的语义标签连接)
- * - 系统应该在静态检查阶段拒绝加载图，不进入执行阶段
+ * 🎯 TDD红绿循环验证:
+ * - 🔴 RED: 当前应该失败，因为缺少静态类型检查器
+ * - 🟢 GREEN: 实现静态检查器后，在validateGraph阶段拒绝图
  * 
- * ⚠️ 当前发现的架构问题:
- * - 缺少静态类型检查器
- * - 类型错误被推迟到运行时才发现
- * - 这违反了AnimaWeave的设计哲学
+ * 📋 严格的验证要求:
+ * - basic.Prompt → basic.Int (不兼容连接)
+ * - 必须在静态检查阶段被拒绝 (ValidationError)
+ * - 图不应该进入执行阶段
  */
 Deno.test("T1.3: 语义标签静态安全约束验证", async () => {
   console.log("🔍 开始T1.3: 语义标签静态安全约束验证");
-  console.log("📋 期望: 静态检查阶段拒绝类型不匹配的图");
+  console.log("🎯 TDD期望: 静态检查阶段拒绝类型不匹配的图");
   
   // 执行包含类型不匹配连接的图
   const fateEcho = await awakening("./sanctums", "type_mismatch_test");
@@ -125,39 +124,57 @@ Deno.test("T1.3: 语义标签静态安全约束验证", async () => {
   console.log("📊 实际结果状态:", fateEcho.status);
   console.log("📄 错误信息:", fateEcho.outputs);
 
-  // 🎯 验证错误被检测到（不管是静态还是运行时）
-  const isError = fateEcho.status !== ExecutionStatus.Success;
-  assertEquals(isError, true, "系统应该检测到类型不匹配错误");
-  
-  // 🔍 分析错误类型
-  console.log("📊 错误分类分析:");
-  console.log(`  - 错误状态: ${fateEcho.status}`);
-  console.log(`  - 是静态错误: ${isStaticError(fateEcho.status)}`);
-  console.log(`  - 是运行时错误: ${isRuntimeError(fateEcho.status)}`);
+  // 🎯 核心验证1: 必须是ValidationError (静态错误)
+  assertEquals(
+    fateEcho.status, 
+    ExecutionStatus.ValidationError, 
+    "类型不匹配必须在静态检查阶段被发现，返回ValidationError"
+  );
 
-  // 🎯 验证错误信息的质量
-  const errorMessage = fateEcho.outputs.toLowerCase();
-  const hasTypeError = errorMessage.includes("type") || 
-                      errorMessage.includes("prompt") || 
-                      errorMessage.includes("int");
+  // 🎯 核心验证2: 必须是静态错误，不是运行时错误
+  assertEquals(
+    isStaticError(fateEcho.status), 
+    true, 
+    "类型检查错误必须是静态错误"
+  );
   
-  assertEquals(hasTypeError, true, "错误信息应该包含类型相关信息");
+  assertEquals(
+    isRuntimeError(fateEcho.status), 
+    false, 
+    "类型检查错误不应该是运行时错误"
+  );
 
-  // 📝 架构改进建议
-  console.log("🏗️ 架构发现:");
+  // 🎯 核心验证3: 错误信息应该明确指出类型不匹配
+  const errorDetails = fateEcho.getErrorDetails();
+  assertEquals(errorDetails !== null, true, "应该有详细的错误信息");
   
-  if (errorMessage.includes("requires") && errorMessage.includes("input")) {
-    console.log("  ❌ 当前: 运行时类型检查 (节点执行时发现错误)");
-    console.log("  ✅ 期望: 静态类型检查 (图加载时发现错误)");
-    console.log("  🔧 需要: 在图解析后、执行前添加静态类型检查器");
-  } else {
-    console.log("  ✅ 已有静态类型检查机制");
+  if (errorDetails) {
+    assertStringIncludes(
+      errorDetails.message.toLowerCase(), 
+      "type", 
+      "错误信息应该提到类型问题"
+    );
+    
+    // 验证错误发生的位置信息
+    assertEquals(
+      errorDetails.location?.file?.includes("type_mismatch_test.weave"), 
+      true, 
+      "错误应该定位到具体的weave文件"
+    );
   }
 
-  console.log("🎯 T1.3验证结果:");
-  console.log("  - 类型错误被检测: ✅");
-  console.log("  - 错误信息质量: ✅");
-  console.log("  - 架构完整性: 待改进 (缺少静态检查器)");
+  // 🎯 核心验证4: 验证这是真正的静态检查，不是运行时检查
+  // 如果错误信息包含节点执行相关内容，说明检查太晚了
+  const errorMessage = fateEcho.outputs.toLowerCase();
+  const isRuntimeCheck = errorMessage.includes("requires") && 
+                        errorMessage.includes("input") && 
+                        errorMessage.includes("node");
+  
+  assertEquals(
+    isRuntimeCheck, 
+    false, 
+    "错误不应该来自节点执行时的检查，应该来自静态验证阶段"
+  );
 
-  console.log("✅ T1.3 基础验证通过 - 发现架构改进点");
+  console.log("✅ T1.3 静态类型检查验证通过");
 });
