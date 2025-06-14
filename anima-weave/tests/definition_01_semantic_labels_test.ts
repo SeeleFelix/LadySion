@@ -96,7 +96,7 @@ describe("定义1：语义标签集合 (ℒ)", () => {
 
       // 🔍 深入验证嵌套字段的语义标签 - 这是组合类型的精髓
       const promptValue = promptOutput.value;
-      assertEquals(promptValue.id.semantic_label, "basic.String", "id字段应该是String语义标签");
+      assertEquals(promptValue.id.semantic_label, "basic.UUID", "id字段应该是UUID语义标签");
       assertEquals(promptValue.name.semantic_label, "basic.String", "name字段应该是String语义标签");
       assertEquals(promptValue.content.semantic_label, "basic.String", "content字段应该是String语义标签");
 

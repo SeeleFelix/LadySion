@@ -1,7 +1,8 @@
 // AnimaWeave 图执行器
 // 负责执行调度、控制流管理、数据流处理等功能
 
-import type { WeaveGraph, WeaveConnection, WeaveNode, PluginRegistry, SemanticValue } from "./core.ts";
+import type { WeaveGraph, WeaveConnection, WeaveNode, PluginRegistry, SemanticValue, Port } from "./core.ts";
+import { Port as PortClass } from "./core.ts";
 
 /**
  * 图执行器 - 处理图的动态执行
@@ -15,7 +16,7 @@ export class GraphExecutor {
   async executeWeaveGraph(graph: WeaveGraph): Promise<Record<string, SemanticValue>> {
     console.log("🔄 开始执行图...");
 
-    const nodeResults = new Map<string, Record<string, unknown>>();
+    const nodeResults = new Map<string, Port[]>();
     
     // 🎯 动态控制流调度实现
     const readyQueue = new Set<string>();
@@ -58,18 +59,18 @@ export class GraphExecutor {
       
       console.log(`⚙️ 执行节点: ${nodeId} (${node.plugin}.${node.type})`);
 
-      // 收集输入数据
-      const inputs = this.collectNodeInputs(node, graph.connections, nodeResults);
+      // 收集输入Port数组
+      const inputPorts = this.collectNodeInputPorts(node, graph.connections, nodeResults);
 
       // 执行节点
-      const outputs = await this.registry.executeNode(node.plugin, node.type, inputs);
+      const outputPorts = await this.registry.executeNode(node.plugin, node.type, inputPorts);
 
       // 存储结果
-      nodeResults.set(nodeId, outputs);
-      console.log(`✅ 节点 ${nodeId} 执行完成:`, outputs);
+      nodeResults.set(nodeId, outputPorts);
+      console.log(`✅ 节点 ${nodeId} 执行完成:`, outputPorts.map(p => ({ name: p.name, value: p.getValue()?.value })));
 
       // 处理控制输出，更新下游节点的就绪状态
-      this.updateDownstreamReadiness(nodeId, outputs, graph, receivedControlInputs, controlInputCounts, readyQueue);
+      this.updateDownstreamReadiness(nodeId, outputPorts, graph, receivedControlInputs, controlInputCounts, readyQueue);
     }
 
     // 收集终端输出（带语义标签）
@@ -108,7 +109,7 @@ export class GraphExecutor {
    */
   private updateDownstreamReadiness(
     nodeId: string,
-    outputs: Record<string, unknown>,
+    outputs: Port[],
     graph: WeaveGraph,
     receivedControlInputs: Map<string, number>,
     controlInputCounts: Map<string, number>,
@@ -121,10 +122,10 @@ export class GraphExecutor {
 
     for (const connection of controlOutputConnections) {
       const targetNodeId = connection.to.node;
-      const outputValue = outputs[connection.from.output];
+      const outputValue = outputs.find(p => p.name === connection.from.output)?.getValue();
       
       // 只有当控制信号为true时才计数
-      if (outputValue === true) {
+      if (outputValue?.value === true) {
         const currentCount = receivedControlInputs.get(targetNodeId) || 0;
         const newCount = currentCount + 1;
         receivedControlInputs.set(targetNodeId, newCount);
@@ -147,7 +148,7 @@ export class GraphExecutor {
   private collectNodeInputs(
     node: WeaveNode,
     connections: WeaveConnection[],
-    nodeResults: Map<string, Record<string, unknown>>,
+    nodeResults: Map<string, Port[]>,
   ): Record<string, unknown> {
     const inputs: Record<string, unknown> = {};
 
@@ -155,9 +156,14 @@ export class GraphExecutor {
     const incomingConnections = connections.filter((conn) => conn.to.node === node.id);
 
     for (const connection of incomingConnections) {
-      const sourceResult = nodeResults.get(connection.from.node);
-      if (sourceResult && connection.from.output in sourceResult) {
-        inputs[connection.to.input] = sourceResult[connection.from.output];
+      const sourceResults = nodeResults.get(connection.from.node);
+      if (sourceResults) {
+        // 在Port数组中找到对应的输出端口
+        const sourcePort = sourceResults.find(port => port.name === connection.from.output);
+        if (sourcePort) {
+          const value = sourcePort.getValue();
+          inputs[connection.to.input] = value ? value.value : undefined;
+        }
       }
     }
 
@@ -174,26 +180,28 @@ export class GraphExecutor {
    */
   private collectTerminalOutputs(
     graph: WeaveGraph,
-    nodeResults: Map<string, Record<string, unknown>>,
+    nodeResults: Map<string, Port[]>,
   ): Record<string, SemanticValue> {
     const terminalOutputs: Record<string, SemanticValue> = {};
 
     for (const [nodeId, results] of nodeResults) {
       const node = graph.nodes[nodeId];
       
-      for (const [outputName, value] of Object.entries(results)) {
+      for (const port of results) {
         const isConsumed = graph.connections.some((conn) =>
-          conn.from.node === nodeId && conn.from.output === outputName
+          conn.from.node === nodeId && conn.from.output === port.name
         );
 
         if (!isConsumed) {
-          const key = `${nodeId}.${outputName}`;
+          const key = `${nodeId}.${port.name}`;
           
           // 获取输出端口的语义标签
-          const semanticLabel = this.getOutputSemanticLabel(node, outputName);
+          const semanticLabel = this.getOutputSemanticLabel(node, port.name);
           
           // 构建语义标签感知的值
-          const semanticValue = this.buildSemanticValue(semanticLabel, value);
+          const portValue = port.getValue();
+          const rawValue = portValue ? portValue.value : undefined;
+          const semanticValue = this.buildSemanticValue(semanticLabel, rawValue);
           
           terminalOutputs[key] = semanticValue;
         }
@@ -208,22 +216,21 @@ export class GraphExecutor {
    */
   private getOutputSemanticLabel(node: WeaveNode, outputName: string): string {
     try {
-      const plugin = this.registry.getPlugin(node.plugin);
-      if (!plugin) {
-        console.warn(`⚠️ 插件未找到: ${node.plugin}`);
+      const metadata = this.registry.getNodeMetadata(node.plugin, node.type);
+      if (!metadata) {
+        console.warn(`⚠️ 节点元数据未找到: ${node.plugin}.${node.type}`);
         return "unknown";
       }
 
-      const definition = plugin.getPluginDefinition();
-      const nodeDefinition = definition.nodes[node.type.split('.').pop() || ''];
-      
-      if (!nodeDefinition) {
-        console.warn(`⚠️ 节点定义未找到: ${node.type}`);
+      const outputPort = metadata.outputs.find(port => port.name === outputName);
+      if (!outputPort) {
+        console.warn(`⚠️ 输出端口未找到: ${outputName}`);
         return "unknown";
       }
 
-      const semanticLabel = nodeDefinition.outputs[outputName];
-      return semanticLabel || "unknown";
+      // 从Port的label构造器获取标签名称
+      const labelInstance = new outputPort.label(null);
+      return `${node.plugin}.${labelInstance.labelName}`;
     } catch (error) {
       console.warn(`⚠️ 获取语义标签失败:`, error);
       return "unknown";
@@ -234,23 +241,29 @@ export class GraphExecutor {
    * 构建语义标签感知的值
    */
   private buildSemanticValue(semanticLabel: string, value: unknown): SemanticValue {
-    // 对于复合类型，需要递归构建嵌套结构
-    if (this.isCompositeType(semanticLabel) && typeof value === 'object' && value !== null) {
-      const compositeValue: Record<string, SemanticValue> = {};
-      const typeDefinition = this.getTypeDefinition(semanticLabel);
+    // 如果值是复合类型（包含SemanticLabel字段），需要递归处理
+    if (typeof value === 'object' && value !== null) {
+      const obj = value as Record<string, unknown>;
+      const processedValue: Record<string, SemanticValue> = {};
       
-      if (typeDefinition && typeDefinition.fields) {
-        for (const [fieldName, fieldValue] of Object.entries(value as Record<string, unknown>)) {
-          const fieldSemanticLabel = typeDefinition.fields[fieldName];
-          if (fieldSemanticLabel) {
-            compositeValue[fieldName] = this.buildSemanticValue(fieldSemanticLabel, fieldValue);
-          }
+      for (const [fieldName, fieldValue] of Object.entries(obj)) {
+        // 检查字段是否是SemanticLabel
+        if (fieldValue && typeof fieldValue === 'object' && 'labelName' in fieldValue && 'value' in fieldValue) {
+          const semanticLabel = fieldValue as any;
+          const fieldSemanticLabel = `basic.${semanticLabel.labelName}`;
+          processedValue[fieldName] = this.buildSemanticValue(fieldSemanticLabel, semanticLabel.value);
+        } else {
+          // 如果不是SemanticLabel，直接使用原值
+          processedValue[fieldName] = {
+            semantic_label: "unknown",
+            value: fieldValue
+          };
         }
       }
       
       return {
         semantic_label: semanticLabel,
-        value: compositeValue
+        value: processedValue
       };
     }
 
@@ -262,47 +275,51 @@ export class GraphExecutor {
   }
 
   /**
-   * 检查是否为复合类型
-   */
-  private isCompositeType(semanticLabel: string): boolean {
-    const typeDefinition = this.getTypeDefinition(semanticLabel);
-    return typeDefinition?.kind === "composite" && !!typeDefinition.fields;
-  }
-
-  /**
-   * 获取类型定义
-   */
-  private getTypeDefinition(semanticLabel: string): any | undefined {
-    try {
-      const [pluginName, typeName] = semanticLabel.split('.');
-      const plugin = this.registry.getPlugin(pluginName);
-      if (!plugin) return undefined;
-
-      const definition = plugin.getPluginDefinition();
-      return definition.semantic_labels[typeName];
-    } catch (error) {
-      return undefined;
-    }
-  }
-
-  /**
    * 判断节点是否需要trigger输入
    */
   private nodeRequiresTrigger(node: WeaveNode): boolean {
     try {
-      const plugin = this.registry.getPlugin(node.plugin);
-      if (!plugin) return false;
-
-      const definition = plugin.getPluginDefinition();
-      const nodeDefinition = definition.nodes[node.type.split('.').pop() || ''];
-      
-      if (!nodeDefinition) return false;
+      const metadata = this.registry.getNodeMetadata(node.plugin, node.type);
+      if (!metadata) return false;
 
       // 检查节点是否有trigger输入端口
-      return 'trigger' in nodeDefinition.inputs;
+      return metadata.inputs.some(port => port.name === 'trigger');
     } catch (error) {
       // 如果无法确定，保守地认为需要trigger
       return true;
     }
+  }
+
+  /**
+   * 将输入数据转换为Port数组
+   */
+  private convertDataToPorts(node: WeaveNode, data: Record<string, unknown>): Port[] {
+    const ports: Port[] = [];
+    
+    // 获取节点元数据以了解输入端口的类型
+    const metadata = this.registry.getNodeMetadata(node.plugin, node.type);
+    if (!metadata) {
+      throw new Error(`Node metadata not found: ${node.plugin}.${node.type}`);
+    }
+    
+    // 为每个输入创建Port
+    for (const [inputName, value] of Object.entries(data)) {
+      const inputPort = metadata.inputs.find(port => port.name === inputName);
+      if (inputPort) {
+        const label = new inputPort.label(value);
+        const port = new PortClass(inputName, inputPort.label, label);
+        ports.push(port);
+      }
+    }
+    
+    return ports;
+  }
+
+  /**
+   * 将输入数据转换为Port数组
+   */
+  private collectNodeInputPorts(node: WeaveNode, connections: WeaveConnection[], nodeResults: Map<string, Port[]>): Port[] {
+    const inputs: Record<string, unknown> = this.collectNodeInputs(node, connections, nodeResults);
+    return this.convertDataToPorts(node, inputs);
   }
 } 

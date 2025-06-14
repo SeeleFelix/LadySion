@@ -1,137 +1,159 @@
-// AnimaWeave 框架核心
-// 定义纯抽象的插件接口，不依赖任何具体插件
+// AnimaWeave 框架核心定义
 
-// ========== 框架抽象接口 ==========
+// ========== 语义标签系统 ==========
 
-/**
- * 插件运行时接口 - 框架定义的标准
- */
+export abstract class SemanticLabel {
+  abstract readonly labelName: string;
+  readonly value: any;
+  
+  constructor(value: any) {
+    this.value = value;
+  }
+  
+  getConvertibleLabels(): string[] {
+    return [];
+  }
+  
+  convertTo(targetLabelName: string): any {
+    throw new Error(`Conversion from ${this.labelName} to ${targetLabelName} not supported`);
+  }
+}
+
+export class Port {
+  readonly name: string;
+  readonly label: new (value: any) => SemanticLabel;
+  private _value?: SemanticLabel;
+  
+  constructor(name: string, label: new (value: any) => SemanticLabel, value?: SemanticLabel) {
+    this.name = name;
+    this.label = label;
+    this._value = value;
+  }
+  
+  getValue(): SemanticLabel | undefined {
+    return this._value;
+  }
+  
+  setValue(value: SemanticLabel): Port {
+    return new Port(this.name, this.label, value);
+  }
+}
+
+export abstract class Node {
+  abstract readonly nodeName: string;
+  abstract readonly inputs: Port[];
+  abstract readonly outputs: Port[];
+  abstract readonly description: string;
+  
+  abstract execute(inputPorts: Port[]): Promise<Port[]> | Port[];
+}
+
+// ========== 插件系统 ==========
+
 export interface IAnimaPlugin {
   readonly name: string;
   readonly version: string;
-
-  // 类型系统接口
-  getSupportedTypes(): string[];
-  validateValue(value: unknown, typeName: string): boolean;
-  createDefaultValue(typeName: string): unknown;
-
-  // 节点系统接口
-  getSupportedNodes(): string[];
-  executeNode(nodeName: string, inputs: Record<string, unknown>): Promise<Record<string, unknown>>;
-
-  // 插件元数据
-  getPluginDefinition(): PluginDefinition;
+  
+  // 插件只提供Node类的列表
+  getSupportedNodes(): Array<new () => Node>;
+  
+  // 插件只提供Label类的列表  
+  getSupportedLabels(): Array<new (value: any) => SemanticLabel>;
 }
 
-/**
- * 插件定义结构 - 从anima文件解析出的结构
- */
-export interface PluginDefinition {
-  metadata: {
-    name: string;
-    version: string;
-    description?: string;
-  };
-  semantic_labels: Record<string, TypeDefinition>;
-  nodes: Record<string, NodeDefinition>;
-}
-
-export interface TypeDefinition {
-  name: string;
-  kind: "primitive" | "composite" | "semantic";
-  baseType?: string;
-  fields?: Record<string, string>;
-  validation?: string[];
-}
-
-export interface NodeDefinition {
-  name: string;
-  inputs: Record<string, string>;
-  outputs: Record<string, string>;
-  mode: "Concurrent" | "Sequential";
-  description?: string;
-}
-
-/**
- * 图执行上下文
- */
-export interface ExecutionContext {
-  nodeId: string;
-  nodeName: string;
-  inputs: Record<string, unknown>;
-  metadata?: Record<string, unknown>;
-}
-
-/**
- * 插件注册表 - 框架核心组件
- */
 export class PluginRegistry {
   private plugins = new Map<string, IAnimaPlugin>();
+  private nodeClasses = new Map<string, new () => Node>(); // fullNodeName -> NodeClass
+  private labelClasses = new Map<string, new (value: any) => SemanticLabel>(); // fullLabelName -> LabelClass
 
-  /**
-   * 注册插件
-   */
   register(plugin: IAnimaPlugin): void {
-    console.log(`🔌 注册插件: ${plugin.name} v${plugin.version}`);
-
     if (this.plugins.has(plugin.name)) {
       throw new Error(`Plugin ${plugin.name} already registered`);
     }
-
+    
     this.plugins.set(plugin.name, plugin);
+    
+    // 收集插件的所有Node类
+    const supportedNodes = plugin.getSupportedNodes();
+    for (const NodeClass of supportedNodes) {
+      const nodeInstance = new NodeClass(); // 临时实例获取nodeName
+      const fullNodeName = `${plugin.name}.${nodeInstance.nodeName}`;
+      this.nodeClasses.set(fullNodeName, NodeClass);
+    }
+    
+    // 收集插件的所有Label类
+    const supportedLabels = plugin.getSupportedLabels();
+    for (const LabelClass of supportedLabels) {
+      const labelInstance = new LabelClass(null); // 临时实例获取labelName
+      const fullLabelName = `${plugin.name}.${labelInstance.labelName}`;
+      this.labelClasses.set(fullLabelName, LabelClass);
+    }
   }
 
-  /**
-   * 获取插件
-   */
   getPlugin(name: string): IAnimaPlugin | undefined {
     return this.plugins.get(name);
   }
 
-  /**
-   * 列出所有插件
-   */
   listPlugins(): string[] {
     return Array.from(this.plugins.keys());
   }
 
-  /**
-   * 执行节点
-   */
-  async executeNode(
-    pluginName: string,
-    nodeName: string,
-    inputs: Record<string, unknown>,
-  ): Promise<Record<string, unknown>> {
-    const plugin = this.getPlugin(pluginName);
-    if (!plugin) {
-      throw new Error(`Plugin not found: ${pluginName}`);
+  // 框架直接执行Node，不通过插件
+  async executeNode(pluginName: string, nodeName: string, inputPorts: Port[]): Promise<Port[]> {
+    const fullNodeName = `${pluginName}.${nodeName}`;
+    const NodeClass = this.nodeClasses.get(fullNodeName);
+    
+    if (!NodeClass) {
+      throw new Error(`Node not found: ${fullNodeName}`);
     }
-
-    if (!plugin.getSupportedNodes().includes(nodeName)) {
-      throw new Error(`Node ${nodeName} not supported by plugin ${pluginName}`);
-    }
-
-    console.log(`⚙️ 执行节点: ${pluginName}.${nodeName}`, inputs);
-    return await plugin.executeNode(nodeName, inputs);
+    
+    const nodeInstance = new NodeClass();
+    return await nodeInstance.execute(inputPorts);
   }
 
-  /**
-   * 验证类型值
-   */
-  validateValue(pluginName: string, typeName: string, value: unknown): boolean {
-    const plugin = this.getPlugin(pluginName);
-    if (!plugin) {
-      throw new Error(`Plugin not found: ${pluginName}`);
+  // 框架直接创建Label，不通过插件
+  createLabel(pluginName: string, labelName: string, value: any): SemanticLabel {
+    const fullLabelName = `${pluginName}.${labelName}`;
+    const LabelClass = this.labelClasses.get(fullLabelName);
+    
+    if (!LabelClass) {
+      throw new Error(`Label not found: ${fullLabelName}`);
     }
+    
+    return new LabelClass(value);
+  }
 
-    return plugin.validateValue(value, typeName);
+  // 获取Node的元数据信息（通过实例化获取）
+  getNodeMetadata(pluginName: string, nodeName: string): { inputs: Port[], outputs: Port[], description: string } | undefined {
+    const fullNodeName = `${pluginName}.${nodeName}`;
+    const NodeClass = this.nodeClasses.get(fullNodeName);
+    
+    if (!NodeClass) {
+      return undefined;
+    }
+    
+    const nodeInstance = new NodeClass();
+    return {
+      inputs: nodeInstance.inputs,
+      outputs: nodeInstance.outputs,
+      description: nodeInstance.description
+    };
+  }
+
+  // 检查Node是否存在
+  hasNode(pluginName: string, nodeName: string): boolean {
+    const fullNodeName = `${pluginName}.${nodeName}`;
+    return this.nodeClasses.has(fullNodeName);
+  }
+
+  // 获取所有注册的Node
+  getAllNodes(): string[] {
+    return Array.from(this.nodeClasses.keys());
   }
 }
 
-/**
- * DSL解析结果接口
- */
+// ========== 图结构 ==========
+
 export interface WeaveGraph {
   nodes: Record<string, WeaveNode>;
   connections: WeaveConnection[];
@@ -144,8 +166,8 @@ export interface WeaveGraph {
 
 export interface WeaveNode {
   id: string;
-  type: string; // 节点类型名
-  plugin: string; // 插件名
+  type: string;
+  plugin: string;
   parameters?: Record<string, unknown>;
 }
 
@@ -154,30 +176,23 @@ export interface WeaveConnection {
   to: { node: string; input: string };
 }
 
-/**
- * 语义标签感知的值表示
- */
 export interface SemanticValue {
-  semantic_label: string;  // 如 "basic.UUID", "basic.Prompt"
-  value: unknown;          // 原始值或嵌套的SemanticValue结构
+  semantic_label: string;
+  value: unknown;
 }
 
-/**
- * 执行结果状态
- */
+// ========== 执行结果 ==========
+
 export enum ExecutionStatus {
   Success = "success",
-  ParseError = "parse_error",      // DSL语法解析错误
-  ValidationError = "validation_error", // 静态检查错误（类型、连接、DAG等）
-  ConfigError = "config_error",    // 配置和导入错误
-  RuntimeError = "runtime_error",  // 节点执行失败
-  DataError = "data_error",        // 数据转换和处理错误
-  FlowError = "flow_error",        // 控制流和状态错误
+  ParseError = "parse_error",
+  ValidationError = "validation_error",
+  ConfigError = "config_error",
+  RuntimeError = "runtime_error",
+  DataError = "data_error",
+  FlowError = "flow_error",
 }
 
-/**
- * 错误详情
- */
 export interface ErrorDetails {
   code: ExecutionStatus;
   message: string;
@@ -191,21 +206,15 @@ export interface ErrorDetails {
   context?: Record<string, unknown>;
 }
 
-/**
- * 执行结果 - 带详细错误分类
- */
 export interface FateEcho {
   status: ExecutionStatus;
-  outputs: string;  // 成功时：JSON序列化的SemanticValue结构；失败时：错误详情JSON
-  error?: ErrorDetails; // 错误时的详细信息
-  getOutputs(): Record<string, SemanticValue>;  // 返回语义标签感知的输出
-  getRawOutputs(): Record<string, unknown>;     // 返回原始值（向后兼容）
-  getErrorDetails(): ErrorDetails | null;      // 获取错误详情
+  outputs: string;
+  error?: ErrorDetails;
+  getOutputs(): Record<string, SemanticValue>;
+  getRawOutputs(): Record<string, unknown>;
+  getErrorDetails(): ErrorDetails | null;
 }
 
-/**
- * 错误辅助函数
- */
 export function isStaticError(status: ExecutionStatus): boolean {
   return status === ExecutionStatus.ParseError || 
          status === ExecutionStatus.ValidationError || 

@@ -7,14 +7,12 @@ import { ExecutionStatus, isStaticError, isRuntimeError, type FateEcho } from ".
 // 重新导出核心接口
 export { ExecutionStatus, isStaticError, isRuntimeError, type FateEcho };
 export type {
-  ExecutionContext,
   IAnimaPlugin,
-  NodeDefinition,
-  PluginDefinition,
-  TypeDefinition,
   WeaveConnection,
   WeaveGraph,
   WeaveNode,
+  SemanticValue,
+  ErrorDetails,
 } from "./framework/core.ts";
 
 /**

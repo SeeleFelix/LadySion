@@ -1,7 +1,7 @@
 // AnimaWeave 插件管理器
 // 负责插件的发现、加载、路径解析等功能
 
-import type { IAnimaPlugin, PluginRegistry, PluginDefinition } from "./core.ts";
+import type { IAnimaPlugin, PluginRegistry } from "./core.ts";
 
 /**
  * 插件管理器 - 处理插件的动态发现和加载
@@ -15,10 +15,10 @@ export class PluginManager {
   async discoverAndLoadPlugins(): Promise<void> {
     console.log("🔍 动态发现插件...");
 
-    // 策略1: 扫描plugins目录，发现TypeScript插件实现
+    // 扫描plugins目录，发现TypeScript插件实现
     await this.scanPluginModules();
 
-    // 策略2: 自动生成anima文件（给AI看的元数据）
+    // 自动生成anima文件（给AI看的元数据）
     await this.generateAnimaFiles();
 
     console.log(`📊 已加载插件: ${this.registry.listPlugins().join(", ")}`);
@@ -191,11 +191,15 @@ export class PluginManager {
         const plugin = this.registry.getPlugin(pluginName);
         if (!plugin) continue;
 
-        // 从插件获取定义
-        const definition = plugin.getPluginDefinition();
-
         // 生成anima文件内容
-        const animaContent = this.generateAnimaContent(definition);
+        const animaContent = this.generateAnimaContent(plugin);
+
+        // 确保sanctums目录存在
+        try {
+          await Deno.mkdir("sanctums", { recursive: true });
+        } catch {
+          // 目录可能已存在，忽略错误
+        }
 
         // 写入anima文件
         const animaPath = `sanctums/${pluginName}.anima`;
@@ -214,39 +218,41 @@ export class PluginManager {
   /**
    * 生成anima文件内容
    */
-  private generateAnimaContent(definition: PluginDefinition): string {
+  private generateAnimaContent(plugin: IAnimaPlugin): string {
     let content = "-- types\n";
 
-    // 生成类型定义
-    for (const [typeName, typeDef] of Object.entries(definition.semantic_labels)) {
-      const typeDefinition = typeDef as any;
-      if (typeDefinition.kind === "composite" && typeDefinition.fields) {
-        content += `${typeName} {\n`;
-        for (const [fieldName, fieldType] of Object.entries(typeDefinition.fields)) {
-          content += `    ${fieldName} ${fieldType}\n`;
-        }
-        content += "}\n";
-      } else {
-        content += `${typeName}\n`;
-      }
+    // 生成类型定义（从Label类获取）
+    const supportedLabels = plugin.getSupportedLabels();
+    for (const LabelClass of supportedLabels) {
+      const labelInstance = new LabelClass(null);
+      content += `${labelInstance.labelName}\n`;
     }
 
     content += "--\n\n-- nodes\n";
 
-    // 生成节点定义
-    for (const [nodeName, nodeDef] of Object.entries(definition.nodes)) {
-      const nodeDefinition = nodeDef as any;
-      content += `${nodeName} {\n`;
-      content += `    mode ${nodeDefinition.mode}\n`;
+    // 生成节点定义（从Node类获取）
+    const supportedNodes = plugin.getSupportedNodes();
+    for (const NodeClass of supportedNodes) {
+      const nodeInstance = new NodeClass();
+      content += `${nodeInstance.nodeName} {\n`;
+      content += `    mode Concurrent\n`; // 默认模式
       content += `    in {\n`;
-      for (const [inputName, inputType] of Object.entries(nodeDefinition.inputs)) {
-        content += `        ${inputName} ${inputType}\n`;
+      
+      // 输入端口
+      for (const inputPort of nodeInstance.inputs) {
+        const labelInstance = new inputPort.label(null);
+        content += `        ${inputPort.name} ${plugin.name}.${labelInstance.labelName}\n`;
       }
+      
       content += `    }\n`;
       content += `    out {\n`;
-      for (const [outputName, outputType] of Object.entries(nodeDefinition.outputs)) {
-        content += `        ${outputName} ${outputType}\n`;
+      
+      // 输出端口
+      for (const outputPort of nodeInstance.outputs) {
+        const labelInstance = new outputPort.label(null);
+        content += `        ${outputPort.name} ${plugin.name}.${labelInstance.labelName}\n`;
       }
+      
       content += `    }\n`;
       content += "}\n\n";
     }
