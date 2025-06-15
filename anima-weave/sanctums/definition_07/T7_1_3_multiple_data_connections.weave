@@ -1,0 +1,30 @@
+-- import
+basic.anima
+--
+
+-- graph
+nodes {
+    starter basic.Start
+    timestamper basic.GetTimestamp
+    isEven basic.IsEven
+    formatter basic.StringFormatter
+}
+
+datas {
+    // 验证多重数据连接：多个 (DataOutputPort, DataInputPort) 有序对
+    // 每个连接都是集合 𝒟 中的独立元素
+    
+    // 连接1: Int -> Int (时间戳到IsEven)
+    timestamper.timestamp -> isEven.number;
+    
+    // 连接2: UUID -> String (启动ID到格式化器)  
+    starter.execution_id -> formatter.input;
+}
+
+controls {
+    // 控制流协调多个节点的执行
+    starter.signal -> timestamper.trigger;
+    timestamper.done -> isEven.trigger;
+    starter.signal -> formatter.trigger;
+}
+-- 

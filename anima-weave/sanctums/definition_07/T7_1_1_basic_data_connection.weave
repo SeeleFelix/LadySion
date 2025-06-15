@@ -1,0 +1,23 @@
+-- import
+basic.anima
+--
+
+-- graph
+nodes {
+    starter basic.Start
+    formatter basic.StringFormatter
+}
+
+datas {
+    // 验证基本数据连接：(DataOutputPort, DataInputPort) 有序对
+    // starter.execution_id 是 DataOutputPort (basic.UUID)
+    // formatter.input 是 DataInputPort (basic.String)
+    // 这个连接体现了 𝒟 ⊆ DataOutputPort × DataInputPort 的基本结构
+    starter.execution_id -> formatter.input;
+}
+
+controls {
+    // 控制流连接，确保节点按序执行
+    starter.signal -> formatter.trigger;
+}
+-- 
