@@ -1,0 +1,39 @@
+-- import
+basic.anima
+--
+
+-- graph
+nodes {
+    // 验证节点集合支持基本的集合操作概念
+    // 展示元素归属关系和集合的协同性质
+    
+    // 核心数据生成子集
+    dataSource basic.Start           // 数据源节点 ∈ 𝒩
+    timeProvider basic.GetTimestamp  // 时间提供者 ∈ 𝒩
+    
+    // 数据处理子集  
+    boolProcessor basic.IsEven       // 布尔处理器 ∈ 𝒩
+    stringProcessor basic.StringFormatter  // 字符串处理器 ∈ 𝒩
+    
+    // 复合处理子集
+    promptCreator basic.CreatePrompt // 提示创建器 ∈ 𝒩
+    completionMarker basic.CompletionMarker // 完成标记器 ∈ 𝒩
+}
+
+datas {
+    // 验证集合内元素间的数据流协同
+    timeProvider.timestamp -> boolProcessor.number;
+    dataSource.execution_id -> stringProcessor.input;
+    dataSource.execution_id -> promptCreator.name;
+    stringProcessor.formatted -> promptCreator.content;
+}
+
+controls {
+    // 验证集合内元素间的控制流协同
+    dataSource.signal -> timeProvider.trigger;
+    dataSource.signal -> stringProcessor.trigger;
+    timeProvider.done -> boolProcessor.trigger;
+    boolProcessor.done -> promptCreator.trigger;
+    promptCreator.done -> completionMarker.trigger;
+}
+-- 

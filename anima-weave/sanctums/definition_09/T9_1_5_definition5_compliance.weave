@@ -1,0 +1,33 @@
+-- import
+basic.anima
+--
+
+-- graph
+nodes {
+    // 验证节点集合𝒩中的节点完全符合定义5的所有约束
+    // 每个节点都必须满足七元组: n = (D_in, C_in, D_out, C_out, φ, concurrent_mode, D_optional)
+    
+    // 展示不同端口配置的节点都满足定义5
+    source basic.Start              // D_in=∅, C_in=∅, D_out≠∅, C_out≠∅
+    timer basic.GetTimestamp        // D_in=∅, C_in≠∅, D_out≠∅, C_out≠∅
+    calculator basic.IsEven         // D_in≠∅, C_in≠∅, D_out≠∅, C_out≠∅
+    formatter basic.FormatNumber    // D_in≠∅, C_in≠∅, D_out≠∅, C_out≠∅
+    processor basic.DataProcessor   // D_in=∅, C_in≠∅, D_out≠∅, C_out≠∅
+    marker basic.CompletionMarker   // D_in=∅, C_in≠∅, D_out≠∅, C_out≠∅
+}
+
+datas {
+    // 验证数据端口集合D_in和D_out的完整性
+    timer.timestamp -> calculator.number;
+    timer.timestamp -> formatter.number;
+}
+
+controls {
+    // 验证控制端口集合C_in和C_out的完整性
+    source.signal -> timer.trigger;
+    timer.done -> calculator.trigger;
+    timer.done -> formatter.trigger;
+    source.signal -> processor.execute;
+    calculator.done -> marker.trigger;
+}
+-- 

@@ -1,0 +1,39 @@
+-- import
+basic.anima
+--
+
+-- graph
+nodes {
+    // 验证节点集合𝒩包含多个满足定义5的节点
+    // 每个节点都是七元组: (D_in, C_in, D_out, C_out, φ, concurrent_mode, D_optional)
+    
+    // n₁: Start节点 - 最简单的节点，无数据输入
+    starter basic.Start
+    
+    // n₂: GetTimestamp节点 - 有控制输入，生成数据
+    timestamper basic.GetTimestamp
+    
+    // n₃: IsEven节点 - 有数据和控制输入，进行计算
+    evenChecker basic.IsEven
+    
+    // n₄: StringFormatter节点 - 字符串处理节点
+    formatter basic.StringFormatter
+    
+    // n₅: DataProcessor节点 - 独立的处理节点
+    processor basic.DataProcessor
+}
+
+datas {
+    // 验证节点集合中的数据连接
+    timestamper.timestamp -> evenChecker.number;
+    starter.execution_id -> formatter.input;
+}
+
+controls {
+    // 验证节点集合中的控制连接，确保所有节点都能被触发
+    starter.signal -> timestamper.trigger;
+    starter.signal -> formatter.trigger;
+    starter.signal -> processor.execute;
+    timestamper.done -> evenChecker.trigger;
+}
+-- 
