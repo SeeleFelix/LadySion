@@ -1,0 +1,61 @@
+-- import
+basic.anima
+--
+
+-- graph
+nodes {
+    // 验证连接有效性约束的完整数学性质
+    // 这个图包含多种节点和连接模式，全面验证数学定义的实现
+    
+    // n₁: 起始节点 - 提供初始数据和控制信号
+    starter basic.Start
+    
+    // n₂: 时间戳节点 - 时间数据生成器
+    timestamper basic.GetTimestamp
+    
+    // n₃: 偶数判断器 - 数学计算节点
+    evenChecker basic.IsEven
+    
+    // n₄: 数字格式化器 - 数据转换节点
+    numberFormatter basic.FormatNumber
+    
+    // n₅: 字符串格式化器 - 额外的数据处理节点
+    stringFormatter basic.StringFormatter
+}
+
+datas {
+    // 验证数据连接集合𝒟_G中每个连接的有效性约束
+    
+    // 连接1: 时间戳到偶数检查
+    // (timestamper.timestamp, evenChecker.number) ∈ 𝒟_G
+    // ∃n₁=timestamper, n₂=evenChecker: 
+    //   timestamp ∈ timestamper.D_out ∧ number ∈ evenChecker.D_in ✓
+    timestamper.timestamp -> evenChecker.number;
+    
+    // 连接2: 时间戳到数字格式化
+    // (timestamper.timestamp, numberFormatter.number) ∈ 𝒟_G
+    // ∃n₁=timestamper, n₂=numberFormatter: 
+    //   timestamp ∈ timestamper.D_out ∧ number ∈ numberFormatter.D_in ✓
+    timestamper.timestamp -> numberFormatter.number;
+    
+    // 连接3: UUID到字符串格式化
+    // (starter.execution_id, stringFormatter.input) ∈ 𝒟_G
+    // ∃n₁=starter, n₂=stringFormatter: 
+    //   execution_id ∈ starter.D_out ∧ input ∈ stringFormatter.D_in ✓
+    starter.execution_id -> stringFormatter.input;
+}
+
+controls {
+    // 验证控制连接集合ℰ_G中每个连接的有效性约束
+    
+    // 控制流链1: 启动时间戳生成
+    starter.signal -> timestamper.trigger;
+    
+    // 控制流链2: 时间戳完成后触发计算
+    timestamper.done -> evenChecker.trigger;
+    timestamper.done -> numberFormatter.trigger;
+    
+    // 控制流链3: 并行启动字符串处理
+    starter.signal -> stringFormatter.trigger;
+}
+-- 

@@ -1,0 +1,49 @@
+-- import
+basic.anima
+--
+
+-- graph
+nodes {
+    // 验证多重连接有效性约束：每个连接都独立满足∀(p_out, p_in) ∈ 𝒟_G, ∃n₁,n₂ ∈ 𝒩_G
+    // 图中包含多个数据连接，每个都必须有明确的节点归属
+    
+    // n₁: 起始节点
+    starter basic.Start
+    
+    // n₂: 时间戳节点，产生整数数据
+    timestamper basic.GetTimestamp
+    
+    // n₃: 偶数判断节点，接收整数，产生布尔值
+    isEven basic.IsEven
+    
+    // n₄: 字符串格式化节点，接收UUID，产生字符串
+    formatter basic.StringFormatter
+}
+
+datas {
+    // 验证多个数据连接的有效性约束
+    
+    // 连接1: (timestamper.timestamp, isEven.number) ∈ 𝒟_G
+    //   - p_out = timestamper.timestamp ∈ timestamper.D_out (n₁ = timestamper)
+    //   - p_in = isEven.number ∈ isEven.D_in (n₂ = isEven)
+    timestamper.timestamp -> isEven.number;
+    
+    // 连接2: (starter.execution_id, formatter.input) ∈ 𝒟_G
+    //   - p_out = starter.execution_id ∈ starter.D_out (n₁ = starter)
+    //   - p_in = formatter.input ∈ formatter.D_in (n₂ = formatter)
+    starter.execution_id -> formatter.input;
+}
+
+controls {
+    // 验证多个控制连接的有效性约束
+    
+    // 连接1: (starter.signal, timestamper.trigger) ∈ ℰ_G
+    starter.signal -> timestamper.trigger;
+    
+    // 连接2: (timestamper.done, isEven.trigger) ∈ ℰ_G
+    timestamper.done -> isEven.trigger;
+    
+    // 连接3: (starter.signal, formatter.trigger) ∈ ℰ_G
+    starter.signal -> formatter.trigger;
+}
+-- 

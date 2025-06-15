@@ -1,0 +1,40 @@
+-- import
+basic.anima
+--
+
+-- graph
+nodes {
+    // 验证基本连接有效性约束：∀(p_out, p_in) ∈ 𝒟_G, ∃n₁,n₂ ∈ 𝒩_G
+    // 每个数据连接都必须有明确的节点归属关系
+    
+    // n₁: 起始节点，提供数据输出端口
+    starter basic.Start
+    
+    // n₂: 时间戳节点，接收控制输入，提供数据输出
+    timestamper basic.GetTimestamp
+    
+    // n₃: 字符串格式化节点，接收数据输入，提供数据输出
+    formatter basic.StringFormatter
+}
+
+datas {
+    // 验证数据连接的有效性约束
+    // 连接1: (starter.execution_id, formatter.input) ∈ 𝒟_G
+    //   - p_out = starter.execution_id ∈ starter.D_out (n₁ = starter)
+    //   - p_in = formatter.input ∈ formatter.D_in (n₂ = formatter)
+    starter.execution_id -> formatter.input;
+}
+
+controls {
+    // 验证控制连接的有效性约束  
+    // 连接1: (starter.signal, timestamper.trigger) ∈ ℰ_G
+    //   - p_out = starter.signal ∈ starter.C_out (n₁ = starter)
+    //   - p_in = timestamper.trigger ∈ timestamper.C_in (n₂ = timestamper)
+    starter.signal -> timestamper.trigger;
+    
+    // 连接2: (starter.signal, formatter.trigger) ∈ ℰ_G
+    //   - p_out = starter.signal ∈ starter.C_out (n₁ = starter)
+    //   - p_in = formatter.trigger ∈ formatter.C_in (n₂ = formatter)
+    starter.signal -> formatter.trigger;
+}
+-- 
