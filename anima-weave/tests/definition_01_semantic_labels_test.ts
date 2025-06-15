@@ -25,6 +25,7 @@
 import { beforeEach, describe, it } from "jsr:@std/testing/bdd";
 import { assertEquals, assertExists, assertStringIncludes } from "jsr:@std/assert";
 import { awakening, ExecutionStatus, isRuntimeError, isStaticError } from "../src/mod.ts";
+import { type ValidationErrorContext } from "../src/framework/core.ts";
 
 describe("定义1：语义标签集合 (ℒ)", () => {
   describe("T1.1.1: 基础语义标签的执行传播", () => {
@@ -184,34 +185,31 @@ describe("定义1：语义标签集合 (ℒ)", () => {
 
       // 🎯 核心验证3: 错误信息应该明确指出类型不匹配
       const errorDetails = result.getErrorDetails();
-      assertEquals(errorDetails !== null, true, "应该有详细的错误信息");
+      assertExists(errorDetails, "应该有详细的错误信息");
+      assertExists(errorDetails.context, "应该有错误上下文");
+      
+      const validationContext = errorDetails.context as ValidationErrorContext;
+      assertExists(validationContext.validationErrors, "应该有验证错误列表");
+      
+      const validationErrors = validationContext.validationErrors;
+      assertEquals(validationErrors.length > 0, true, "应该至少有一个验证错误");
+      
+      // 检查第一个错误是否为类型不匹配
+      const firstError = validationErrors[0];
+      assertEquals(firstError.type, "TYPE_MISMATCH", "应该是类型不匹配错误");
+      
+      // 验证错误包含源类型和目标类型信息
+      assertExists(firstError.sourceType, "应该有源类型信息");
+      assertExists(firstError.targetType, "应该有目标类型信息");
+      
+      // 验证连接信息的完整性
+      assertExists(firstError.connection.from.node, "应该有源节点名");
+      assertExists(firstError.connection.from.port, "应该有源端口名");
+      assertExists(firstError.connection.to.node, "应该有目标节点名");
+      assertExists(firstError.connection.to.port, "应该有目标端口名");
 
-      if (errorDetails) {
-        assertStringIncludes(
-          errorDetails.message.toLowerCase(),
-          "type",
-          "错误信息应该提到类型问题",
-        );
-
-        // 验证错误发生的位置信息
-        assertEquals(
-          errorDetails.location?.file?.includes("T1_1_4_type_mismatch_test.weave"),
-          true,
-          "错误应该定位到具体的weave文件",
-        );
-      }
-
-      // 🎯 核心验证4: 验证这是真正的静态检查，不是运行时检查
-      const errorMessage = result.outputs.toLowerCase();
-      const isRuntimeCheck = errorMessage.includes("requires") &&
-        errorMessage.includes("input") &&
-        errorMessage.includes("node");
-
-      assertEquals(
-        isRuntimeCheck,
-        false,
-        "错误不应该来自节点执行时的检查，应该来自静态验证阶段",
-      );
+      console.log("🔍 类型不匹配错误详情:");
+      console.log(JSON.stringify(firstError, null, 2));
     });
   });
 

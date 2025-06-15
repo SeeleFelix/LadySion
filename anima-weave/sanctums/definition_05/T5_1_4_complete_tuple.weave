@@ -1,0 +1,22 @@
+-- import
+basic.anima
+--
+
+-- graph
+nodes {
+    starter basic.Start
+    timer basic.GetTimestamp
+    checker basic.IsEven
+    formatter basic.FormatNumber
+}
+
+datas {
+    timer.timestamp -> checker.number;
+}
+
+controls {
+    starter.signal -> timer.trigger;
+    timer.done -> checker.trigger;
+    checker.done -> formatter.trigger;
+}
+-- 
