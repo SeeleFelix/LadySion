@@ -1,0 +1,35 @@
+-- import
+basic.anima
+--
+
+-- graph
+nodes {
+    // 展示图的子集关系：𝒩_G ⊆ 𝒩, 𝒟_G ⊆ 𝒟, ℰ_G ⊆ ℰ
+    // 当前图只使用全局定义中的一个子集
+    
+    // 从全局节点集合𝒩中选择的子集𝒩_G
+    starter basic.Start          // 从𝒩中选择的节点
+    processor basic.DataProcessor // 从𝒩中选择的节点  
+    formatter basic.FormatNumber  // 从𝒩中选择的节点
+}
+
+datas {
+    // 从全局数据连接集合𝒟中选择的子集𝒟_G
+    // 这些连接必须符合端口语义标签兼容性
+    
+    // 虽然没有直接的数据连接，但通过静态分析可以验证
+    // starter.execution_id -> processor.input (如果processor有数据输入的话)
+    // 这里展示了𝒟_G ⊆ 𝒟的概念
+}
+
+controls {
+    // 从全局控制连接集合ℰ中选择的子集ℰ_G
+    // 展示控制流的子集特性
+    
+    starter.signal -> processor.execute;  // 控制连接1: ∈ ℰ_G ⊆ ℰ
+    starter.signal -> formatter.trigger;  // 控制连接2: ∈ ℰ_G ⊆ ℰ
+    
+    // 注意：我们没有使用所有可能的控制连接，只选择了需要的子集
+    // 这体现了ℰ_G是ℰ的真子集的概念
+}
+-- 

@@ -1,0 +1,56 @@
+-- import
+basic.anima
+--
+
+-- graph
+nodes {
+    // 验证图三元组形成完整的计算结构
+    // 展示节点间的连通性和数据流/控制流的有机结合
+    
+    // 输入层节点
+    inputSource basic.Start                // 数据源节点
+    timeProvider basic.GetTimestamp        // 时间提供节点
+    
+    // 处理层节点
+    boolAnalyzer basic.IsEven             // 布尔分析节点
+    stringProcessor basic.StringFormatter  // 字符串处理节点
+    numberFormatter basic.FormatNumber     // 数字格式化节点
+    
+    // 输出层节点
+    resultAggregator basic.CreatePrompt   // 结果聚合节点
+    finalMarker basic.CompletionMarker    // 完成标记节点
+}
+
+datas {
+    // 𝒟_G: 形成完整的数据流拓扑
+    // 展示图的数据连通性
+    
+    // 时间数据的多路分发
+    timeProvider.timestamp -> boolAnalyzer.number;     // 时间→布尔分析
+    timeProvider.timestamp -> numberFormatter.number;  // 时间→数字格式化
+    
+    // 字符串数据的处理链
+    inputSource.execution_id -> stringProcessor.input;      // ID→字符串处理
+    inputSource.execution_id -> resultAggregator.name;      // ID→聚合器名称
+    
+    // 处理结果的聚合
+    stringProcessor.formatted -> resultAggregator.content;  // 格式化→聚合内容
+}
+
+controls {
+    // ℰ_G: 形成完整的控制流拓扑
+    // 展示图的控制协调能力
+    
+    // 第一层控制：启动并行处理
+    inputSource.signal -> timeProvider.trigger;      // 启动时间生成
+    inputSource.signal -> stringProcessor.trigger;   // 启动字符串处理
+    
+    // 第二层控制：协调中间处理
+    timeProvider.done -> boolAnalyzer.trigger;      // 时间完成→布尔分析
+    timeProvider.done -> numberFormatter.trigger;   // 时间完成→数字格式化
+    
+    // 第三层控制：聚合最终结果
+    boolAnalyzer.done -> resultAggregator.trigger;  // 布尔完成→结果聚合
+    resultAggregator.done -> finalMarker.trigger;   // 聚合完成→最终标记
+}
+-- 
