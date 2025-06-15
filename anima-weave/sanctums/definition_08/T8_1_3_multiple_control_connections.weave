@@ -1,0 +1,24 @@
+-- import
+basic.anima
+--
+
+-- graph
+nodes {
+    starter basic.Start
+    timestamper basic.GetTimestamp
+    formatter basic.StringFormatter
+}
+
+datas {
+    // 数据连接支持并行处理
+    starter.execution_id -> formatter.input;
+}
+
+controls {
+    // 验证多重控制连接：控制信号扇出到多个目标
+    // 从一个 ControlOutputPort 连接到多个 ControlInputPort
+    // 每个连接都是 ℰ ⊆ ControlOutputPort × ControlInputPort 中的独立元素
+    starter.signal -> timestamper.trigger;
+    starter.signal -> formatter.trigger;
+}
+-- 

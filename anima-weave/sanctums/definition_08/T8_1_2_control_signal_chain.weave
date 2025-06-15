@@ -1,0 +1,27 @@
+-- import
+basic.anima
+--
+
+-- graph
+nodes {
+    starter basic.Start
+    timestamper basic.GetTimestamp
+    checker basic.IsEven
+    formatter basic.StringFormatter
+}
+
+datas {
+    // 数据连接支持链式处理
+    timestamper.timestamp -> checker.number;
+    starter.execution_id -> formatter.input;
+}
+
+controls {
+    // 验证控制信号的链式传播：(ControlOutputPort, ControlInputPort) 链式连接
+    // 形成控制流：starter → timestamper → checker → formatter
+    // 每个连接都是 ℰ 集合中的独立元素
+    starter.signal -> timestamper.trigger;
+    timestamper.done -> checker.trigger;
+    checker.done -> formatter.trigger;
+}
+-- 

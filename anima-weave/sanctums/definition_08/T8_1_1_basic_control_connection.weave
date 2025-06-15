@@ -1,0 +1,18 @@
+-- import
+basic.anima
+--
+
+-- graph
+nodes {
+    starter basic.Start
+    timestamper basic.GetTimestamp
+}
+
+controls {
+    // 验证基本控制连接：(ControlOutputPort, ControlInputPort) 有序对
+    // starter.signal 是 ControlOutputPort (basic.Signal)
+    // timestamper.trigger 是 ControlInputPort (basic.Signal)
+    // 这个连接体现了 ℰ ⊆ ControlOutputPort × ControlInputPort 的基本结构
+    starter.signal -> timestamper.trigger;
+}
+-- 
