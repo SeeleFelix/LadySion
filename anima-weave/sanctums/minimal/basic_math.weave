@@ -1,0 +1,26 @@
+-- import
+math.anima
+--
+
+-- graph
+// 基础数学运算图：Constant(5) + Constant(3) = 8
+
+nodes {
+    input5 math.Constant { 
+        value 5
+    }
+    input3 math.Constant { value 3 }
+    adder math.Add
+    output math.Output
+}
+
+datas {
+    input5.output -> adder.a;
+    input3.output -> adder.b;
+    adder.result -> output.input;
+}
+
+controls {
+    // 使用简单的顺序控制
+}
+-- 

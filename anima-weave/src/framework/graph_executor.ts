@@ -109,7 +109,7 @@ export class GraphExecutor {
       const inputPorts = this.collectNodeInputPorts(node, graph.connections, nodeResults);
 
       // 执行节点
-      const outputPorts = await this.registry.executeNode(node.vessel, node.type, inputPorts);
+      const outputPorts = await this.registry.executeNode(node.vessel, node.type, inputPorts, node.config);
 
       const nodeEndTime = Date.now();
       const nodeDuration = nodeEndTime - nodeStartTime;
@@ -244,10 +244,7 @@ export class GraphExecutor {
       }
     }
 
-    // 添加节点参数
-    if (node.parameters) {
-      Object.assign(inputs, node.parameters);
-    }
+    // 注意：配置参数通过executeNode方法单独传递，不混入inputs
 
     return inputs;
   }

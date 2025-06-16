@@ -52,8 +52,41 @@ nodeInstances
     { return instances; }
 
 nodeInstance
-  = __ id:identifier __ type:qualifiedName __
-    { return { id, type }; }
+  = __ id:identifier __ type:qualifiedName __ config:configBlock? __
+    { return { id, type, config: config || {} }; }
+
+configBlock
+  = "{" __ properties:configProperties? __ "}"
+    { return properties ? Object.fromEntries(properties) : {}; }
+
+configProperties
+  = first:configProperty rest:(__ configProperty)*
+    { return [first, ...rest.map(r => r[1])]; }
+
+configProperty
+  = __ key:identifier __ value:configValue __
+    { return [key, value]; }
+
+configValue
+  = configNumber / configString / configBoolean
+
+configNumber
+  = digits:[0-9]+ decimal:("." [0-9]+)?
+    { 
+      const intPart = digits.join('');
+      if (decimal) {
+        return parseFloat(intPart + decimal[0] + decimal[1].join(''));
+      }
+      return parseInt(intPart, 10);
+    }
+
+configString
+  = '"' chars:[^"]* '"'
+    { return chars.join(''); }
+
+configBoolean
+  = "true" { return true; }
+  / "false" { return false; }
 
 // ===== Data Section =====
 dataSection

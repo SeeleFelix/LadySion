@@ -102,11 +102,18 @@ export class WeaveParser {
       // 解析 "basic.Start" 格式：basic是vessel，Start是type
       const [vessel, type] = node.type.split(".");
 
-      graph.nodes[node.id] = {
+      const weaveNode: WeaveNode = {
         id: node.id,
         type: type,
         vessel: vessel,
       };
+
+      // 如果有配置块，添加到节点中
+      if (node.config) {
+        weaveNode.config = node.config;
+      }
+
+      graph.nodes[node.id] = weaveNode;
     }
   }
 

@@ -249,6 +249,17 @@ export class VesselManager {
       const nodeInstance = new NodeClass();
       content += `${nodeInstance.nodeName} {\n`;
       content += `    mode Concurrent\n`; // 默认模式
+      
+      // 配置参数
+      const configSchema = nodeInstance.getConfigSchema();
+      if (Object.keys(configSchema).length > 0) {
+        content += `    config {\n`;
+        for (const [key, type] of Object.entries(configSchema)) {
+          content += `        ${key} ${type}\n`;
+        }
+        content += `    }\n`;
+      }
+      
       content += `    in {\n`;
 
       // 输入端口

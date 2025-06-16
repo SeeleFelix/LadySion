@@ -45,6 +45,24 @@ export abstract class Node {
   abstract readonly outputs: Port[];
   abstract readonly description: string;
 
+  // 配置参数（可选）
+  protected config?: Record<string, any>;
+
+  // 设置配置参数
+  setConfig(config: Record<string, any>): void {
+    this.config = config;
+  }
+
+  // 获取配置参数
+  getConfig(key: string, defaultValue?: any): any {
+    return this.config?.[key] ?? defaultValue;
+  }
+
+  // 获取配置模式定义（默认为空，子类可以覆盖）
+  getConfigSchema(): Record<string, 'number' | 'string' | 'boolean'> {
+    return {};
+  }
+
   abstract execute(inputPorts: Port[]): Promise<Port[]> | Port[];
 }
 
@@ -100,7 +118,7 @@ export class VesselRegistry {
   }
 
   // 框架直接执行Node，不通过容器
-  async executeNode(vesselName: string, nodeName: string, inputPorts: Port[]): Promise<Port[]> {
+  async executeNode(vesselName: string, nodeName: string, inputPorts: Port[], config?: Record<string, any>): Promise<Port[]> {
     const fullNodeName = `${vesselName}.${nodeName}`;
     const NodeClass = this.nodeClasses.get(fullNodeName);
 
@@ -109,6 +127,12 @@ export class VesselRegistry {
     }
 
     const nodeInstance = new NodeClass();
+    
+    // 设置配置参数
+    if (config) {
+      nodeInstance.setConfig(config);
+    }
+    
     return await nodeInstance.execute(inputPorts);
   }
 
@@ -194,7 +218,7 @@ export interface WeaveNode {
   id: string;
   type: string;
   vessel: string;
-  parameters?: Record<string, unknown>;
+  config?: Record<string, unknown>; // JSON配置块
 }
 
 export interface WeaveConnection {
