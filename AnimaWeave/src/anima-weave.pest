@@ -1,0 +1,83 @@
+// AnimaWeave DSL - Pest Grammar
+// Converted from EBNF to PEG (Parsing Expression Grammar)
+
+// 重新启用WHITESPACE，在nodes section中允许缩进，但在graph section的nodes实例中保持4空格处理
+WHITESPACE = _{ " " | "\t" }
+NEWLINE = _{ "\r\n" | "\n" }
+COMMENT = _{ "//" ~ (!NEWLINE ~ ANY)* }
+
+// ========== Top Level Structure ==========
+AnimaWeave_file = { SOI ~ file_content ~ EOI }
+
+file_content = { graph_file | definition_file }
+
+definition_file = { NEWLINE* ~ (import_section | types_section | nodes_section) ~ (NEWLINE+ ~ (import_section | types_section | nodes_section))* ~ NEWLINE* }
+graph_file = { import_section? ~ NEWLINE* ~ graph_section }
+
+// ========== Import Section ==========
+import_section = { section_header_import ~ import_list ~ section_end }
+section_header_import = { "--" ~ "import" ~ NEWLINE }
+import_list = { import_statement* }
+import_statement = { qualified_name ~ alias_map? ~ NEWLINE }
+alias_map = { "{" ~ NEWLINE ~ alias_mapping* ~ "}" }
+alias_mapping = { identifier ~ identifier ~ NEWLINE }
+
+// ========== Types Section ==========
+types_section = { section_header_types ~ type_definition* ~ section_end }
+section_header_types = { "--" ~ "types" ~ NEWLINE }
+type_definition = { type_name ~ ("{" ~ NEWLINE ~ convertible_types ~ "}")? ~ NEWLINE }
+type_name = { qualified_name }
+convertible_types = { (qualified_name ~ NEWLINE)* }
+
+// ========== Nodes Section ==========
+nodes_section = { section_header_nodes ~ (NEWLINE* ~ node_definition)* ~ NEWLINE* ~ section_end }
+section_header_nodes = { "--" ~ "nodes" ~ NEWLINE }
+node_definition = { identifier ~ "{" ~ NEWLINE ~ mode_declaration? ~ port_sections ~ "}" ~ NEWLINE }
+
+mode_declaration = { "mode" ~ concurrent_mode ~ NEWLINE }
+concurrent_mode = { "Concurrent" | "Sequential" }
+
+port_sections = { (in_section | out_section)+ }
+in_section = { "in" ~ "{" ~ (NEWLINE ~ port_list)? ~ "}" ~ NEWLINE }
+out_section = { "out" ~ "{" ~ (NEWLINE ~ port_list)? ~ "}" ~ NEWLINE }
+
+port_list = { port_definition* }
+port_definition = { identifier ~ qualified_name ~ port_modifiers? ~ NEWLINE }
+port_modifiers = { "optional" | activation_mode }
+activation_mode = { "mode=" ~ ("AND" | "OR" | "XOR") }
+
+// ========== Graph Section ==========
+graph_section = { section_header_graph ~ graph_body ~ section_end }
+section_header_graph = { "--" ~ "graph" ~ NEWLINE }
+graph_body = { NEWLINE* ~ nodes_instance_section? ~ NEWLINE* ~ data_connection_section? ~ NEWLINE* ~ control_connection_section? ~ NEWLINE* }
+
+// 正常的语法处理：允许换行和空格
+nodes_instance_section = { "nodes" ~ "{" ~ NEWLINE* ~ node_instances ~ NEWLINE* ~ "}" }
+node_instances = { node_instance* }
+node_instance = { identifier ~ qualified_name ~ instance_override? ~ NEWLINE }
+instance_override = { "{" ~ NEWLINE ~ override_declaration* ~ "}" }
+override_declaration = { (mode_override | port_override) ~ NEWLINE }
+mode_override = { "mode" ~ concurrent_mode }
+port_override = { identifier ~ activation_mode }
+
+data_connection_section = { "datas" ~ "{" ~ NEWLINE ~ connection* ~ "}" ~ NEWLINE }
+control_connection_section = { "controls" ~ "{" ~ NEWLINE ~ connection* ~ "}" ~ NEWLINE }
+
+connection = { connection_source ~ "->" ~ connection_target ~ ";" ~ COMMENT? ~ NEWLINE }
+connection_source = { port_reference }
+connection_target = { port_reference }
+
+port_reference = { node_identifier ~ "." ~ port_identifier }
+node_identifier = @{ letter ~ (letter | digit | "_")* }
+port_identifier = @{ letter ~ (letter | digit | "_")* }
+
+// ========== Basic Types ==========
+identifier = @{ letter ~ (letter | digit | "_")* }
+qualified_name = @{ identifier ~ ("." ~ identifier)* }
+number = @{ "-"? ~ digit+ ~ ("." ~ digit+)? }
+string_literal = @{ "\"" ~ (!"\"" ~ ANY)* ~ "\"" }
+
+letter = { 'A'..'Z' | 'a'..'z' | "_" }
+digit = { '0'..'9' }
+
+section_end = { "--" ~ NEWLINE? } 
