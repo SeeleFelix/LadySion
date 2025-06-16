@@ -3,10 +3,11 @@ use std::collections::HashMap;
 use crate::{ExecutionEnginePlugin, TypeSystemPlugin, NodeInputs, NodeOutputs};
 use crate::types::TypedValue;
 
-/// 插件注册表
+/// 插件注册表 - 管理所有可用的插件
+#[derive(Clone)]
 pub struct PluginRegistry {
-    execution_plugins: HashMap<String, Box<dyn ExecutionEnginePlugin>>, // 执行引擎插件
-    type_plugins: HashMap<String, Box<dyn TypeSystemPlugin>>, // 类型系统插件
+    execution_plugins: HashMap<String, std::sync::Arc<dyn ExecutionEnginePlugin + Send + Sync>>, // 执行引擎插件
+    type_plugins: HashMap<String, std::sync::Arc<dyn TypeSystemPlugin + Send + Sync>>, // 类型系统插件
 }
 
 impl PluginRegistry {

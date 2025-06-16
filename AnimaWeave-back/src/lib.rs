@@ -7,12 +7,19 @@
 
 use std::collections::HashMap;
 use serde_json;
+use std::path::Path;
+use serde::{Serialize, Deserialize};
+use chrono::{DateTime, Utc};
+use uuid::Uuid;
 
 // 导入插件模块 (内部使用)
 mod plugins;
 mod plugin_registry;
 mod types;
 mod parser;
+
+// 添加Actor模块
+pub mod actor;
 
 // 重新导出核心类型
 pub use types::{TypedValue, NodeInputs, NodeOutputs, Type};
@@ -66,8 +73,8 @@ pub fn awakening(sanctum_path: &str, weave_filename: &str) -> FateEcho {
         }
     };
 
-    // 3. 执行图 - 真正的图执行引擎
-    let execution_result = execute_graph(&graph_definition, &plugin_registry);
+    // 3. 执行图 - 使用Actor引擎替换同步执行
+    let execution_result = futures::executor::block_on(actor::execute_graph_actor(&graph_definition, &plugin_registry));
     let all_outputs = match execution_result {
         Ok(outputs) => outputs,
         Err(e) => {
