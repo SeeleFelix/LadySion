@@ -1,0 +1,81 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.3.6'
+	id 'io.spring.dependency-management' version '1.1.6'
+	id 'antlr'
+}
+
+group = 'SeeleFelix'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+	withJavadocJar()
+	withSourcesJar()
+}
+
+repositories {
+	mavenCentral()
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+dependencies {
+	// Spring Boot 核心
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	
+	// 事件驱动架构
+	implementation 'org.springframework:spring-context'
+	implementation 'org.springframework.boot:spring-boot-starter-aop'
+	
+	// DSL解析 - ANTLR
+	antlr 'org.antlr:antlr4:4.13.2'
+	implementation 'org.antlr:antlr4-runtime:4.13.2'
+	
+	// JSON处理
+	implementation 'com.fasterxml.jackson.core:jackson-databind'
+	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
+	
+	// 并发处理工具
+	implementation 'org.springframework.boot:spring-boot-starter-cache'
+	
+	// Lombok
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+	
+	// 开发工具
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+	
+	// 测试依赖
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+// ANTLR配置
+generateGrammarSource {
+	maxHeapSize = "64m"
+	arguments += ["-visitor", "-long-messages"]
+	outputDirectory = file("src/main/java/SeeleFelix/AnimaWeave/parser/generated")
+}
+
+// 确保编译前生成ANTLR代码
+compileJava.dependsOn generateGrammarSource
+sourcesJar.dependsOn generateGrammarSource
+javadocJar.dependsOn generateGrammarSource
+
+tasks.named('test') {
+	useJUnitPlatform()
+	// 启用Virtual Threads用于测试
+	jvmArgs += ["--enable-preview"]
+}
+ 
