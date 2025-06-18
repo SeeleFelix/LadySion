@@ -1,4 +1,4 @@
-package SeeleFelix.AnimaWeave.framework.vessel.basic;
+package SeeleFelix.AnimaWeave.vessels.basic;
 
 import SeeleFelix.AnimaWeave.framework.node.NodeInstance;
 import lombok.extern.slf4j.Slf4j;

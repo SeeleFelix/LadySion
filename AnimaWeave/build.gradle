@@ -103,10 +103,28 @@ task generateAnimaFiles(type: JavaExec) {
 	}
 }
 
-// 快捷别名
-task genAnima {
+// 命令行Spring应用：专门用于生成anima文件，与web应用分离
+task generateAnima(type: JavaExec) {
 	group = 'vessel'
-	description = 'generateAnimaFiles的快捷别名'
-	dependsOn generateAnimaFiles
+	description = '生成Anima文件（独立的Spring命令行应用）'
+	
+	dependsOn compileJava
+	classpath = sourceSets.main.runtimeClasspath
+	mainClass = 'SeeleFelix.AnimaWeave.tools.generator.AnimaGeneratorCliApp'
+	
+	// 传递JVM参数以加快启动速度
+	jvmArgs = [
+		'-Dspring.main.banner-mode=off',
+		'-Dlogging.level.org.springframework=WARN',
+		'-Dspring.devtools.add-properties=false'
+	]
+	
+	doFirst {
+		println '⚡ 启动独立的Anima生成器...'
+	}
+	
+	doLast {
+		println '📁 生成完成，文件位于: ./sanctums/ 目录'
+	}
 }
  

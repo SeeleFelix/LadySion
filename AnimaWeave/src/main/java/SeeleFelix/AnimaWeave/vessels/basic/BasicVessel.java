@@ -1,5 +1,6 @@
-package SeeleFelix.AnimaWeave.framework.vessel;
+package SeeleFelix.AnimaWeave.vessels.basic;
 
+import SeeleFelix.AnimaWeave.framework.vessel.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 

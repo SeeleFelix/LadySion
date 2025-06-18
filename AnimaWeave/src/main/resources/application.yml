@@ -58,6 +58,16 @@ animaweave:
       enabled: true
       buffer-size: 1024
 
+# Anima文件生成器配置
+anima:
+  generator:
+    output-directory: "sanctums"
+    generated-file-suffix: ""
+    file-extension: ".anima"
+    overwrite-existing: true
+    validate-after-generation: true
+    verbose-logging: false
+
 # 日志配置
 logging:
   level:

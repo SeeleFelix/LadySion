@@ -25,7 +25,6 @@ import java.util.concurrent.ConcurrentMap;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class VesselManager {
     
     private final EventDispatcher eventDispatcher;
@@ -33,7 +32,15 @@ public class VesselManager {
     private final NodeInstanceFactory nodeInstanceFactory;
     
     @Value("${animaweave.vessels.directory:./vessels}")
-    private final String vesselsDirectory;
+    private String vesselsDirectory;
+    
+    public VesselManager(EventDispatcher eventDispatcher, 
+                        VesselRegistry vesselRegistry, 
+                        NodeInstanceFactory nodeInstanceFactory) {
+        this.eventDispatcher = eventDispatcher;
+        this.vesselRegistry = vesselRegistry;
+        this.nodeInstanceFactory = nodeInstanceFactory;
+    }
     
     // vessel类加载器缓存 - 使用Java 21增强的ConcurrentHashMap
     private final ConcurrentMap<String, URLClassLoader> vesselClassLoaders = new ConcurrentHashMap<>();

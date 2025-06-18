@@ -1,7 +1,8 @@
 package SeeleFelix.AnimaWeave.vessel;
 
-import SeeleFelix.AnimaWeave.framework.vessel.AnimaFileGenerator;
-import SeeleFelix.AnimaWeave.framework.vessel.BasicVessel;
+import SeeleFelix.AnimaWeave.tools.generator.AnimaFileGenerator;
+import SeeleFelix.AnimaWeave.tools.generator.GeneratorConfig;
+import SeeleFelix.AnimaWeave.vessels.basic.BasicVessel;
 import SeeleFelix.AnimaWeave.framework.vessel.VesselContextImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -118,7 +119,9 @@ class BasicVesselTest {
     @Test
     void testAnimaFileGeneration() throws Exception {
         // 生成.anima文件内容
-        var content = AnimaFileGenerator.generateAnimaContent(basicVessel);
+        var config = GeneratorConfig.testConfig(tempDir);
+        var generator = AnimaFileGenerator.standalone(config);
+        var content = generator.generateAnimaContent(basicVessel);
         
         assertNotNull(content);
         assertTrue(content.contains("-- types"));
@@ -133,9 +136,11 @@ class BasicVesselTest {
     @Test
     void testAnimaFileSaving() throws Exception {
         var outputPath = tempDir.resolve("basic_generated.anima");
+        var config = GeneratorConfig.testConfig(tempDir);
+        var generator = AnimaFileGenerator.standalone(config);
         
         // 生成并保存文件
-        AnimaFileGenerator.saveToFile(basicVessel, outputPath);
+        generator.saveToFile(basicVessel, outputPath);
         
         // 验证文件是否存在
         assertTrue(Files.exists(outputPath));
@@ -147,7 +152,7 @@ class BasicVesselTest {
         assertTrue(content.contains("mode Concurrent"));
         
         // 验证文件语法
-        assertTrue(AnimaFileGenerator.validateGeneratedFile(outputPath));
+        assertTrue(generator.validateGeneratedFile(outputPath));
         
         System.out.println("Generated file path: " + outputPath);
         System.out.println("File content:");
