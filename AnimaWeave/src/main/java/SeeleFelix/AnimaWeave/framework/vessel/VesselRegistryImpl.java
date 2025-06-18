@@ -11,6 +11,8 @@ import java.util.concurrent.ConcurrentMap;
  * Vessel注册表实现
  * 线程安全的vessel插件注册表
  * 使用lombok和Java 21现代化实现
+ * 
+ * 简化版本：只负责vessel生命周期管理，不提供运行时查找功能
  */
 @Slf4j
 @Component
@@ -64,23 +66,9 @@ public class VesselRegistryImpl implements VesselRegistry {
         return vessels.containsKey(vesselName);
     }
     
-    @Override
-    public Optional<AnimaVessel> getVesselForNodeType(String nodeType) {
-        return vessels.values().stream()
-                .filter(vessel -> vessel.getSupportedNodes().stream()
-                        .anyMatch(node -> node.nodeType().equals(nodeType)))
-                .findFirst();
-    }
-    
-    @Override
-    public List<AnimaVessel> getVesselsForSemanticLabel(String semanticLabel) {
-        return vessels.values().stream()
-                .filter(vessel -> vessel.getSupportedLabels().stream()
-                        .anyMatch(label -> label.labelName().equals(semanticLabel)))
-                .toList();
-    }
-    
-    // 新增方法：获取所有支持的节点类型
+    /**
+     * 获取所有支持的节点类型 - 用于调试和文档生成
+     */
     public List<String> getAllSupportedNodeTypes() {
         return vessels.values().stream()
                 .flatMap(vessel -> vessel.getSupportedNodes().stream())

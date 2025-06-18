@@ -65,7 +65,7 @@ dependencies {
 generateGrammarSource {
 	maxHeapSize = "64m"
 	arguments += ["-visitor", "-long-messages"]
-	outputDirectory = file("src/main/java/SeeleFelix/AnimaWeave/parser/generated")
+	// 输出目录会根据包结构自动确定
 }
 
 // 确保编译前生成ANTLR代码

@@ -1,38 +1,65 @@
 package SeeleFelix.AnimaWeave.framework.event.events;
 
+import SeeleFelix.AnimaWeave.framework.event.AnimaWeaveEvent;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
-import lombok.experimental.Accessors;
-import SeeleFelix.AnimaWeave.framework.event.AnimaWeaveEvent;
 
 import java.util.Map;
 
 /**
- * 节点执行请求事件
- * 框架发送给vessel插件，请求执行特定节点
- * 使用lombok实现零样板代码的现代化事件类
+ * 节点执行请求事件 - 简化版本
+ * 
+ * GraphCoordinator发送此事件来请求执行特定节点
+ * NodeInstance通过@EventListener(condition)自动匹配
  */
 @Getter
-@ToString(callSuper = true, of = {"nodeId", "nodeType", "vesselName", "executionContextId"})
-@Accessors(fluent = true)
-public class NodeExecutionRequest extends AnimaWeaveEvent {
+@ToString(callSuper = true, of = {"nodeId", "inputsSize"})
+@EqualsAndHashCode(callSuper = false, of = {"nodeId", "executionContextId"})
+public final class NodeExecutionRequest extends AnimaWeaveEvent {
     
-    private final String nodeId;
-    private final String nodeType;
-    private final String vesselName;
-    private final Map<String, Object> inputs;
-    private final Map<String, String> inputLabels;  // 输入端口的语义标签
-    private final String executionContextId;
+    private final String nodeId;                    // 目标节点ID
+    private final Map<String, Object> inputs;      // 节点输入数据
+    private final String executionContextId;       // 图执行上下文ID
     
-    public NodeExecutionRequest(Object source, String sourceIdentifier, String nodeId, String nodeType, 
-                               String vesselName, Map<String, Object> inputs,
-                               Map<String, String> inputLabels, String executionContextId) {
+    public NodeExecutionRequest(Object source, String sourceIdentifier,
+                               String nodeId, Map<String, Object> inputs, 
+                               String executionContextId) {
         super(source, sourceIdentifier);
         this.nodeId = nodeId;
-        this.nodeType = nodeType;
-        this.vesselName = vesselName;
-        this.inputs = Map.copyOf(inputs);
-        this.inputLabels = Map.copyOf(inputLabels);
+        this.inputs = inputs != null ? Map.copyOf(inputs) : Map.of();
         this.executionContextId = executionContextId;
+    }
+    
+    /**
+     * 便捷的静态工厂方法
+     */
+    public static NodeExecutionRequest of(Object source, String sourceIdentifier,
+                                        String nodeId, Map<String, Object> inputs,
+                                        String executionContextId) {
+        return new NodeExecutionRequest(source, sourceIdentifier, nodeId, inputs, executionContextId);
+    }
+    
+    /**
+     * 检查是否有输入数据
+     */
+    public boolean hasInputs() {
+        return !inputs.isEmpty();
+    }
+    
+    /**
+     * 获取输入数量
+     */
+    public int getInputsSize() {
+        return inputs.size();
+    }
+    
+    /**
+     * 获取执行摘要
+     */
+    public String getExecutionSummary() {
+        return "Request execution of node '%s' with %d inputs: %s".formatted(
+            nodeId, inputs.size(), inputs.keySet()
+        );
     }
 } 

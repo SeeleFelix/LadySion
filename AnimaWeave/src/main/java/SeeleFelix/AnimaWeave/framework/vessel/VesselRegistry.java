@@ -6,6 +6,9 @@ import java.util.Optional;
 /**
  * Vessel注册表接口
  * 管理已加载的vessel插件
+ * 
+ * 在新架构中，这个接口只负责vessel的生命周期管理，
+ * 不再需要运行时查找功能（因为NodeInstance已经预先注册到Spring）
  */
 public interface VesselRegistry {
     
@@ -38,14 +41,4 @@ public interface VesselRegistry {
      * 检查vessel是否已注册
      */
     boolean isRegistered(String vesselName);
-    
-    /**
-     * 获取支持指定节点类型的vessel
-     */
-    Optional<AnimaVessel> getVesselForNodeType(String nodeType);
-    
-    /**
-     * 获取支持指定语义标签的vessel列表
-     */
-    List<AnimaVessel> getVesselsForSemanticLabel(String semanticLabel);
 } 

@@ -4,56 +4,54 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.ToString;
+import lombok.EqualsAndHashCode;
 
 /**
  * 图定义
- * 包含节点和连接的定义
+ * 包含完整的图结构信息
  */
-public record GraphDefinition(
-    String graphId,
-    String name,
-    Map<String, GraphNode> nodes,
-    List<GraphConnection> connections
-) {
+@Getter
+@ToString
+@EqualsAndHashCode
+@Builder
+public class GraphDefinition {
+    /**
+     * 图名称
+     */
+    private final String name;
     
     /**
-     * 获取节点
+     * 导入的依赖
      */
-    public GraphNode getNode(String nodeId) {
-        return nodes.get(nodeId);
-    }
+    @Builder.Default
+    private final List<String> imports = List.of();
     
     /**
-     * 获取所有节点ID
+     * 节点定义：节点类型 -> 节点定义
      */
-    public Set<String> getNodeIds() {
-        return nodes.keySet();
-    }
+    @Builder.Default
+    private final Map<String, NodeDefinition> nodeDefinitions = Map.of();
     
     /**
-     * 获取连接
+     * 节点实例：实例名 -> 节点类型
      */
-    public List<GraphConnection> getConnections() {
-        return connections;
-    }
+    @Builder.Default
+    private final Map<String, String> nodeInstances = Map.of();
     
     /**
-     * 获取指向特定节点的连接
+     * 数据连接
      */
-    public List<GraphConnection> getConnectionsTo(String nodeId) {
-        return connections.stream()
-                .filter(conn -> conn.toNodeId().equals(nodeId))
-                .collect(Collectors.toList());
-    }
+    @Builder.Default
+    private final List<Connection> dataConnections = List.of();
     
     /**
-     * 获取从特定节点出发的连接
+     * 控制连接
      */
-    public List<GraphConnection> getConnectionsFrom(String nodeId) {
-        return connections.stream()
-                .filter(conn -> conn.fromNodeId().equals(nodeId))
-                .collect(Collectors.toList());
-    }
+    @Builder.Default
+    private final List<Connection> controlConnections = List.of();
 }
 
 /**

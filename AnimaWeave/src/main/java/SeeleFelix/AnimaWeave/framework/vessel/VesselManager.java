@@ -2,6 +2,7 @@ package SeeleFelix.AnimaWeave.framework.vessel;
 
 import SeeleFelix.AnimaWeave.framework.event.EventDispatcher;
 import SeeleFelix.AnimaWeave.framework.event.events.VesselLoadedEvent;
+import SeeleFelix.AnimaWeave.framework.node.NodeInstanceFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,6 +30,7 @@ public class VesselManager {
     
     private final EventDispatcher eventDispatcher;
     private final VesselRegistry vesselRegistry;
+    private final NodeInstanceFactory nodeInstanceFactory;
     
     @Value("${animaweave.vessels.directory:./vessels}")
     private final String vesselsDirectory;
@@ -99,12 +101,15 @@ public class VesselManager {
                     vesselRegistry.register(vesselName, vessel);
                     vesselClassLoaders.put(vesselName, classLoader);
                     
+                    // 为vessel创建NodeInstance
+                    nodeInstanceFactory.createNodeInstancesForVessel(vessel);
+                    
                     log.info("Successfully loaded vessel: {} v{}", 
                               vessel.getMetadata().name(), 
                               vessel.getMetadata().version());
                     
                     // 发送vessel加载事件
-                    var event = new VesselLoadedEvent(
+                    var event = VesselLoadedEvent.success(
                         this,
                         "VesselManager",
                         vessel.getMetadata().name(),

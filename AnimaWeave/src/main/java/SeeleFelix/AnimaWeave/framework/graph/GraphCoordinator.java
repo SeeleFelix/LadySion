@@ -1,294 +1,210 @@
 package SeeleFelix.AnimaWeave.framework.graph;
 
-import SeeleFelix.AnimaWeave.framework.event.EventDispatcher;
-import SeeleFelix.AnimaWeave.framework.event.events.*;
-import SeeleFelix.AnimaWeave.framework.vessel.VesselRegistry;
-import SeeleFelix.AnimaWeave.framework.vessel.AnimaVessel;
-import SeeleFelix.AnimaWeave.framework.vessel.NodeDefinition;
+import SeeleFelix.AnimaWeave.framework.event.events.NodeExecutionRequest;
+import SeeleFelix.AnimaWeave.framework.event.events.NodeOutputSaveEvent;
+import SeeleFelix.AnimaWeave.framework.startup.SystemReadyEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
-import java.time.Duration;
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * 图执行协调器
- * 负责协调整个图的执行，管理节点间的数据流和控制流
- * 使用Java 21 + Spring 6.1 + lombok现代化实现
+ * 图执行协调器 - 简化的事件驱动版本
+ * 
+ * 职责：
+ * 1. 等待系统就绪
+ * 2. 监听节点完成事件 (NodeOutputSaveEvent)
+ * 3. 更新数据总线
+ * 4. 触发下一批可执行的节点
+ * 5. 判断图执行完成
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class GraphCoordinator {
     
-    private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(30);
+    private final ApplicationEventPublisher eventPublisher;
     
-    private final EventDispatcher eventDispatcher;
-    private final VesselRegistry vesselRegistry;
-    
-    // 执行上下文管理 - 使用Java 21增强的ConcurrentHashMap
+    // 执行上下文管理 - 简化版本
     private final ConcurrentMap<String, ExecutionContext> executionContexts = new ConcurrentHashMap<>();
     
+    // 系统就绪状态
+    private final AtomicBoolean systemReady = new AtomicBoolean(false);
+                
     /**
-     * 执行单个节点 - 使用现代化的异步模式
+     * 监听系统就绪事件
      */
-    public CompletableFuture<NodeExecutionResult> executeNode(String nodeId, String nodeType,
-                                                              Map<String, Object> inputs,
-                                                              String executionContextId) {
-        log.debug("Executing node: {} of type: {}", nodeId, nodeType);
-        
-        // 使用Optional链式处理
-        return vesselRegistry.getVesselForNodeType(nodeType)
-            .map(vessel -> {
-                var vesselName = vessel.getMetadata().name();
-                
-                // 创建节点执行请求
-                var request = new NodeExecutionRequest(
-                    this,
-                    "GraphCoordinator",
-                    nodeId,
-                    nodeType,
-                    vesselName,
-                    inputs,
-                    extractInputLabels(vessel, nodeType, inputs),
-                    executionContextId
-                );
-                
-                // 发送请求并等待响应
-                return eventDispatcher.dispatch(request, NodeExecutionResult.class);
-            })
-            .orElseGet(() -> {
-                var future = new CompletableFuture<NodeExecutionResult>();
-                var errorMessage = """
-                    No vessel found for node type: %s
-                    
-                    Available node types: %s
-                    """.formatted(
-                        nodeType,
-                        vesselRegistry.getAllSupportedNodeTypes()
-                    );
-                future.completeExceptionally(new IllegalArgumentException(errorMessage));
-                return future;
-            });
+    @EventListener
+    public void onSystemReady(SystemReadyEvent event) {
+        systemReady.set(true);
+        log.info("🚀 System is ready! Graph execution is now available.");
+        log.info("Available vessels: {}", event.getLoadedVessels());
     }
     
     /**
-     * 执行完整的图 - 使用Virtual Threads并行执行
+     * 启动图执行
      */
-    @Async("graphExecutionThreadPool")
-    public CompletableFuture<GraphExecutionResult> executeGraph(GraphDefinition graphDef) {
-        var executionId = UUID.randomUUID().toString();
-        log.info("Starting graph execution: {}", executionId);
+    public void startGraphExecution(GraphDefinition graphDef) {
+        if (!systemReady.get()) {
+            throw new IllegalStateException("System is not ready yet. Please wait for all vessels to load.");
+        }
         
+        var executionId = "graph_exec_" + System.nanoTime();
         var context = new ExecutionContext(executionId, graphDef);
         executionContexts.put(executionId, context);
         
-        return CompletableFuture
-            .supplyAsync(() -> executeGraphInternal(context))
-            .exceptionally(throwable -> {
-                log.error("Graph execution failed: {}", executionId, throwable);
-                executionContexts.remove(executionId);
-                return new GraphExecutionResult(executionId, false, throwable.getMessage(), Map.of());
-            });
-    }
-    
-    /**
-     * 内部图执行方法 - 使用Java 21的现代化并发
-     */
-    private GraphExecutionResult executeGraphInternal(ExecutionContext context) {
-        try {
-            // 拓扑排序确定执行顺序
-            var executionOrder = topologicalSort(context.getGraphDefinition());
-            
-            // 使用CompletableFuture链式执行节点
-            var result = executeNodesSequentially(context, executionOrder);
-            
-            log.info("Graph execution completed: {}", context.getExecutionId());
-            return result;
-            
-        } catch (Exception e) {
-            log.error("Failed to execute graph: {}", context.getExecutionId(), e);
-            throw new RuntimeException("Graph execution failed", e);
-        } finally {
-            executionContexts.remove(context.getExecutionId());
-        }
-    }
-    
-    /**
-     * 顺序执行节点 - 使用函数式编程风格
-     */
-    private GraphExecutionResult executeNodesSequentially(ExecutionContext context, List<String> executionOrder) {
-        return executionOrder.stream()
-            .reduce(
-                CompletableFuture.completedFuture(context),
-                (futureContext, nodeId) -> futureContext.thenCompose(ctx -> executeNodeAndUpdate(ctx, nodeId)),
-                (f1, f2) -> f2  // combiner不会被使用，因为这是顺序执行
-            )
-            .thenApply(ctx -> new GraphExecutionResult(
-                ctx.getExecutionId(), 
-                true, 
-                "Completed successfully", 
-                ctx.getOutputs()
-            ))
-            .join();
-    }
-    
-    /**
-     * 执行节点并更新上下文
-     */
-    private CompletableFuture<ExecutionContext> executeNodeAndUpdate(ExecutionContext context, String nodeId) {
-        var node = context.getGraphDefinition().getNode(nodeId);
-        var nodeInputs = collectNodeInputs(context, nodeId);
+        log.info("Starting graph execution: {} for graph: {}", executionId, graphDef.name());
         
-        return executeNode(nodeId, node.nodeType(), nodeInputs, context.getExecutionId())
-            .thenApply(result -> {
-                if (result.isFailure()) {
-                    throw new RuntimeException("Node execution failed: " + result.getErrorMessage());
-                }
-                
-                updateContextWithNodeResult(context, nodeId, result);
-                return context;
-            });
+        // 触发初始节点（没有依赖的节点）
+        triggerInitialNodes(context);
     }
     
     /**
-     * 监听节点执行结果事件 - 使用现代化的事件处理
+     * 监听节点输出保存事件 - 这是核心的事件驱动逻辑
      */
     @EventListener
-    public void handleNodeExecutionResult(NodeExecutionResult result) {
-        log.trace("Received node execution result: {}", result);
-        eventDispatcher.handleResponse(result, result.getRequestId());
-    }
-    
-    /**
-     * 监听数据流事件 - 使用switch表达式
-     */
-    @EventListener
-    public void handleDataFlowEvent(DataFlowEvent event) {
-        var action = switch (event.getEventType()) {
-            case "DataFlowEvent" -> {
-                log.trace("Data flow: {} -> {}", event.getFromNodeId(), event.getToNodeId());
-                yield "processed";
-            }
-            default -> {
-                log.warn("Unknown data flow event type: {}", event.getEventType());
-                yield "ignored";
-            }
-        };
+    @Async("virtualThreadExecutor")
+    public void onNodeComplete(NodeOutputSaveEvent event) {
+        log.debug("Node completed: {} (execution: {})", event.getNodeName(), event.getNodeExecutionId());
         
-        // 更新执行上下文中的数据流
-        Optional.ofNullable(executionContexts.get(event.getExecutionContextId()))
-            .ifPresent(context -> context.updateDataFlow(event.getConnectionId(), event.getValue()));
-    }
-    
-    /**
-     * 提取输入端口的语义标签 - 使用现代化的流式API
-     */
-    private Map<String, String> extractInputLabels(AnimaVessel vessel, String nodeType, Map<String, Object> inputs) {
-        return vessel.getSupportedNodes().stream()
-                .filter(node -> node.nodeType().equals(nodeType))
-                .findFirst()
-                .map(NodeDefinition::inputPorts)
-                .orElse(List.of())
-                .stream()
-                .filter(port -> inputs.containsKey(port.name()))
-                .collect(Collectors.toMap(
-                    port -> port.name(),
-                    port -> port.semanticLabel().labelName()
-                ));
-    }
-    
-    /**
-     * 收集节点的输入数据 - 使用现代化的数据收集
-     */
-    private Map<String, Object> collectNodeInputs(ExecutionContext context, String nodeId) {
-        var graphDef = context.getGraphDefinition();
-        
-        return graphDef.getConnections().stream()
-            .filter(connection -> connection.toNodeId().equals(nodeId))
-            .collect(Collectors.toMap(
-                connection -> connection.toPortName(),
-                connection -> context.getNodeOutput(connection.fromNodeId(), connection.fromPortName()),
-                (existing, replacement) -> replacement  // 如果有重复键，使用新值
-            ));
-    }
-    
-    /**
-     * 更新上下文与节点结果
-     */
-    private void updateContextWithNodeResult(ExecutionContext context, String nodeId, NodeExecutionResult result) {
-        result.getOutputs().forEach((portName, value) -> 
-            context.setNodeOutput(nodeId, portName, value)
-        );
-    }
-    
-    /**
-     * 拓扑排序 - 使用现代化的图算法
-     */
-    private List<String> topologicalSort(GraphDefinition graphDef) {
-        var result = new ArrayList<String>();
-        var visited = new HashSet<String>();
-        var visiting = new HashSet<String>();
-        
-        // 使用并行流处理图节点
-        graphDef.getNodes().keySet().parallelStream()
-            .filter(nodeId -> !visited.contains(nodeId))
-            .forEach(nodeId -> topologicalSortDFS(nodeId, graphDef, visited, visiting, result));
-        
-        Collections.reverse(result);
-        return result;
-    }
-    
-    /**
-     * 拓扑排序的DFS实现
-     */
-    private synchronized void topologicalSortDFS(String nodeId, GraphDefinition graphDef, 
-                                  Set<String> visited, Set<String> visiting, List<String> result) {
-        if (visiting.contains(nodeId)) {
-            throw new IllegalArgumentException("Circular dependency detected in graph");
-        }
-        
-        if (visited.contains(nodeId)) {
+        var context = executionContexts.get(event.getGraphExecutionId());
+        if (context == null) {
+            log.warn("No execution context found for: {}", event.getGraphExecutionId());
             return;
         }
         
-        visiting.add(nodeId);
+        // 更新数据总线
+        updateDataBus(context, event);
         
-        // 访问所有依赖节点
-        graphDef.getConnections().stream()
-            .filter(conn -> conn.fromNodeId().equals(nodeId))
-            .map(conn -> conn.toNodeId())
-            .distinct()
-            .forEach(dependentNode -> topologicalSortDFS(dependentNode, graphDef, visited, visiting, result));
+        // 触发下一批可执行的节点
+        triggerNextNodes(context, event.getNodeName());
         
-        visiting.remove(nodeId);
-        visited.add(nodeId);
-        result.add(nodeId);
+        // 检查是否完成
+        checkGraphCompletion(context);
     }
     
     /**
-     * 获取活跃的执行上下文数量 - 监控用
+     * 更新数据总线
+     */
+    private void updateDataBus(ExecutionContext context, NodeOutputSaveEvent event) {
+        // 将节点的所有输出端口保存到数据总线
+        event.getOutputs().forEach((portName, value) -> {
+            context.setNodeOutput(event.getNodeName(), portName, value, event.getNodeExecutionId());
+        });
+        
+        log.trace("Updated data bus for node: {} with {} outputs", 
+                 event.getNodeName(), event.getOutputs().size());
+    }
+    
+    /**
+     * 触发下一批可执行的节点
+     */
+    private void triggerNextNodes(ExecutionContext context, String completedNodeName) {
+        var readyNodes = findReadyNodes(context, completedNodeName);
+        
+        for (String nodeId : readyNodes) {
+            var inputs = collectNodeInputs(context, nodeId);
+        
+            var request = NodeExecutionRequest.of(
+                this,
+                "GraphCoordinator", 
+                nodeId,
+                inputs,
+                context.getExecutionId()
+            );
+            
+            log.debug("Triggering node: {} with {} inputs", nodeId, inputs.size());
+            eventPublisher.publishEvent(request);
+        }
+    }
+    
+    /**
+     * 触发初始节点（没有输入依赖的节点）
+     */
+    private void triggerInitialNodes(ExecutionContext context) {
+        var graphDef = context.getGraphDefinition();
+        var initialNodes = findNodesWithoutDependencies(graphDef);
+        
+        for (String nodeId : initialNodes) {
+            var request = NodeExecutionRequest.of(
+                this,
+                "GraphCoordinator",
+                nodeId,
+                Map.of(), // 初始节点没有输入
+                context.getExecutionId()
+            );
+            
+            log.debug("Triggering initial node: {}", nodeId);
+            eventPublisher.publishEvent(request);
+        }
+    }
+    
+    /**
+     * 寻找准备好执行的节点
+     */
+    private Set<String> findReadyNodes(ExecutionContext context, String completedNodeName) {
+        // TODO: 实现基于图定义的依赖分析
+        // 现在先返回空集合，避免编译错误
+        return Set.of();
+    }
+    
+    /**
+     * 收集节点的输入数据
+     */
+    private Map<String, Object> collectNodeInputs(ExecutionContext context, String nodeId) {
+        // TODO: 根据图定义收集节点的输入
+        // 现在先返回空Map，避免编译错误
+        return Map.of();
+    }
+    
+    /**
+     * 寻找没有依赖的初始节点
+     */
+    private Set<String> findNodesWithoutDependencies(GraphDefinition graphDef) {
+        // TODO: 实现图分析逻辑
+        // 现在先返回空集合，避免编译错误
+        return Set.of();
+    }
+    
+    /**
+     * 检查图执行是否完成
+     */
+    private void checkGraphCompletion(ExecutionContext context) {
+        // TODO: 实现完成检查逻辑
+        log.trace("Checking graph completion for: {}", context.getExecutionId());
+    }
+    
+    /**
+     * 获取活跃的执行上下文数量
      */
     public int getActiveExecutionCount() {
         return executionContexts.size();
     }
     
     /**
-     * 取消图执行
+     * 停止图执行
      */
-    public boolean cancelExecution(String executionId) {
-        return Optional.ofNullable(executionContexts.remove(executionId))
-            .map(context -> {
-                log.info("Cancelled graph execution: {}", executionId);
+    public boolean stopExecution(String executionId) {
+        var context = executionContexts.remove(executionId);
+        if (context != null) {
+            log.info("Stopped graph execution: {}", executionId);
                 return true;
-            })
-            .orElse(false);
+        }
+        return false;
+    }
+    
+    /**
+     * 检查系统是否就绪
+     */
+    public boolean isSystemReady() {
+        return systemReady.get();
     }
 } 

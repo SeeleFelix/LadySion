@@ -1,0 +1,23 @@
+-- import
+--
+
+-- graph
+nodes {
+    c1 Constant
+    c2 Constant  
+    add Add
+    out Output
+}
+
+datas {
+    c1.value -> add.a;
+    c2.value -> add.b;
+    add.result -> out.input;
+}
+
+controls {
+    c1.value -> add.a;
+    c2.value -> add.b; 
+    add.result -> out.input;
+}
+-- 
