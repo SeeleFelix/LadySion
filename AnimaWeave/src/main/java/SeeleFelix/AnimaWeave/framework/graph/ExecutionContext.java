@@ -42,7 +42,7 @@ public class ExecutionContext {
         this.graphDefinition = graphDefinition;
         this.startTime = Instant.now();
         
-        log.debug("Created execution context: {} for graph: {}", executionId, graphDefinition.name());
+        log.debug("Created execution context: {} for graph: {}", executionId, graphDefinition.getName());
     }
     
     /**

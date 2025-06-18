@@ -78,4 +78,35 @@ tasks.named('test') {
 	// 启用Virtual Threads用于测试
 	jvmArgs += ["--enable-preview"]
 }
+
+// 自定义task：生成.anima文件
+task generateAnimaFiles(type: JavaExec) {
+	group = 'vessel'
+	description = '从Java Vessel定义生成.anima文件到sanctums目录'
+	
+	dependsOn compileJava
+	classpath = sourceSets.main.runtimeClasspath
+	mainClass = 'SeeleFelix.AnimaWeave.framework.vessel.GenerateAnimaFiles'
+	
+	// 可以传递参数
+	if (project.hasProperty('outputDir')) {
+		args project.property('outputDir')
+	}
+	
+	doFirst {
+		println '🔨 开始生成vessel .anima文件...'
+	}
+	
+	doLast {
+		println '✅ .anima文件生成完成！'
+		println '📁 文件保存在: ./sanctums/ 目录'
+	}
+}
+
+// 快捷别名
+task genAnima {
+	group = 'vessel'
+	description = 'generateAnimaFiles的快捷别名'
+	dependsOn generateAnimaFiles
+}
  

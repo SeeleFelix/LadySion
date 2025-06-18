@@ -61,7 +61,7 @@ public class GraphCoordinator {
         var context = new ExecutionContext(executionId, graphDef);
         executionContexts.put(executionId, context);
         
-        log.info("Starting graph execution: {} for graph: {}", executionId, graphDef.name());
+        log.info("Starting graph execution: {} for graph: {}", executionId, graphDef.getName());
         
         // 触发初始节点（没有依赖的节点）
         triggerInitialNodes(context);

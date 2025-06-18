@@ -32,12 +32,12 @@ public class Awakening {
     public CompletableFuture<AwakeningResult> awaken(GraphDefinition graphDefinition) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                log.info("🌅 Awakening begins for graph: {}", graphDefinition.name());
+                log.info("🌅 Awakening begins for graph: {}", graphDefinition.getName());
                 
                 // 检查系统是否就绪
                 if (!graphCoordinator.isSystemReady()) {
                     return AwakeningResult.failure(
-                        graphDefinition.name(),
+                        graphDefinition.getName(),
                         "System is not ready. Please wait for vessel loading to complete."
                     );
                 }
@@ -45,17 +45,17 @@ public class Awakening {
                 // 开始图执行
                 graphCoordinator.startGraphExecution(graphDefinition);
                 
-                log.info("✨ Graph awakening initiated: {}", graphDefinition.name());
+                log.info("✨ Graph awakening initiated: {}", graphDefinition.getName());
                 
                 return AwakeningResult.success(
-                    graphDefinition.name(),
+                    graphDefinition.getName(),
                     "Graph execution started successfully"
                 );
                 
             } catch (Exception e) {
-                log.error("💥 Awakening failed for graph: {}", graphDefinition.name(), e);
+                log.error("💥 Awakening failed for graph: {}", graphDefinition.getName(), e);
                 return AwakeningResult.failure(
-                    graphDefinition.name(),
+                    graphDefinition.getName(),
                     "Awakening failed: " + e.getMessage()
                 );
             }
