@@ -163,6 +163,12 @@ public class DSLGraphBuilder extends AnimaWeaveDSLBaseVisitor<GraphDefinition> {
     public GraphDefinition visitGraphSection(AnimaWeaveDSLParser.GraphSectionContext ctx) {
         log.debug("处理图定义段");
         
+        // 检查是否有图名称
+        if (ctx.IDENTIFIER() != null) {
+            graphName = ctx.IDENTIFIER().getText();
+            log.debug("设置图名称: {}", graphName);
+        }
+        
         if (ctx.graphBody() != null) {
             visit(ctx.graphBody());
         }

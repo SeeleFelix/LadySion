@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
+import jakarta.annotation.PostConstruct;
 import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -34,6 +35,9 @@ public class VesselManager {
     @Value("${animaweave.vessels.directory:./vessels}")
     private String vesselsDirectory;
     
+    // vessel类加载器缓存 - 使用Java 21增强的ConcurrentHashMap
+    private final ConcurrentMap<String, URLClassLoader> vesselClassLoaders = new ConcurrentHashMap<>();
+    
     public VesselManager(EventDispatcher eventDispatcher, 
                         VesselRegistry vesselRegistry, 
                         NodeInstanceFactory nodeInstanceFactory) {
@@ -42,8 +46,24 @@ public class VesselManager {
         this.nodeInstanceFactory = nodeInstanceFactory;
     }
     
-    // vessel类加载器缓存 - 使用Java 21增强的ConcurrentHashMap
-    private final ConcurrentMap<String, URLClassLoader> vesselClassLoaders = new ConcurrentHashMap<>();
+    /**
+     * Spring启动时自动加载JAR vessel插件
+     * 职责单一：只负责JAR文件的vessel加载
+     */
+    @PostConstruct
+    public void loadJarVessels() {
+        log.info("🚀 VesselManager initializing - loading JAR vessels...");
+        
+        // 只负责加载JAR文件中的vessel插件
+        loadAllVessels().whenComplete((result, throwable) -> {
+            if (throwable != null) {
+                log.error("❌ Failed to load JAR vessels during initialization", throwable);
+            } else {
+                log.info("✅ VesselManager JAR loading completed");
+                log.info("📊 Current JAR vessels in registry: {}", vesselRegistry.getVesselNames().size());
+            }
+        });
+    }
     
     /**
      * 启动时自动加载所有vessel插件 - 使用Virtual Threads并行加载
@@ -103,7 +123,7 @@ public class VesselManager {
                     var context = createVesselContext(vessel.getMetadata().name());
                     vessel.initialize(context);
                     
-                    // 注册vessel
+                    // 注册vessel (VesselRegistry会自动发布VesselLoadedEvent)
                     var vesselName = vessel.getMetadata().name();
                     vesselRegistry.register(vesselName, vessel);
                     vesselClassLoaders.put(vesselName, classLoader);
@@ -111,19 +131,10 @@ public class VesselManager {
                     // 为vessel创建NodeInstance
                     nodeInstanceFactory.createNodeInstancesForVessel(vessel);
                     
-                    log.info("Successfully loaded vessel: {} v{}", 
+                    log.info("Successfully loaded JAR vessel: {} v{}", 
                               vessel.getMetadata().name(), 
                               vessel.getMetadata().version());
                     
-                    // 发送vessel加载事件
-                    var event = VesselLoadedEvent.success(
-                        this,
-                        "VesselManager",
-                        vessel.getMetadata().name(),
-                        vessel.getMetadata()
-                    );
-                    
-                    eventDispatcher.publishEvent(event);
                     vesselFound = true;
                     
                 } catch (Exception e) {

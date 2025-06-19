@@ -17,8 +17,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * 职责：
  * 1. 监听vessel加载事件
  * 2. 跟踪系统启动进度
- * 3. 在所有vessel加载完成后发送SystemReady事件
+ * 3. 在发现vessel后合理时间内判断系统就绪
  * 4. 处理vessel加载失败的情况
+ * 
+ * 设计理念：不硬编码vessel列表，而是动态发现和管理
  */
 @Slf4j
 @Component
@@ -27,12 +29,8 @@ public class SystemStartupCoordinator {
     
     private final ApplicationEventPublisher eventPublisher;
     
-    // 预期的vessel列表 - 可以从配置文件读取
-    private final Set<String> expectedVessels = Set.of(
-        "MathVessel",
-        "OpenRouterVessel", 
-        "BasicVessel"
-    );
+    // 已发现的vessel（第一次加载事件时记录）
+    private final Set<String> discoveredVessels = new HashSet<>();
     
     // 已成功加载的vessel
     private final Set<String> loadedVessels = new HashSet<>();
@@ -43,6 +41,12 @@ public class SystemStartupCoordinator {
     // 系统就绪标志
     private final AtomicBoolean systemReady = new AtomicBoolean(false);
     
+    // 启动完成检查延迟（毫秒）- 在最后一个vessel加载后等待
+    private static final long STARTUP_COMPLETION_DELAY = 500L;
+    
+    // 最后一次vessel加载时间
+    private volatile long lastVesselLoadTime = 0L;
+
     /**
      * 监听vessel加载事件
      */
@@ -50,80 +54,102 @@ public class SystemStartupCoordinator {
     public void onVesselLoaded(VesselLoadedEvent event) {
         var vesselName = event.vesselName();
         
-        if (event.successful()) {
-            synchronized (this) {
+        synchronized (this) {
+            // 记录发现的vessel
+            discoveredVessels.add(vesselName);
+            
+            if (event.successful()) {
                 loadedVessels.add(vesselName);
                 log.info("Vessel loaded successfully: {} ({})", 
                         vesselName, event.metadata().version());
-                
-                // 检查是否所有vessel都加载完成
-                checkSystemReadiness();
-            }
-        } else {
-            synchronized (this) {
+            } else {
                 failedVessels.add(vesselName);
                 log.error("Failed to load vessel: {} - {}", vesselName, event.errorMessage());
-                
-                // 检查是否需要停止启动过程
-                checkStartupFailure();
             }
+            
+            // 更新最后加载时间
+            lastVesselLoadTime = System.currentTimeMillis();
+            
+            // 延迟检查系统就绪（给其他vessel加载留时间）
+            scheduleReadinessCheck();
         }
+    }
+    
+    /**
+     * 安排就绪性检查
+     */
+    private void scheduleReadinessCheck() {
+        // 使用简单的延迟检查机制
+        new Thread(() -> {
+            try {
+                Thread.sleep(STARTUP_COMPLETION_DELAY);
+                checkSystemReadiness();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }).start();
     }
     
     /**
      * 检查系统是否就绪
      */
     private void checkSystemReadiness() {
-        if (loadedVessels.containsAll(expectedVessels)) {
-            if (systemReady.compareAndSet(false, true)) {
-                log.info("🎉 All vessels loaded successfully! System is ready.");
-                log.info("Loaded vessels: {}", loadedVessels);
-                
-                // 发送系统就绪事件
-                var readyEvent = SystemReadyEvent.of(
-                    this,
-                    "SystemStartupCoordinator",
-                    loadedVessels,
-                    System.currentTimeMillis()
-                );
-                
-                eventPublisher.publishEvent(readyEvent);
+        synchronized (this) {
+            // 如果已经就绪，不重复处理
+            if (systemReady.get()) {
+                return;
             }
-        } else {
-            var remaining = new HashSet<>(expectedVessels);
-            remaining.removeAll(loadedVessels);
-            log.debug("Waiting for vessels: {}", remaining);
-        }
-    }
-    
-    /**
-     * 检查启动失败情况
-     */
-    private void checkStartupFailure() {
-        // 如果任何关键vessel加载失败，可能需要停止系统
-        if (!failedVessels.isEmpty()) {
-            log.warn("⚠️ Some vessels failed to load: {}", failedVessels);
             
-            // 可以根据策略决定是否继续：
-            // 1. 严格模式：任何失败都停止启动
-            // 2. 宽松模式：只要有基础vessel就继续
-            // 这里先用宽松模式
+            // 检查是否已经过了足够的等待时间
+            long timeSinceLastLoad = System.currentTimeMillis() - lastVesselLoadTime;
+            if (timeSinceLastLoad < STARTUP_COMPLETION_DELAY) {
+                // 还没到时间，可能还有vessel在加载
+                return;
+            }
             
-            var criticalVessels = Set.of("BasicVessel"); // 关键vessel
-            var failedCritical = new HashSet<>(failedVessels);
-            failedCritical.retainAll(criticalVessels);
+            // 判断系统就绪条件：
+            // 1. 至少有一个vessel成功加载
+            // 2. 没有关键vessel加载失败
+            boolean hasBasicVessel = loadedVessels.stream()
+                .anyMatch(name -> name.toLowerCase().contains("basic"));
             
-            if (!failedCritical.isEmpty()) {
-                log.error("💥 Critical vessels failed to load: {}. System startup aborted.", failedCritical);
+            if (!loadedVessels.isEmpty() && hasBasicVessel) {
+                if (systemReady.compareAndSet(false, true)) {
+                    log.info("🎉 System startup completed! Discovered {} vessels, {} loaded successfully.", 
+                            discoveredVessels.size(), loadedVessels.size());
+                    log.info("Loaded vessels: {}", loadedVessels);
+                    
+                    if (!failedVessels.isEmpty()) {
+                        log.warn("Some vessels failed to load: {}", failedVessels);
+                    }
+                    
+                    // 发送系统就绪事件
+                    var readyEvent = SystemReadyEvent.of(
+                        this,
+                        "SystemStartupCoordinator",
+                        loadedVessels,
+                        System.currentTimeMillis()
+                    );
+                    
+                    eventPublisher.publishEvent(readyEvent);
+                }
+            } else {
+                log.warn("⚠️ System not ready: loadedVessels={}, hasBasic={}", 
+                        loadedVessels, hasBasicVessel);
                 
-                var failureEvent = SystemStartupFailureEvent.of(
-                    this,
-                    "SystemStartupCoordinator",
-                    failedVessels,
-                    "Critical vessels failed to load"
-                );
-                
-                eventPublisher.publishEvent(failureEvent);
+                // 如果没有基础vessel，可能需要报告启动失败
+                if (!hasBasicVessel && !discoveredVessels.isEmpty()) {
+                    log.error("💥 No basic vessel loaded. System startup may have failed.");
+                    
+                    var failureEvent = SystemStartupFailureEvent.of(
+                        this,
+                        "SystemStartupCoordinator",
+                        failedVessels,
+                        "No basic vessel available"
+                    );
+                    
+                    eventPublisher.publishEvent(failureEvent);
+                }
             }
         }
     }
@@ -133,7 +159,7 @@ public class SystemStartupCoordinator {
      */
     public SystemStartupStatus getStartupStatus() {
         return new SystemStartupStatus(
-            expectedVessels,
+            Set.copyOf(discoveredVessels),
             Set.copyOf(loadedVessels),
             Set.copyOf(failedVessels),
             systemReady.get()
@@ -145,5 +171,23 @@ public class SystemStartupCoordinator {
      */
     public void forceCheckReadiness() {
         checkSystemReadiness();
+    }
+    
+    /**
+     * 立即标记系统就绪（用于测试环境）
+     */
+    public void forceSystemReady() {
+        if (systemReady.compareAndSet(false, true)) {
+            log.info("🧪 System forced to ready state for testing");
+            
+            var readyEvent = SystemReadyEvent.of(
+                this,
+                "SystemStartupCoordinator",
+                loadedVessels.isEmpty() ? Set.of("test") : loadedVessels,
+                System.currentTimeMillis()
+            );
+            
+            eventPublisher.publishEvent(readyEvent);
+        }
     }
 } 

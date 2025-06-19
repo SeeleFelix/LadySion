@@ -66,6 +66,7 @@ docs/
 | OpenRouter指南      | OpenRouter集成和配置指南            | [openrouter-guide.md](technical/openrouter-guide.md)               |
 | TRA配置管理指南     | TypeScript Resource API配置系统指南 | [tra-configuration-guide.md](technical/tra-configuration-guide.md) |
 | 索引文件指南        | 项目文件索引和导航指南              | [index-files-guide.md](technical/index-files-guide.md)             |
+| Vessel架构重构      | 容器系统架构重构设计                | [vessel-architecture-refactor.md](technical/vessel-architecture-refactor.md) |
 
 ## 📖 操作指南 (Guides)
 
@@ -92,6 +93,8 @@ docs/
 
 | 文档类型 | 内容         | 状态      |
 | -------- | ------------ | --------- |
+| [TDD Cursor规则](testing/tdd-cursor-rules.md) | 基于Claude 4、ThoughtWorks和XP标准的TDD指导 | ✅ 完成 |
+| [前端单元测试](testing/frontend-unit-testing.md) | 前端测试规范和最佳实践 | ✅ 完成 |
 | 测试策略 | 整体测试方法 | 🔄 待完成 |
 
 ## 🚀 部署文档 (Deployment)

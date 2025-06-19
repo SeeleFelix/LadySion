@@ -52,7 +52,7 @@ public class GraphCoordinator {
     /**
      * 启动图执行
      */
-    public void startGraphExecution(GraphDefinition graphDef) {
+    public String startGraphExecution(GraphDefinition graphDef) {
         if (!systemReady.get()) {
             throw new IllegalStateException("System is not ready yet. Please wait for all vessels to load.");
         }
@@ -65,6 +65,8 @@ public class GraphCoordinator {
         
         // 触发初始节点（没有依赖的节点）
         triggerInitialNodes(context);
+        
+        return executionId;
     }
     
     /**

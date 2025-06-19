@@ -1,5 +1,6 @@
 package SeeleFelix.AnimaWeave.framework.vessel;
 
+import SeeleFelix.AnimaWeave.framework.event.EventDispatcher;
 import SeeleFelix.AnimaWeave.tools.generator.AnimaFileGenerator;
 import SeeleFelix.AnimaWeave.tools.generator.GeneratorConfig;
 import SeeleFelix.AnimaWeave.vessels.basic.BasicVessel;
@@ -7,6 +8,8 @@ import SeeleFelix.AnimaWeave.framework.vessel.VesselContextImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,12 +24,20 @@ class BasicVesselTest {
     
     private BasicVessel basicVessel;
     
+    @Mock
+    private VesselRegistry mockVesselRegistry;
+    
+    @Mock
+    private EventDispatcher mockEventDispatcher;
+    
     @TempDir
     Path tempDir;
     
     @BeforeEach
     void setUp() {
-        basicVessel = new BasicVessel();
+        MockitoAnnotations.openMocks(this);
+        // 现在BasicVessel需要依赖注入
+        basicVessel = new BasicVessel(mockVesselRegistry, mockEventDispatcher);
     }
     
     @Test

@@ -1,15 +1,11 @@
 package SeeleFelix.AnimaWeave.tools.generator;
 
-import SeeleFelix.AnimaWeave.framework.vessel.AnimaVessel;
 import SeeleFelix.AnimaWeave.framework.vessel.VesselRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
-
-import java.util.Map;
 
 /**
  * 独立的Anima文件生成器命令行应用
@@ -23,18 +19,18 @@ import java.util.Map;
 @Slf4j
 @SpringBootApplication(scanBasePackages = {
     "SeeleFelix.AnimaWeave.tools.generator",
-    "SeeleFelix.AnimaWeave.vessels"
+    "SeeleFelix.AnimaWeave.vessels",
+    "SeeleFelix.AnimaWeave.framework.vessel", // 添加vessel相关组件扫描
+    "SeeleFelix.AnimaWeave.framework.event"   // 添加事件相关组件扫描
 })
 public class AnimaGeneratorCliApp implements CommandLineRunner {
 
     private final AnimaFileGenerator generator;
     private final VesselRegistry vesselRegistry;
-    private final ApplicationContext applicationContext;
 
-    public AnimaGeneratorCliApp(AnimaFileGenerator generator, VesselRegistry vesselRegistry, ApplicationContext applicationContext) {
+    public AnimaGeneratorCliApp(AnimaFileGenerator generator, VesselRegistry vesselRegistry) {
         this.generator = generator;
         this.vesselRegistry = vesselRegistry;
-        this.applicationContext = applicationContext;
     }
 
     public static void main(String[] args) {
@@ -55,36 +51,20 @@ public class AnimaGeneratorCliApp implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         try {
-            log.info("🔍 自动发现并注册vessel...");
-            discoverAndRegisterVessels();
-            
             log.info("🔨 开始生成.anima文件...");
+            // 依赖Spring自动机制加载vessel (SpringVesselAutoRegistrar + VesselManager)
+            // 直接使用VesselRegistry中已注册的vessel
             generator.generateAllVesselFiles(vesselRegistry);
             
             log.info("🎉 .anima文件生成完成！");
             
+            // 输出统计信息
+            var vesselNames = vesselRegistry.getVesselNames();
+            log.info("📊 已生成 {} 个vessel的.anima文件: {}", vesselNames.size(), vesselNames);
+            
         } catch (Exception e) {
             log.error("❌ 生成过程中发生错误", e);
             throw e; // 重新抛出异常，让Spring Boot处理退出代码
-        }
-    }
-    
-    /**
-     * 自动发现并注册所有的vessel
-     */
-    private void discoverAndRegisterVessels() {
-        Map<String, AnimaVessel> vesselBeans = applicationContext.getBeansOfType(AnimaVessel.class);
-        
-        log.info("发现 {} 个vessel bean", vesselBeans.size());
-        
-        vesselBeans.forEach((beanName, vessel) -> {
-            String vesselId = vessel.getMetadata().name();
-            vesselRegistry.register(vesselId, vessel);
-            log.info("✓ 注册vessel: {} ({})", vesselId, beanName);
-        });
-        
-        if (vesselBeans.isEmpty()) {
-            log.warn("⚠️  未发现任何vessel，请检查ComponentScan配置");
         }
     }
 } 

@@ -1,6 +1,8 @@
 package SeeleFelix.AnimaWeave.vessels.basic;
 
 import SeeleFelix.AnimaWeave.framework.vessel.*;
+import SeeleFelix.AnimaWeave.framework.event.EventDispatcher;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -12,11 +14,17 @@ import java.util.function.Function;
  * Basic Vessel - 基础容器实现
  * 提供基础数据类型和基本操作节点
  * 
+ * 使用Spring依赖注入，不需要通过VesselContext传递依赖
  * 对应 basic.anima 文件中的定义
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class BasicVessel implements AnimaVessel {
+    
+    // Spring自动注入的依赖 - 不需要通过VesselContext传递！
+    private final VesselRegistry vesselRegistry;
+    private final EventDispatcher eventDispatcher;
     
     private VesselStatus status = VesselStatus.STOPPED;
     

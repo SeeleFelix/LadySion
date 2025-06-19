@@ -42,7 +42,7 @@ portModifiers   : 'optional' | activationMode ;
 activationMode  : 'mode=' ('AND' | 'OR' | 'XOR') ;
 
 // ========== Graph Section ==========
-graphSection    : SECTION_HEADER_GRAPH graphBody SECTION_END ;
+graphSection    : SECTION_HEADER_GRAPH IDENTIFIER? graphBody SECTION_END ;
 graphBody       : nodesInstanceSection? dataConnectionSection? controlConnectionSection? ;
 
 // Nodes Instance Section
