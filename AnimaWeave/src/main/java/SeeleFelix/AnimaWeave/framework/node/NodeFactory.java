@@ -23,7 +23,7 @@ import java.util.Map;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class NodeInstanceFactory {
+public class NodeFactory {
     
     private final ApplicationContext applicationContext;
     private final ApplicationEventPublisher eventPublisher;
@@ -53,7 +53,7 @@ public class NodeInstanceFactory {
         var beanName = generateBeanName(vesselName, nodeType);
         
         // 创建NodeInstance（这里先创建一个通用的实现）
-        var nodeInstance = new GenericNodeInstance(beanName, nodeType, eventPublisher, nodeDef);
+        var nodeInstance = new GenericNode(beanName, nodeType, eventPublisher, nodeDef);
         
         // 动态注册到Spring容器
         var beanFactory = ((ConfigurableApplicationContext) applicationContext).getBeanFactory();
@@ -73,11 +73,11 @@ public class NodeInstanceFactory {
      * 通用NodeInstance实现
      * 这是一个适配器，将NodeDefinition的静态定义转换为可执行的实例
      */
-    public static class GenericNodeInstance extends NodeInstance {
+    public static class GenericNode extends Node {
         
         private final NodeDefinition nodeDefinition;
         
-        public GenericNodeInstance(String nodeName, String nodeType, 
+        public GenericNode(String nodeName, String nodeType, 
                                  ApplicationEventPublisher eventPublisher,
                                  NodeDefinition nodeDefinition) {
             super(nodeName, nodeType, eventPublisher);

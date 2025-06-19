@@ -1,6 +1,6 @@
 package SeeleFelix.AnimaWeave.vessels.basic;
 
-import SeeleFelix.AnimaWeave.framework.node.NodeInstance;
+import SeeleFelix.AnimaWeave.framework.node.Node;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
@@ -13,10 +13,10 @@ import java.util.Map;
  */
 @Slf4j
 @Component
-public class GetTimestampNodeInstance extends NodeInstance {
+public class GetTimestampNode extends Node {
     
-    public GetTimestampNodeInstance(ApplicationEventPublisher eventPublisher) {
-        super("GetTimestamp", "GetTimestamp", eventPublisher);
+    public GetTimestampNode(ApplicationEventPublisher eventPublisher) {
+        super("GetTimestamp", "basic.GetTimestamp", eventPublisher);
     }
     
     @Override

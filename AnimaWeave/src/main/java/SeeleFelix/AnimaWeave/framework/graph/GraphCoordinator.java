@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.HashSet;
 
 /**
  * 图执行协调器 - 简化的事件驱动版本
@@ -114,16 +115,18 @@ public class GraphCoordinator {
         
         for (String nodeId : readyNodes) {
             var inputs = collectNodeInputs(context, nodeId);
+            var nodeType = context.getGraphDefinition().getNodeInstances().get(nodeId);
         
             var request = NodeExecutionRequest.of(
                 this,
                 "GraphCoordinator", 
                 nodeId,
+                nodeType,
                 inputs,
                 context.getExecutionId()
             );
             
-            log.debug("Triggering node: {} with {} inputs", nodeId, inputs.size());
+            log.debug("Triggering node: {} (type: {}) with {} inputs", nodeId, nodeType, inputs.size());
             eventPublisher.publishEvent(request);
         }
     }
@@ -136,15 +139,18 @@ public class GraphCoordinator {
         var initialNodes = findNodesWithoutDependencies(graphDef);
         
         for (String nodeId : initialNodes) {
+            var nodeType = context.getGraphDefinition().getNodeInstances().get(nodeId);
+            
             var request = NodeExecutionRequest.of(
                 this,
                 "GraphCoordinator",
                 nodeId,
+                nodeType,
                 Map.of(), // 初始节点没有输入
                 context.getExecutionId()
             );
             
-            log.debug("Triggering initial node: {}", nodeId);
+            log.debug("Triggering initial node: {} (type: {})", nodeId, nodeType);
             eventPublisher.publishEvent(request);
         }
     }
@@ -171,9 +177,25 @@ public class GraphCoordinator {
      * 寻找没有依赖的初始节点
      */
     private Set<String> findNodesWithoutDependencies(GraphDefinition graphDef) {
-        // TODO: 实现图分析逻辑
-        // 现在先返回空集合，避免编译错误
-        return Set.of();
+        var allNodes = graphDef.getNodeInstances().keySet();
+        var nodesWithInputs = new HashSet<String>();
+        
+        // 找出所有有数据输入连接的节点
+        for (var connection : graphDef.getDataConnections()) {
+            nodesWithInputs.add(connection.getTargetNodeName());
+        }
+        
+        // 找出所有有控制输入连接的节点
+        for (var connection : graphDef.getControlConnections()) {
+            nodesWithInputs.add(connection.getTargetNodeName());
+        }
+        
+        // 初始节点 = 所有节点 - 有输入的节点
+        var initialNodes = new HashSet<>(allNodes);
+        initialNodes.removeAll(nodesWithInputs);
+        
+        log.debug("Found {} initial nodes: {}", initialNodes.size(), initialNodes);
+        return initialNodes;
     }
     
     /**

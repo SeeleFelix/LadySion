@@ -1,6 +1,6 @@
 package SeeleFelix.AnimaWeave.vessels.basic;
 
-import SeeleFelix.AnimaWeave.framework.node.NodeInstance;
+import SeeleFelix.AnimaWeave.framework.node.Node;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
@@ -14,10 +14,10 @@ import java.util.UUID;
  */
 @Slf4j
 @Component
-public class StartNodeInstance extends NodeInstance {
+public class StartNode extends Node {
     
-    public StartNodeInstance(ApplicationEventPublisher eventPublisher) {
-        super("Start", "Start", eventPublisher);
+    public StartNode(ApplicationEventPublisher eventPublisher) {
+        super("Start", "basic.Start", eventPublisher);
     }
     
     @Override

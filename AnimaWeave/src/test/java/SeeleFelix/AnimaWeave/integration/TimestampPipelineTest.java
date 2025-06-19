@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestPropertySource(properties = {
     "logging.level.SeeleFelix.AnimaWeave=DEBUG"
 })
-class TimestampPipelineEndToEndTest {
+class TimestampPipelineTest {
 
     @Autowired
     private AnimaWeave animaWeave;

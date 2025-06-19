@@ -2,7 +2,7 @@ package SeeleFelix.AnimaWeave.framework.vessel;
 
 import SeeleFelix.AnimaWeave.framework.event.EventDispatcher;
 import SeeleFelix.AnimaWeave.framework.event.events.VesselLoadedEvent;
-import SeeleFelix.AnimaWeave.framework.node.NodeInstanceFactory;
+import SeeleFelix.AnimaWeave.framework.node.NodeFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,7 +30,7 @@ public class VesselManager {
     
     private final EventDispatcher eventDispatcher;
     private final VesselRegistry vesselRegistry;
-    private final NodeInstanceFactory nodeInstanceFactory;
+    private final NodeFactory nodeFactory;
     
     @Value("${animaweave.vessels.directory:./vessels}")
     private String vesselsDirectory;
@@ -40,10 +40,10 @@ public class VesselManager {
     
     public VesselManager(EventDispatcher eventDispatcher, 
                         VesselRegistry vesselRegistry, 
-                        NodeInstanceFactory nodeInstanceFactory) {
+                        NodeFactory nodeFactory) {
         this.eventDispatcher = eventDispatcher;
         this.vesselRegistry = vesselRegistry;
-        this.nodeInstanceFactory = nodeInstanceFactory;
+        this.nodeFactory = nodeFactory;
     }
     
     /**
@@ -128,8 +128,8 @@ public class VesselManager {
                     vesselRegistry.register(vesselName, vessel);
                     vesselClassLoaders.put(vesselName, classLoader);
                     
-                    // 为vessel创建NodeInstance
-                    nodeInstanceFactory.createNodeInstancesForVessel(vessel);
+                                // 为vessel创建Node
+            nodeFactory.createNodeInstancesForVessel(vessel);
                     
                     log.info("Successfully loaded JAR vessel: {} v{}", 
                               vessel.getMetadata().name(), 

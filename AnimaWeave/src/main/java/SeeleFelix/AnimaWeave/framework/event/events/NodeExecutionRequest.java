@@ -14,19 +14,21 @@ import java.util.Map;
  * NodeInstance通过@EventListener(condition)自动匹配
  */
 @Getter
-@ToString(callSuper = true, of = {"nodeId", "inputsSize"})
-@EqualsAndHashCode(callSuper = false, of = {"nodeId", "executionContextId"})
+@ToString(callSuper = true, of = {"nodeId", "nodeType"})
+@EqualsAndHashCode(callSuper = false, of = {"nodeId", "nodeType", "executionContextId"})
 public final class NodeExecutionRequest extends AnimaWeaveEvent {
     
     private final String nodeId;                    // 目标节点ID
+    private final String nodeType;                 // 节点类型 (如 basic.Start)
     private final Map<String, Object> inputs;      // 节点输入数据
     private final String executionContextId;       // 图执行上下文ID
     
     public NodeExecutionRequest(Object source, String sourceIdentifier,
-                               String nodeId, Map<String, Object> inputs, 
+                               String nodeId, String nodeType, Map<String, Object> inputs, 
                                String executionContextId) {
         super(source, sourceIdentifier);
         this.nodeId = nodeId;
+        this.nodeType = nodeType;
         this.inputs = inputs != null ? Map.copyOf(inputs) : Map.of();
         this.executionContextId = executionContextId;
     }
@@ -35,9 +37,9 @@ public final class NodeExecutionRequest extends AnimaWeaveEvent {
      * 便捷的静态工厂方法
      */
     public static NodeExecutionRequest of(Object source, String sourceIdentifier,
-                                        String nodeId, Map<String, Object> inputs,
+                                        String nodeId, String nodeType, Map<String, Object> inputs,
                                         String executionContextId) {
-        return new NodeExecutionRequest(source, sourceIdentifier, nodeId, inputs, executionContextId);
+        return new NodeExecutionRequest(source, sourceIdentifier, nodeId, nodeType, inputs, executionContextId);
     }
     
     /**
@@ -58,8 +60,8 @@ public final class NodeExecutionRequest extends AnimaWeaveEvent {
      * 获取执行摘要
      */
     public String getExecutionSummary() {
-        return "Request execution of node '%s' with %d inputs: %s".formatted(
-            nodeId, inputs.size(), inputs.keySet()
+        return "Request execution of node '%s' (type: %s) with %d inputs: %s".formatted(
+            nodeId, nodeType, inputs.size(), inputs.keySet()
         );
     }
 } 

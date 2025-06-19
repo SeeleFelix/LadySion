@@ -23,33 +23,34 @@ import java.util.Map;
 @Slf4j
 @Getter
 @RequiredArgsConstructor
-public abstract class NodeInstance {
+public abstract class Node {
     
     private final String nodeName;  // 图中的唯一节点名称
     private final String nodeType;  // 节点类型（如Add, Multiply等）
     private final ApplicationEventPublisher eventPublisher;
     
     /**
-     * 监听针对自己的执行请求 - 使用Spring条件监听
+     * 监听针对自己类型的执行请求 - 使用Spring条件监听
+     * 一个nodeType实例可以处理图中多个相同类型的节点
      */
-    @EventListener(condition = "#request.nodeId == this.nodeName")
+    @EventListener(condition = "#request.nodeType == this.nodeType")
     @Async("virtualThreadExecutor")
     public void handleExecution(NodeExecutionRequest request) {
-        log.debug("Node {} (type: {}) received execution request with {} inputs", 
-                 nodeName, nodeType, request.getInputs().size());
+        log.debug("Node type {} (instance: {}) received execution request for nodeId: {} with {} inputs", 
+                 nodeType, nodeName, request.getNodeId(), request.getInputs().size());
         
         try {
             // 执行节点特定的计算逻辑
             var outputs = executeNode(request.getInputs());
             
-            // 生成节点执行ID
-            var nodeExecutionId = nodeName + "_exec_" + System.nanoTime();
+            // 生成节点执行ID (使用图中的实际nodeId)
+            var nodeExecutionId = request.getNodeId() + "_exec_" + System.nanoTime();
             
-            // 发送统一的保存事件
+            // 发送统一的保存事件 (使用图中的实际nodeId)
             var saveEvent = NodeOutputSaveEvent.of(
                 this,
-                nodeName,
-                nodeName,
+                request.getNodeId(),  // 使用图中的nodeId
+                request.getNodeId(),  // 使用图中的nodeId
                 nodeExecutionId,
                 outputs,
                 request.getExecutionContextId()
@@ -57,20 +58,20 @@ public abstract class NodeInstance {
             
             eventPublisher.publishEvent(saveEvent);
             
-            log.debug("Node {} completed execution, published save event with {} outputs", 
-                     nodeName, outputs.size());
+            log.debug("Node type {} completed execution for nodeId: {}, published save event with {} outputs", 
+                     nodeType, request.getNodeId(), outputs.size());
             
         } catch (Exception e) {
-            log.error("Node {} execution failed", nodeName, e);
+            log.error("Node type {} execution failed for nodeId: {}", nodeType, request.getNodeId(), e);
             
             // 生成错误执行ID
-            var errorExecutionId = nodeName + "_exec_error_" + System.nanoTime();
+            var errorExecutionId = request.getNodeId() + "_exec_error_" + System.nanoTime();
             
             // 发送错误事件
             var errorEvent = NodeOutputSaveEvent.of(
                 this,
-                nodeName,
-                nodeName,
+                request.getNodeId(),  // 使用图中的nodeId
+                request.getNodeId(),  // 使用图中的nodeId
                 errorExecutionId,
                 Map.of("error", e.getMessage()),
                 request.getExecutionContextId()
