@@ -16,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.HashSet;
+import java.util.HashMap;
 
 /**
  * 图执行协调器 - 简化的事件驱动版本
@@ -86,6 +87,9 @@ public class GraphCoordinator {
         
         // 更新数据总线
         updateDataBus(context, event);
+        
+        // 标记节点为已执行
+        context.markNodeExecuted(event.getNodeName());
         
         // 触发下一批可执行的节点
         triggerNextNodes(context, event.getNodeName());
@@ -159,18 +163,128 @@ public class GraphCoordinator {
      * 寻找准备好执行的节点
      */
     private Set<String> findReadyNodes(ExecutionContext context, String completedNodeName) {
-        // TODO: 实现基于图定义的依赖分析
-        // 现在先返回空集合，避免编译错误
-        return Set.of();
+        var graphDef = context.getGraphDefinition();
+        var readyNodes = new HashSet<String>();
+        
+        // 获取所有从完成节点出发的连接
+        var outgoingDataConnections = graphDef.getDataConnections().stream()
+            .filter(conn -> conn.getSourceNodeName().equals(completedNodeName))
+            .toList();
+            
+        var outgoingControlConnections = graphDef.getControlConnections().stream()
+            .filter(conn -> conn.getSourceNodeName().equals(completedNodeName))
+            .toList();
+        
+        // 收集所有可能被触发的目标节点
+        var candidateNodes = new HashSet<String>();
+        outgoingDataConnections.forEach(conn -> candidateNodes.add(conn.getTargetNodeName()));
+        outgoingControlConnections.forEach(conn -> candidateNodes.add(conn.getTargetNodeName()));
+        
+        // 对每个候选节点，检查其所有依赖是否都已满足
+        for (String nodeId : candidateNodes) {
+            if (isNodeReadyToExecute(context, nodeId)) {
+                readyNodes.add(nodeId);
+                log.debug("Node {} is ready to execute after {} completion", nodeId, completedNodeName);
+            } else {
+                log.trace("Node {} not ready yet, waiting for more dependencies", nodeId);
+            }
+        }
+        
+        log.debug("Found {} ready nodes after {} completion: {}", readyNodes.size(), completedNodeName, readyNodes);
+        return readyNodes;
     }
     
+    /**
+     * 检查节点是否准备好执行（所有依赖都已满足）
+     */
+    private boolean isNodeReadyToExecute(ExecutionContext context, String nodeId) {
+        var graphDef = context.getGraphDefinition();
+        
+        // 获取该节点的所有输入连接
+        var incomingDataConnections = graphDef.getDataConnections().stream()
+            .filter(conn -> conn.getTargetNodeName().equals(nodeId))
+            .toList();
+            
+        var incomingControlConnections = graphDef.getControlConnections().stream()
+            .filter(conn -> conn.getTargetNodeName().equals(nodeId))
+            .toList();
+        
+        // 检查所有数据依赖是否都已满足
+        for (var connection : incomingDataConnections) {
+            String sourceNode = connection.getSourceNodeName();
+            String sourcePort = connection.getSourcePortName();
+            
+            if (!context.hasNodeOutput(sourceNode, sourcePort)) {
+                log.trace("Node {} waiting for data: {}.{}", nodeId, sourceNode, sourcePort);
+                return false;
+            }
+        }
+        
+        // 检查所有控制依赖是否都已满足
+        for (var connection : incomingControlConnections) {
+            String sourceNode = connection.getSourceNodeName();
+            String sourcePort = connection.getSourcePortName();
+            
+            if (!context.hasNodeOutput(sourceNode, sourcePort)) {
+                log.trace("Node {} waiting for control signal: {}.{}", nodeId, sourceNode, sourcePort);
+                return false;
+            }
+        }
+        
+        // 检查该节点是否已经执行过（避免重复执行）
+        if (context.hasNodeBeenExecuted(nodeId)) {
+            log.trace("Node {} already executed, skipping", nodeId);
+            return false;
+        }
+        
+        return true;
+    }
+
     /**
      * 收集节点的输入数据
      */
     private Map<String, Object> collectNodeInputs(ExecutionContext context, String nodeId) {
-        // TODO: 根据图定义收集节点的输入
-        // 现在先返回空Map，避免编译错误
-        return Map.of();
+        var graphDef = context.getGraphDefinition();
+        var inputs = new HashMap<String, Object>();
+        
+        // 收集数据输入
+        var incomingDataConnections = graphDef.getDataConnections().stream()
+            .filter(conn -> conn.getTargetNodeName().equals(nodeId))
+            .toList();
+            
+        for (var connection : incomingDataConnections) {
+            String sourceNode = connection.getSourceNodeName();
+            String sourcePort = connection.getSourcePortName();
+            String targetPort = connection.getTargetPortName();
+            
+            Object value = context.getNodeOutput(sourceNode, sourcePort);
+            if (value != null) {
+                inputs.put(targetPort, value);
+                log.trace("Collected data input for {}.{} from {}.{}: {}", 
+                         nodeId, targetPort, sourceNode, sourcePort, value);
+            }
+        }
+        
+        // 收集控制输入（通常是Signal类型）
+        var incomingControlConnections = graphDef.getControlConnections().stream()
+            .filter(conn -> conn.getTargetNodeName().equals(nodeId))
+            .toList();
+            
+        for (var connection : incomingControlConnections) {
+            String sourceNode = connection.getSourceNodeName();
+            String sourcePort = connection.getSourcePortName();
+            String targetPort = connection.getTargetPortName();
+            
+            Object value = context.getNodeOutput(sourceNode, sourcePort);
+            if (value != null) {
+                inputs.put(targetPort, value);
+                log.trace("Collected control input for {}.{} from {}.{}: {}", 
+                         nodeId, targetPort, sourceNode, sourcePort, value);
+            }
+        }
+        
+        log.debug("Collected {} inputs for node {}: {}", inputs.size(), nodeId, inputs.keySet());
+        return inputs;
     }
     
     /**

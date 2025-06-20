@@ -37,6 +37,9 @@ public class ExecutionContext {
     // 节点执行计数：记录每个节点被执行的次数
     private final ConcurrentMap<String, Integer> nodeExecutionCounts = new ConcurrentHashMap<>();
     
+    // 已执行节点追踪：记录哪些节点已经完成执行
+    private final Set<String> executedNodes = ConcurrentHashMap.newKeySet();
+    
     public ExecutionContext(String executionId, GraphDefinition graphDefinition) {
         this.executionId = executionId;
         this.graphDefinition = graphDefinition;
@@ -80,7 +83,7 @@ public class ExecutionContext {
         if (previousValue != null) {
             log.trace("Previous value overwritten: {} -> {}", 
                      getValuePreview(previousValue), getValuePreview(value));
-    }
+        }
     }
     
     /**
@@ -97,6 +100,28 @@ public class ExecutionContext {
     public boolean hasNodeOutput(String nodeName, String portName) {
         var portKey = createPortKey(nodeName, portName);
         return dataBus.containsKey(portKey);
+    }
+    
+    /**
+     * 检查节点是否已经执行过
+     */
+    public boolean hasNodeBeenExecuted(String nodeName) {
+        return executedNodes.contains(nodeName);
+    }
+    
+    /**
+     * 标记节点为已执行
+     */
+    public void markNodeExecuted(String nodeName) {
+        executedNodes.add(nodeName);
+        log.trace("Marked node as executed: {}", nodeName);
+    }
+    
+    /**
+     * 获取已执行节点的列表
+     */
+    public Set<String> getExecutedNodes() {
+        return Set.copyOf(executedNodes);
     }
     
     /**
