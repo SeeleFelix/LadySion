@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SpringVesselAutoRegistrar {
 
-  private final VesselRegistry vesselRegistry;
+  private final VesselsRegistry vesselRegistry;
   private final ApplicationContext applicationContext;
 
   /** Spring启动时自动注册所有@Component vessel */

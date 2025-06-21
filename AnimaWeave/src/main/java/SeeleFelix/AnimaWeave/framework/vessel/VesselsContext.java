@@ -14,19 +14,19 @@ import org.slf4j.LoggerFactory;
  * <p>简化版本：移除接口抽象，直接作为数据类使用
  */
 @Getter
-public class VesselContext {
+public class VesselsContext {
 
-  private static final Logger logger = LoggerFactory.getLogger(VesselContext.class);
+  private static final Logger logger = LoggerFactory.getLogger(VesselsContext.class);
 
   private final EventDispatcher eventDispatcher;
-  private final VesselRegistry vesselRegistry;
+  private final VesselsRegistry vesselRegistry;
   private final String vesselName;
   private final String workingDirectory;
   private final String tempDirectory;
 
-  public VesselContext(
+  public VesselsContext(
       EventDispatcher eventDispatcher,
-      VesselRegistry vesselRegistry,
+      VesselsRegistry vesselRegistry,
       String vesselName,
       String baseDirectory) {
     this.eventDispatcher = eventDispatcher;

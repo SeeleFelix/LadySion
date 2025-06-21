@@ -19,7 +19,7 @@ public interface AnimaVessel {
    *
    * @param context vessel上下文，提供框架服务
    */
-  void initialize(VesselContext context);
+  void initialize(VesselsContext context);
 
   /** 插件关闭 */
   void shutdown();

@@ -1,6 +1,6 @@
 package SeeleFelix.AnimaWeave.tools.generator;
 
-import SeeleFelix.AnimaWeave.framework.vessel.VesselRegistry;
+import SeeleFelix.AnimaWeave.framework.vessel.VesselsRegistry;
 import java.nio.file.Path;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
@@ -26,9 +26,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class AnimaGeneratorCliApp implements CommandLineRunner {
 
   private final AnimaFileGenerator generator;
-  private final VesselRegistry vesselRegistry;
+  private final VesselsRegistry vesselRegistry;
 
-  public AnimaGeneratorCliApp(AnimaFileGenerator generator, VesselRegistry vesselRegistry) {
+  public AnimaGeneratorCliApp(AnimaFileGenerator generator, VesselsRegistry vesselRegistry) {
     this.generator = generator;
     this.vesselRegistry = vesselRegistry;
   }

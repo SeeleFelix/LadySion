@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component
-public class VesselRegistry {
+public class VesselsRegistry {
 
   private final ConcurrentMap<String, AnimaVessel> vessels = new ConcurrentHashMap<>();
 

@@ -51,18 +51,18 @@ public class BasicVessel implements AnimaVessel {
             "图执行的起始点，生成执行ID和信号",
             List.of(), // 无输入端口
             List.of(
-                new PortDefinition("signal", "信号", getLabel("Signal"), true, null),
-                new PortDefinition("execution_id", "执行ID", getLabel("UUID"), true, null))),
+                new PortTemplate("signal", "信号", getLabel("Signal"), true, null),
+                new PortTemplate("execution_id", "执行ID", getLabel("UUID"), true, null))),
 
         // GetTimestamp节点
         new NodeDefinition(
             "GetTimestamp",
             "获取时间戳",
             "获取当前时间戳",
-            List.of(new PortDefinition("trigger", "触发信号", getLabel("Signal"), true, null)),
+            List.of(new PortTemplate("trigger", "触发信号", getLabel("Signal"), true, null)),
             List.of(
-                new PortDefinition("timestamp", "时间戳", getLabel("Int"), true, null),
-                new PortDefinition("done", "完成信号", getLabel("Signal"), true, null))),
+                new PortTemplate("timestamp", "时间戳", getLabel("Int"), true, null),
+                new PortTemplate("done", "完成信号", getLabel("Signal"), true, null))),
 
         // IsEven节点
         new NodeDefinition(
@@ -70,11 +70,11 @@ public class BasicVessel implements AnimaVessel {
             "判断偶数",
             "判断一个数字是否为偶数",
             List.of(
-                new PortDefinition("number", "数字", getLabel("Int"), true, null),
-                new PortDefinition("trigger", "触发信号", getLabel("Signal"), true, null)),
+                new PortTemplate("number", "数字", getLabel("Int"), true, null),
+                new PortTemplate("trigger", "触发信号", getLabel("Signal"), true, null)),
             List.of(
-                new PortDefinition("result", "结果", getLabel("Bool"), true, null),
-                new PortDefinition("done", "完成信号", getLabel("Signal"), true, null))),
+                new PortTemplate("result", "结果", getLabel("Bool"), true, null),
+                new PortTemplate("done", "完成信号", getLabel("Signal"), true, null))),
 
         // FormatNumber节点
         new NodeDefinition(
@@ -82,11 +82,11 @@ public class BasicVessel implements AnimaVessel {
             "格式化数字",
             "将数字格式化为字符串",
             List.of(
-                new PortDefinition("number", "数字", getLabel("Int"), true, null),
-                new PortDefinition("trigger", "触发信号", getLabel("Signal"), true, null)),
+                new PortTemplate("number", "数字", getLabel("Int"), true, null),
+                new PortTemplate("trigger", "触发信号", getLabel("Signal"), true, null)),
             List.of(
-                new PortDefinition("formatted", "格式化结果", getLabel("String"), true, null),
-                new PortDefinition("done", "完成信号", getLabel("Signal"), true, null))),
+                new PortTemplate("formatted", "格式化结果", getLabel("String"), true, null),
+                new PortTemplate("done", "完成信号", getLabel("Signal"), true, null))),
 
         // CreatePrompt节点
         new NodeDefinition(
@@ -94,12 +94,12 @@ public class BasicVessel implements AnimaVessel {
             "创建提示",
             "创建一个提示对象",
             List.of(
-                new PortDefinition("name", "名称", getLabel("String"), true, null),
-                new PortDefinition("content", "内容", getLabel("String"), true, null),
-                new PortDefinition("trigger", "触发信号", getLabel("Signal"), true, null)),
+                new PortTemplate("name", "名称", getLabel("String"), true, null),
+                new PortTemplate("content", "内容", getLabel("String"), true, null),
+                new PortTemplate("trigger", "触发信号", getLabel("Signal"), true, null)),
             List.of(
-                new PortDefinition("prompt", "提示对象", getLabel("Prompt"), true, null),
-                new PortDefinition("done", "完成信号", getLabel("Signal"), true, null))),
+                new PortTemplate("prompt", "提示对象", getLabel("Prompt"), true, null),
+                new PortTemplate("done", "完成信号", getLabel("Signal"), true, null))),
 
         // StringFormatter节点
         new NodeDefinition(
@@ -107,35 +107,35 @@ public class BasicVessel implements AnimaVessel {
             "字符串格式化",
             "格式化字符串",
             List.of(
-                new PortDefinition("input", "输入字符串", getLabel("String"), true, null),
-                new PortDefinition("trigger", "触发信号", getLabel("Signal"), true, null)),
+                new PortTemplate("input", "输入字符串", getLabel("String"), true, null),
+                new PortTemplate("trigger", "触发信号", getLabel("Signal"), true, null)),
             List.of(
-                new PortDefinition("formatted", "格式化结果", getLabel("String"), true, null),
-                new PortDefinition("done", "完成信号", getLabel("Signal"), true, null))),
+                new PortTemplate("formatted", "格式化结果", getLabel("String"), true, null),
+                new PortTemplate("done", "完成信号", getLabel("Signal"), true, null))),
 
         // DataProcessor节点
         new NodeDefinition(
             "DataProcessor",
             "数据处理器",
             "处理数据并返回结果",
-            List.of(new PortDefinition("execute", "执行信号", getLabel("Signal"), true, null)),
+            List.of(new PortTemplate("execute", "执行信号", getLabel("Signal"), true, null)),
             List.of(
-                new PortDefinition("result", "处理结果", getLabel("String"), true, null),
-                new PortDefinition("done", "完成信号", getLabel("Signal"), true, null))),
+                new PortTemplate("result", "处理结果", getLabel("String"), true, null),
+                new PortTemplate("done", "完成信号", getLabel("Signal"), true, null))),
 
         // CompletionMarker节点
         new NodeDefinition(
             "CompletionMarker",
             "完成标记",
             "标记处理完成并记录时间戳",
-            List.of(new PortDefinition("trigger", "触发信号", getLabel("Signal"), true, null)),
+            List.of(new PortTemplate("trigger", "触发信号", getLabel("Signal"), true, null)),
             List.of(
-                new PortDefinition("completed", "完成信号", getLabel("Signal"), true, null),
-                new PortDefinition("timestamp", "时间戳", getLabel("Int"), true, null))));
+                new PortTemplate("completed", "完成信号", getLabel("Signal"), true, null),
+                new PortTemplate("timestamp", "时间戳", getLabel("Int"), true, null))));
   }
 
   @Override
-  public void initialize(VesselContext context) {
+  public void initialize(VesselsContext context) {
     log.info("🔌 初始化Basic容器 v{}", getMetadata().version());
   }
 

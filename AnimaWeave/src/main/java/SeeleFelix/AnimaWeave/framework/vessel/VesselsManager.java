@@ -19,10 +19,10 @@ import org.springframework.stereotype.Component;
 /** Vessel插件管理器 负责插件的加载、注册和生命周期管理 使用Java 21 + Spring 6.1 + lombok现代化实现 */
 @Slf4j
 @Component
-public class VesselManager {
+public class VesselsManager {
 
   private final EventDispatcher eventDispatcher;
-  private final VesselRegistry vesselRegistry;
+  private final VesselsRegistry vesselRegistry;
   private final NodeFactory nodeFactory;
 
   @Value("${animaweave.vessels.directory:./vessels}")
@@ -32,8 +32,8 @@ public class VesselManager {
   private final ConcurrentMap<String, URLClassLoader> vesselClassLoaders =
       new ConcurrentHashMap<>();
 
-  public VesselManager(
-      EventDispatcher eventDispatcher, VesselRegistry vesselRegistry, NodeFactory nodeFactory) {
+  public VesselsManager(
+      EventDispatcher eventDispatcher, VesselsRegistry vesselRegistry, NodeFactory nodeFactory) {
     this.eventDispatcher = eventDispatcher;
     this.vesselRegistry = vesselRegistry;
     this.nodeFactory = nodeFactory;
@@ -224,8 +224,8 @@ public class VesselManager {
   }
 
   /** 创建vessel上下文 */
-  private VesselContext createVesselContext(String vesselName) {
-    return new VesselContext(eventDispatcher, vesselRegistry, vesselName, vesselsDirectory);
+  private VesselsContext createVesselContext(String vesselName) {
+    return new VesselsContext(eventDispatcher, vesselRegistry, vesselName, vesselsDirectory);
   }
 
   /** 安全关闭类加载器 - 使用Java 21的现代化异常处理 */
@@ -240,7 +240,7 @@ public class VesselManager {
   }
 
   // Getter for monitoring
-  public VesselRegistry getVesselRegistry() {
+  public VesselsRegistry getVesselRegistry() {
     return vesselRegistry;
   }
 }

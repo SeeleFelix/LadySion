@@ -12,34 +12,34 @@ public record NodeDefinition(
     String nodeType, // 节点类型（如 "Add", "Multiply"）
     String displayName, // 显示名称
     String description, // 描述
-    List<PortDefinition> inputPorts, // 输入端口定义
-    List<PortDefinition> outputPorts // 输出端口定义
+    List<PortTemplate> inputPorts, // 输入端口模板
+    List<PortTemplate> outputPorts // 输出端口模板
     ) {
 
 
 
-  /** 获取指定名称的输入端口 */
-  public PortDefinition getInputPort(String portName) {
+  /** 获取指定名称的输入端口模板 */
+  public PortTemplate getInputPort(String portName) {
     return inputPorts.stream()
         .filter(port -> port.name().equals(portName))
         .findFirst()
         .orElse(null);
   }
 
-  /** 获取指定名称的输出端口 */
-  public PortDefinition getOutputPort(String portName) {
+  /** 获取指定名称的输出端口模板 */
+  public PortTemplate getOutputPort(String portName) {
     return outputPorts.stream()
         .filter(port -> port.name().equals(portName))
         .findFirst()
         .orElse(null);
   }
 
-  /** 验证输入语义标签是否符合端口定义 */
-  public boolean validateInputs(Map<String, SemanticLabel> inputs) {
+  /** 验证输入端口是否符合端口模板定义 */
+  public boolean validateInputs(Map<String, Port> inputs) {
     return inputPorts.stream()
         .allMatch(
             port -> {
-              SemanticLabel input = inputs.get(port.name());
+              Port input = inputs.get(port.name());
               if (port.required() && input == null) {
                 return false;
               }
@@ -52,11 +52,11 @@ public record NodeDefinition(
 
   /** 检查节点是否有必需的输入端口 */
   public boolean hasRequiredInputs() {
-    return inputPorts.stream().anyMatch(PortDefinition::required);
+    return inputPorts.stream().anyMatch(PortTemplate::required);
   }
 
   /** 获取所有必需输入端口的名称 */
   public List<String> getRequiredInputPortNames() {
-    return inputPorts.stream().filter(PortDefinition::required).map(PortDefinition::name).toList();
+    return inputPorts.stream().filter(PortTemplate::required).map(PortTemplate::name).toList();
   }
 }

@@ -3,7 +3,7 @@ package SeeleFelix.AnimaWeave.tools.generator;
 import SeeleFelix.AnimaWeave.framework.vessel.AnimaVessel;
 import SeeleFelix.AnimaWeave.framework.vessel.NodeDefinition;
 import SeeleFelix.AnimaWeave.framework.vessel.SemanticLabelDefinition;
-import SeeleFelix.AnimaWeave.framework.vessel.VesselRegistry;
+import SeeleFelix.AnimaWeave.framework.vessel.VesselsRegistry;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -165,7 +165,7 @@ public class AnimaFileGenerator {
   }
 
   /** 批量生成所有已注册vessel的.anima文件 */
-  public void generateAllVesselFiles(VesselRegistry registry, Optional<Path> customOutputDir) {
+  public void generateAllVesselFiles(VesselsRegistry registry, Optional<Path> customOutputDir) {
     try {
       var outputDir = customOutputDir.orElse(config.getOutputDirectoryPath());
       log.info("🔨 开始生成所有vessel的.anima文件到目录: {}", outputDir);
