@@ -1,0 +1,128 @@
+[versions]
+# Java工具链和构建相关
+java = "21"
+gradle = "8.11.1"
+
+# Spring Boot生态系统
+spring-boot = "3.3.6"
+spring-dependency-management = "1.1.6"
+
+# 测试框架
+junit-jupiter = "5.11.4"
+junit-platform = "1.11.4"
+mockito = "5.14.2"
+assertj = "3.26.3"
+
+# 代码质量工具
+checkstyle = "10.20.1"
+spotbugs = "4.8.6"
+pmd = "7.8.0"
+
+# ANTLR和解析器
+antlr = "4.13.2"
+
+# 日志框架
+slf4j = "2.0.16"
+logback = "1.5.12"
+
+# Jackson JSON处理
+jackson = "2.18.2"
+
+# Apache Commons
+commons-lang3 = "3.17.0"
+commons-io = "2.18.0"
+
+# Lombok
+lombok = "1.18.36"
+
+# Selfie快照测试
+selfie = "0.26.0"
+
+[libraries]
+# Spring Boot
+spring-boot-starter = { module = "org.springframework.boot:spring-boot-starter", version.ref = "spring-boot" }
+spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "spring-boot" }
+spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test", version.ref = "spring-boot" }
+spring-boot-starter-logging = { module = "org.springframework.boot:spring-boot-starter-logging", version.ref = "spring-boot" }
+
+# 测试框架
+junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit-jupiter" }
+junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit-jupiter" }
+junit-jupiter-params = { module = "org.junit.jupiter:junit-jupiter-params", version.ref = "junit-jupiter" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit-platform" }
+mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
+mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter", version.ref = "mockito" }
+assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
+
+# ANTLR
+antlr-runtime = { module = "org.antlr:antlr4-runtime", version.ref = "antlr" }
+antlr-tool = { module = "org.antlr:antlr4", version.ref = "antlr" }
+
+# 日志
+slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+
+# Jackson
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
+jackson-core = { module = "com.fasterxml.jackson.core:jackson-core", version.ref = "jackson" }
+
+# Apache Commons
+commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
+commons-io = { module = "commons-io:commons-io", version.ref = "commons-io" }
+
+# Lombok
+lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
+
+# Selfie快照测试
+selfie-jvm = { module = "com.diffplug.selfie:selfie-runner-junit5", version.ref = "selfie" }
+
+[bundles]
+# 测试相关依赖包
+testing = [
+    "junit-jupiter-api",
+    "junit-jupiter-engine", 
+    "junit-jupiter-params",
+    "junit-platform-launcher",
+    "mockito-core",
+    "mockito-junit-jupiter",
+    "assertj-core"
+]
+
+# Spring Boot核心包
+spring-boot-core = [
+    "spring-boot-starter",
+    "spring-boot-starter-web",
+    "spring-boot-starter-logging"
+]
+
+# Jackson处理包
+jackson = [
+    "jackson-core",
+    "jackson-databind"
+]
+
+# Apache Commons工具包
+commons = [
+    "commons-lang3",
+    "commons-io"
+]
+
+[plugins]
+# Spring Boot插件
+spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
+spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }
+
+# ANTLR插件
+antlr = { id = "antlr" }
+
+# 代码质量插件
+checkstyle = { id = "checkstyle" }
+pmd = { id = "pmd" }
+spotbugs = { id = "com.github.spotbugs", version = "6.0.26" }
+
+# 版本管理插件
+version-catalog-update = { id = "nl.littlerobots.version-catalog-update", version = "0.8.5" }
+versions = { id = "com.github.ben-manes.versions", version = "0.51.0" }
+
+# 其他实用插件
+lombok = { id = "io.freefair.lombok", version = "8.11" } 

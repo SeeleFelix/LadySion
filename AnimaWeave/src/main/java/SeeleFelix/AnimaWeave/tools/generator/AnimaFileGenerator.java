@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * AnimaFile生成器
@@ -179,9 +180,9 @@ public class AnimaFileGenerator {
     /**
      * 批量生成所有已注册vessel的.anima文件
      */
-    public void generateAllVesselFiles(VesselRegistry registry) {
+    public void generateAllVesselFiles(VesselRegistry registry, Optional<Path> customOutputDir) {
         try {
-            var outputDir = config.getOutputDirectoryPath();
+            var outputDir = customOutputDir.orElse(config.getOutputDirectoryPath());
             log.info("🔨 开始生成所有vessel的.anima文件到目录: {}", outputDir);
             
             var vesselNames = registry.getVesselNames();

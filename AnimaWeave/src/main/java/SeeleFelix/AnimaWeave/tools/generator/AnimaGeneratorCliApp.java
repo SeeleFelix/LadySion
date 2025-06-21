@@ -7,6 +7,9 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 
+import java.nio.file.Path;
+import java.util.Optional;
+
 /**
  * 独立的Anima文件生成器命令行应用
  * 
@@ -52,20 +55,13 @@ public class AnimaGeneratorCliApp implements CommandLineRunner {
         try {
             log.info("🔨 开始生成.anima文件...");
             
-            // 处理命令行参数：支持指定输出目录
+            Optional<Path> customOutputDir = Optional.empty();
             if (args.length > 0) {
-                String outputDir = args[0];
-                log.info("📁 使用自定义输出目录: {}", outputDir);
-                // 动态设置输出目录
-                var config = generator.getClass().getDeclaredField("config");
-                config.setAccessible(true);
-                GeneratorConfig generatorConfig = (GeneratorConfig) config.get(generator);
-                generatorConfig.setOutputDirectory(outputDir);
+                customOutputDir = Optional.of(Path.of(args[0]));
+                log.info("📁 使用自定义输出目录: {}", args[0]);
             }
             
-            // 依赖Spring自动机制加载vessel (SpringVesselAutoRegistrar + VesselManager)
-            // 直接使用VesselRegistry中已注册的vessel
-            generator.generateAllVesselFiles(vesselRegistry);
+            generator.generateAllVesselFiles(vesselRegistry, customOutputDir);
             
             log.info("🎉 .anima文件生成完成！");
             

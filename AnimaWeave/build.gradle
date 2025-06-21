@@ -1,8 +1,13 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '3.3.6'
-	id 'io.spring.dependency-management' version '1.1.6'
+	id 'org.springframework.boot' version '3.5.3'
+	id 'io.spring.dependency-management' version '1.1.7'
 	id 'antlr'
+	// 代码质量检查插件
+	id 'checkstyle'
+	id 'com.github.spotbugs' version '6.2.0'
+	// 依赖版本检查插件
+	id 'com.github.ben-manes.versions' version '0.52.0'
 }
 
 group = 'SeeleFelix'
@@ -39,23 +44,23 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	
 	// 事件驱动架构
-	implementation 'org.springframework:spring-context'
+	implementation 'org.springframework:spring-context:6.2.8'
 	implementation 'org.springframework.boot:spring-boot-starter-aop'
 	
 	// DSL解析 - ANTLR
-	antlr 'org.antlr:antlr4:4.13.1'
-	implementation 'org.antlr:antlr4-runtime:4.13.1'
+	antlr 'org.antlr:antlr4:4.13.2'
+	implementation 'org.antlr:antlr4-runtime:4.13.2'
 	
 	// JSON处理
-	implementation 'com.fasterxml.jackson.core:jackson-core'
-	implementation 'com.fasterxml.jackson.core:jackson-databind'
+	implementation 'com.fasterxml.jackson.core:jackson-core:2.19.1'
+	implementation 'com.fasterxml.jackson.core:jackson-databind:2.19.1'
 	
 	// 并发处理工具
 	implementation 'org.springframework.boot:spring-boot-starter-cache'
 	
 	// Lombok
-	compileOnly 'org.projectlombok:lombok'
-	annotationProcessor 'org.projectlombok:lombok'
+	compileOnly 'org.projectlombok:lombok:1.18.38'
+	annotationProcessor 'org.projectlombok:lombok:1.18.38'
 	
 	// 开发工具
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
@@ -64,7 +69,7 @@ dependencies {
 	// 测试依赖
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.13.1'
 	
 	// 添加Selfie JVM Snapshot Testing依赖 - 现代化替代方案
 	testImplementation 'com.diffplug.selfie:selfie-runner-junit5:2.5.3'
@@ -102,6 +107,17 @@ tasks.named('test') {
 	outputs.upToDateWhen { false }
 }
 
+// 代码质量检查配置 - 使用现有配置文件
+checkstyle {
+	toolVersion = '10.25.0'
+	configFile = file('config/checkstyle/checkstyle.xml')
+}
+
+spotbugs {
+	toolVersion = '4.9.3'
+	excludeFilter = file('config/spotbugs/exclude.xml')
+}
+
 // 自定义task：生成.anima文件
 task generateAnimaFiles(type: JavaExec) {
 	group = 'vessel'
@@ -124,4 +140,27 @@ task generateAnimaFiles(type: JavaExec) {
 		println '✅ .anima文件生成完成！'
 		println '📁 文件保存在: ./sanctums/ 目录'
 	}
+}
+
+// 依赖版本检查配置
+tasks.named("dependencyUpdates").configure {
+	// 检查频率设置
+	checkForGradleUpdate = true
+	outputFormatter = "json"
+	outputDir = "build/dependencyUpdates"
+	reportfileName = "report"
+	
+	// 版本过滤规则 - 排除不稳定版本
+	rejectVersionIf { selection ->
+		selection.candidate.version.contains('-alpha') ||
+		selection.candidate.version.contains('-beta') ||
+		selection.candidate.version.contains('-rc') ||
+		selection.candidate.version.contains('-M') ||
+		selection.candidate.version.contains('-milestone') ||
+		selection.candidate.version.contains('-dev') ||
+		selection.candidate.version.contains('-SNAPSHOT')
+	}
+	
+	// 只检查稳定版本
+	revision = "release"
 }
