@@ -20,8 +20,7 @@ import org.springframework.context.annotation.ComponentScan;
 @SpringBootApplication(scanBasePackages = {
     "SeeleFelix.AnimaWeave.tools.generator",
     "SeeleFelix.AnimaWeave.vessels",
-    "SeeleFelix.AnimaWeave.framework.vessel", // 添加vessel相关组件扫描
-    "SeeleFelix.AnimaWeave.framework.event"   // 添加事件相关组件扫描
+    "SeeleFelix.AnimaWeave.framework"  // 扫描整个framework包，确保所有依赖都被包含
 })
 public class AnimaGeneratorCliApp implements CommandLineRunner {
 
@@ -44,14 +43,26 @@ public class AnimaGeneratorCliApp implements CommandLineRunner {
         // 禁用banner以减少输出噪音
         app.setBannerMode(org.springframework.boot.Banner.Mode.OFF);
         
-        // 设置JVM退出代码
-        System.exit(SpringApplication.exit(app.run(args)));
+        // 启动应用
+        app.run(args);
     }
 
     @Override
     public void run(String... args) throws Exception {
         try {
             log.info("🔨 开始生成.anima文件...");
+            
+            // 处理命令行参数：支持指定输出目录
+            if (args.length > 0) {
+                String outputDir = args[0];
+                log.info("📁 使用自定义输出目录: {}", outputDir);
+                // 动态设置输出目录
+                var config = generator.getClass().getDeclaredField("config");
+                config.setAccessible(true);
+                GeneratorConfig generatorConfig = (GeneratorConfig) config.get(generator);
+                generatorConfig.setOutputDirectory(outputDir);
+            }
+            
             // 依赖Spring自动机制加载vessel (SpringVesselAutoRegistrar + VesselManager)
             // 直接使用VesselRegistry中已注册的vessel
             generator.generateAllVesselFiles(vesselRegistry);

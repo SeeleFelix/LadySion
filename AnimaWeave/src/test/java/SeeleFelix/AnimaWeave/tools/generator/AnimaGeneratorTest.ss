@@ -1,0 +1,114 @@
+╔═ shouldGenerateAnimaFileForRegisteredVessel ═╗
+-- types
+Signal
+Int
+Bool
+String
+UUID {
+    String
+}
+Prompt {
+    String
+}
+Prompts {
+    Prompt
+}
+--
+
+-- nodes
+Start {
+    mode Concurrent
+    in {
+    }
+    out {
+        signal basic.Signal
+        execution_id basic.UUID
+    }
+}
+
+GetTimestamp {
+    mode Concurrent
+    in {
+        trigger basic.Signal
+    }
+    out {
+        timestamp basic.Int
+        done basic.Signal
+    }
+}
+
+IsEven {
+    mode Concurrent
+    in {
+        number basic.Int
+        trigger basic.Signal
+    }
+    out {
+        result basic.Bool
+        done basic.Signal
+    }
+}
+
+FormatNumber {
+    mode Concurrent
+    in {
+        number basic.Int
+        trigger basic.Signal
+    }
+    out {
+        formatted basic.String
+        done basic.Signal
+    }
+}
+
+CreatePrompt {
+    mode Concurrent
+    in {
+        name basic.String
+        content basic.String
+        trigger basic.Signal
+    }
+    out {
+        prompt basic.Prompt
+        done basic.Signal
+    }
+}
+
+StringFormatter {
+    mode Concurrent
+    in {
+        input basic.String
+        trigger basic.Signal
+    }
+    out {
+        formatted basic.String
+        done basic.Signal
+    }
+}
+
+DataProcessor {
+    mode Concurrent
+    in {
+        execute basic.Signal
+    }
+    out {
+        result basic.String
+        done basic.Signal
+    }
+}
+
+CompletionMarker {
+    mode Concurrent
+    in {
+        trigger basic.Signal
+    }
+    out {
+        completed basic.Signal
+        timestamp basic.Int
+    }
+}
+
+--
+
+
+╔═ [end of file] ═╗

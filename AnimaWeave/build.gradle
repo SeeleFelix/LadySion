@@ -8,6 +8,11 @@ plugins {
 group = 'SeeleFelix'
 version = '0.0.1-SNAPSHOT'
 
+// 明确指定Spring Boot主类
+springBoot {
+	mainClass = 'SeeleFelix.AnimaWeave.AnimaWeaveApplication'
+}
+
 java {
 	toolchain {
 		languageVersion = JavaLanguageVersion.of(21)
@@ -28,6 +33,7 @@ configurations {
 
 dependencies {
 	// Spring Boot 核心
+	implementation 'org.springframework.boot:spring-boot-starter'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
@@ -37,12 +43,12 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-aop'
 	
 	// DSL解析 - ANTLR
-	antlr 'org.antlr:antlr4:4.13.2'
-	implementation 'org.antlr:antlr4-runtime:4.13.2'
+	antlr 'org.antlr:antlr4:4.13.1'
+	implementation 'org.antlr:antlr4-runtime:4.13.1'
 	
 	// JSON处理
+	implementation 'com.fasterxml.jackson.core:jackson-core'
 	implementation 'com.fasterxml.jackson.core:jackson-databind'
-	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
 	
 	// 并发处理工具
 	implementation 'org.springframework.boot:spring-boot-starter-cache'
@@ -59,6 +65,9 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	
+	// 添加Selfie JVM Snapshot Testing依赖 - 现代化替代方案
+	testImplementation 'com.diffplug.selfie:selfie-runner-junit5:2.5.3'
 }
 
 // ANTLR配置
@@ -77,6 +86,20 @@ tasks.named('test') {
 	useJUnitPlatform()
 	// 启用Virtual Threads用于测试
 	jvmArgs += ["--enable-preview"]
+	
+	// Selfie JVM snapshot testing配置 - 按照官方文档配置
+	environment project.properties.subMap(["selfie"])
+	inputs.files(fileTree("src/test") {
+		include "**/*.ss"
+	})
+	
+	// 添加Selfie需要的系统属性传递
+	systemProperties System.properties.findAll { key, value ->
+		key.startsWith("selfie")
+	}
+	
+	// 强制测试总是运行 - 用于开发调试
+	outputs.upToDateWhen { false }
 }
 
 // 自定义task：生成.anima文件
@@ -86,7 +109,7 @@ task generateAnimaFiles(type: JavaExec) {
 	
 	dependsOn compileJava
 	classpath = sourceSets.main.runtimeClasspath
-	mainClass = 'SeeleFelix.AnimaWeave.framework.vessel.GenerateAnimaFiles'
+	mainClass = 'SeeleFelix.AnimaWeave.tools.generator.AnimaGeneratorCliApp'  // 修复类名
 	
 	// 可以传递参数
 	if (project.hasProperty('outputDir')) {
@@ -102,29 +125,3 @@ task generateAnimaFiles(type: JavaExec) {
 		println '📁 文件保存在: ./sanctums/ 目录'
 	}
 }
-
-// 命令行Spring应用：专门用于生成anima文件，与web应用分离
-task generateAnima(type: JavaExec) {
-	group = 'vessel'
-	description = '生成Anima文件（独立的Spring命令行应用）'
-	
-	dependsOn compileJava
-	classpath = sourceSets.main.runtimeClasspath
-	mainClass = 'SeeleFelix.AnimaWeave.tools.generator.AnimaGeneratorCliApp'
-	
-	// 传递JVM参数以加快启动速度
-	jvmArgs = [
-		'-Dspring.main.banner-mode=off',
-		'-Dlogging.level.org.springframework=WARN',
-		'-Dspring.devtools.add-properties=false'
-	]
-	
-	doFirst {
-		println '⚡ 启动独立的Anima生成器...'
-	}
-	
-	doLast {
-		println '📁 生成完成，文件位于: ./sanctums/ 目录'
-	}
-}
- 
