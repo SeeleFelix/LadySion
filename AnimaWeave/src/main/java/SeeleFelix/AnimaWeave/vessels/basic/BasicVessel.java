@@ -32,28 +32,18 @@ public class BasicVessel implements AnimaVessel {
 
   @Override
   public List<SemanticLabelDefinition> getSupportedLabels() {
-    return List.of(
-        // Signal - 布尔信号类型
-        SemanticLabelDefinition.of("Signal", Boolean.class),
-
-        // Int - 整数类型
-        SemanticLabelDefinition.of("Int", Integer.class),
-
-        // Bool - 布尔类型
-        SemanticLabelDefinition.of("Bool", Boolean.class),
-
-        // String - 字符串类型，可以转换为其他类型
-        SemanticLabelDefinition.of(
-            "String", String.class, List.of("Int", "Bool"), createStringConverter()),
-
-        // UUID - UUID类型，内部结构为String
-        SemanticLabelDefinition.of("UUID", String.class),
-
-        // Prompt - 提示类型，内部结构为String
-        SemanticLabelDefinition.of("Prompt", PromptData.class),
-
-        // Prompts - 提示数组类型
-        SemanticLabelDefinition.of("Prompts", PromptData[].class));
+    // 先创建基础类型（无依赖）
+    var signal = new SemanticLabelDefinition("Signal", List.of(), Function.identity());
+    var intType = new SemanticLabelDefinition("Int", List.of(), Function.identity());
+    var boolType = new SemanticLabelDefinition("Bool", List.of(), Function.identity());
+    var prompt = new SemanticLabelDefinition("Prompt", List.of(), Function.identity());
+    var prompts = new SemanticLabelDefinition("Prompts", List.of(), Function.identity());
+    
+    // 创建有依赖关系的类型
+    var stringType = new SemanticLabelDefinition("String", List.of(intType, boolType), createStringConverter());
+    var uuidType = new SemanticLabelDefinition("UUID", List.of(stringType), Function.identity());
+    
+    return List.of(signal, intType, boolType, stringType, uuidType, prompt, prompts);
   }
 
   @Override

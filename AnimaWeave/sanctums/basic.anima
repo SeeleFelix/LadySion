@@ -2,16 +2,15 @@
 Signal
 Int
 Bool
-String
+String {
+    Int
+    Bool
+}
 UUID {
     String
 }
-Prompt {
-    String
-}
-Prompts {
-    Prompt
-}
+Prompt
+Prompts
 --
 
 -- nodes

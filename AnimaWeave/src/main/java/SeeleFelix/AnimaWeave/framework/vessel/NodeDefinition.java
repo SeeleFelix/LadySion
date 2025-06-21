@@ -51,16 +51,19 @@ public record NodeDefinition(
         .orElse(null);
   }
 
-  /** 验证输入数据是否符合端口定义 */
-  public boolean validateInputs(Map<String, Object> inputs) {
+  /** 验证输入语义标签是否符合端口定义 */
+  public boolean validateInputs(Map<String, SemanticLabel> inputs) {
     return inputPorts.stream()
         .allMatch(
             port -> {
-              Object value = inputs.get(port.name());
-              if (port.required() && value == null) {
+              SemanticLabel input = inputs.get(port.name());
+              if (port.required() && input == null) {
                 return false;
               }
-              return port.semanticLabel().isTypeCompatible(value);
+              if (input == null) {
+                return true; // 可选端口可以为null
+              }
+              return port.semanticLabel().isCompatibleWith(input.labelName());
             });
   }
 

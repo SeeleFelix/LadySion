@@ -54,10 +54,10 @@ public class AnimaFileGenerator {
     for (var label : labels) {
       builder.append(label.labelName());
 
-      // 检查是否有复合类型结构
-      if (hasComplexStructure(label)) {
+      // 检查是否需要生成结构定义
+      if (hasCompatibleLabels(label)) {
         builder.append(" {\n");
-        generateComplexTypeStructure(label, builder);
+        generateStructureDefinition(label, builder);
         builder.append("}");
       }
 
@@ -102,25 +102,23 @@ public class AnimaFileGenerator {
     }
   }
 
-  /** 检查类型是否有复杂结构 */
-  private boolean hasComplexStructure(SemanticLabelDefinition label) {
-    // 根据类型名称判断是否为复合类型
-    return switch (label.labelName()) {
-      case "UUID", "Prompt", "Prompts" -> true;
-      default -> false;
-    };
+  /** 检查是否有兼容标签需要生成结构 */
+  private boolean hasCompatibleLabels(SemanticLabelDefinition label) {
+    // 如果有兼容类型，需要生成结构定义
+    return !label.compatibleLabels().isEmpty();
   }
 
-  /** 生成复杂类型结构 */
-  private void generateComplexTypeStructure(SemanticLabelDefinition label, StringBuilder builder) {
-    switch (label.labelName()) {
-      case "UUID", "Prompt" -> builder.append("    String\n");
-      case "Prompts" -> builder.append("    Prompt\n");
-      default -> {
-        // 未知复杂类型，生成注释
-        builder.append("    // Unknown complex type: ").append(label.labelName()).append("\n");
-        log.warn("Unknown complex type structure for label: {}", label.labelName());
-      }
+  /** 生成语义标签的结构定义 */
+  private void generateStructureDefinition(SemanticLabelDefinition label, StringBuilder builder) {
+    // 从兼容标签列表生成结构
+    for (var compatibleLabel : label.compatibleLabels()) {
+      builder.append("    ").append(compatibleLabel.labelName()).append("\n");
+    }
+    
+    // 如果没有兼容标签，生成注释（理论上不应该到这里）
+    if (label.compatibleLabels().isEmpty()) {
+      builder.append("    // No compatible labels defined\n");
+      log.warn("Label {} should not reach here without compatible labels", label.labelName());
     }
   }
 
