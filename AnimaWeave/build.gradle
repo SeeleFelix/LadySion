@@ -72,10 +72,11 @@ dependencies {
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 	
-	// 测试依赖
+	// 测试依赖 - 统一版本避免冲突
+	testImplementation platform('org.junit:junit-bom:5.12.2')
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.13.1'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	
 	// 添加Selfie JVM Snapshot Testing依赖 - 现代化替代方案
 	testImplementation 'com.diffplug.selfie:selfie-runner-junit5:2.5.3'

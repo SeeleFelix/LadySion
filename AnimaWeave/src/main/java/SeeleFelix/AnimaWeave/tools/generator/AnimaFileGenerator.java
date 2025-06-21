@@ -175,7 +175,11 @@ public class AnimaFileGenerator {
         var vessel = registry.getVessel(vesselName);
         if (vessel.isPresent()) {
           try {
-            saveToFile(vessel.get());
+            // 使用自定义输出目录生成文件路径
+            var outputPath = customOutputDir
+                .map(dir -> dir.resolve(vesselName + ".anima"))
+                .orElse(config.getOutputPath(vessel.get()));
+            saveToFile(vessel.get(), outputPath);
           } catch (IOException e) {
             log.error("生成{}的.anima文件失败", vesselName, e);
           }
