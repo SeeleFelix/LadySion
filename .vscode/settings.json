@@ -3,5 +3,6 @@
   "deno.importMap": "import_map.json",
   "deno.lint": true,
   "deno.unstable": true,
-  "java.compile.nullAnalysis.mode": "automatic"
+  "java.compile.nullAnalysis.mode": "automatic",
+  "java.configuration.updateBuildConfiguration": "automatic"
 }

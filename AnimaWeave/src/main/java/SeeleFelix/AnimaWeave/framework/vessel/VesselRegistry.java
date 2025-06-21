@@ -4,41 +4,27 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Vessel注册表接口
- * 管理已加载的vessel插件
- * 
- * 在新架构中，这个接口只负责vessel的生命周期管理，
- * 不再需要运行时查找功能（因为NodeInstance已经预先注册到Spring）
+ * Vessel注册表接口 管理已加载的vessel插件
+ *
+ * <p>在新架构中，这个接口只负责vessel的生命周期管理， 不再需要运行时查找功能（因为NodeInstance已经预先注册到Spring）
  */
 public interface VesselRegistry {
-    
-    /**
-     * 注册vessel插件
-     */
-    void register(String vesselName, AnimaVessel vessel);
-    
-    /**
-     * 注销vessel插件
-     */
-    void unregister(String vesselName);
-    
-    /**
-     * 获取指定的vessel插件
-     */
-    Optional<AnimaVessel> getVessel(String vesselName);
-    
-    /**
-     * 获取所有已注册的vessel名称
-     */
-    List<String> getVesselNames();
-    
-    /**
-     * 获取所有已注册的vessel插件
-     */
-    List<AnimaVessel> getAllVessels();
-    
-    /**
-     * 检查vessel是否已注册
-     */
-    boolean isRegistered(String vesselName);
-} 
+
+  /** 注册vessel插件 */
+  void register(String vesselName, AnimaVessel vessel);
+
+  /** 注销vessel插件 */
+  void unregister(String vesselName);
+
+  /** 获取指定的vessel插件 */
+  Optional<AnimaVessel> getVessel(String vesselName);
+
+  /** 获取所有已注册的vessel名称 */
+  List<String> getVesselNames();
+
+  /** 获取所有已注册的vessel插件 */
+  List<AnimaVessel> getAllVessels();
+
+  /** 检查vessel是否已注册 */
+  boolean isRegistered(String vesselName);
+}
