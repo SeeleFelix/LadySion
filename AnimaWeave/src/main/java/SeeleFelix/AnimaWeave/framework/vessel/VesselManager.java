@@ -225,7 +225,7 @@ public class VesselManager {
 
   /** 创建vessel上下文 */
   private VesselContext createVesselContext(String vesselName) {
-    return new VesselContextImpl(eventDispatcher, vesselRegistry, vesselName, vesselsDirectory);
+    return new VesselContext(eventDispatcher, vesselRegistry, vesselName, vesselsDirectory);
   }
 
   /** 安全关闭类加载器 - 使用Java 21的现代化异常处理 */

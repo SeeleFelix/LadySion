@@ -1,33 +1,89 @@
 package SeeleFelix.AnimaWeave.framework.vessel;
 
 import SeeleFelix.AnimaWeave.framework.event.EventDispatcher;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import lombok.Getter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-/** Vessel上下文接口 为vessel插件提供框架服务的访问入口 */
-public interface VesselContext {
+/** 
+ * Vessel上下文
+ * 为vessel插件提供框架服务的数据容器
+ * 
+ * <p>简化版本：移除接口抽象，直接作为数据类使用
+ */
+@Getter
+public class VesselContext {
 
-  /** 获取事件调度器 */
-  EventDispatcher getEventDispatcher();
+  private static final Logger logger = LoggerFactory.getLogger(VesselContext.class);
 
-  /** 获取vessel注册表 */
-  VesselRegistry getVesselRegistry();
+  private final EventDispatcher eventDispatcher;
+  private final VesselRegistry vesselRegistry;
+  private final String vesselName;
+  private final String workingDirectory;
+  private final String tempDirectory;
+
+  public VesselContext(
+      EventDispatcher eventDispatcher,
+      VesselRegistry vesselRegistry,
+      String vesselName,
+      String baseDirectory) {
+    this.eventDispatcher = eventDispatcher;
+    this.vesselRegistry = vesselRegistry;
+    this.vesselName = vesselName;
+    this.workingDirectory = Paths.get(baseDirectory, vesselName).toString();
+    this.tempDirectory =
+        Paths.get(System.getProperty("java.io.tmpdir"), "animaweave", vesselName).toString();
+
+    // 确保目录存在
+    createDirectoriesIfNeeded();
+  }
 
   /** 获取配置属性 */
-  String getProperty(String key);
+  public String getProperty(String key) {
+    return System.getProperty(key);
+  }
 
   /** 获取配置属性，带默认值 */
-  String getProperty(String key, String defaultValue);
+  public String getProperty(String key, String defaultValue) {
+    return System.getProperty(key, defaultValue);
+  }
 
   /** 记录日志 */
-  void log(String level, String message);
+  public void log(String level, String message) {
+    switch (level.toUpperCase()) {
+      case "DEBUG" -> logger.debug("[{}] {}", vesselName, message);
+      case "INFO" -> logger.info("[{}] {}", vesselName, message);
+      case "WARN" -> logger.warn("[{}] {}", vesselName, message);
+      case "ERROR" -> logger.error("[{}] {}", vesselName, message);
+      default -> logger.info("[{}] {}", vesselName, message);
+    }
+  }
 
   /** 记录日志（默认INFO级别） */
-  default void log(String message) {
+  public void log(String message) {
     log("INFO", message);
   }
 
-  /** 获取vessel的工作目录 */
-  String getWorkingDirectory();
+  /** 确保目录存在 */
+  private void createDirectoriesIfNeeded() {
+    try {
+      var workingPath = Paths.get(workingDirectory);
+      var tempPath = Paths.get(tempDirectory);
 
-  /** 获取vessel的临时目录 */
-  String getTempDirectory();
+      if (!workingPath.toFile().exists()) {
+        workingPath.toFile().mkdirs();
+        logger.debug("Created working directory: {}", workingDirectory);
+      }
+
+      if (!tempPath.toFile().exists()) {
+        tempPath.toFile().mkdirs();
+        logger.debug("Created temp directory: {}", tempDirectory);
+      }
+    } catch (Exception e) {
+      logger.warn("Failed to create directories for vessel: {}", vesselName, e);
+    }
+  }
 }
+
