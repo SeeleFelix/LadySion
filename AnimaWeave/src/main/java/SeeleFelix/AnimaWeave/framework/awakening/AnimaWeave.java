@@ -49,7 +49,9 @@ public class AnimaWeave {
                 if (!graphCoordinator.isSystemReady()) {
                     return AwakeningResult.failure(
                         "system",
-                        "System is not ready. Please wait for vessel loading to complete."
+                        null,
+                        "System is not ready. Please wait for vessel loading to complete.",
+                        AwakeningResult.ExecutionTrace.empty()
                     );
                 }
                 
@@ -58,7 +60,9 @@ public class AnimaWeave {
                     if (!file.getName().endsWith(".weave")) {
                         return AwakeningResult.failure(
                             file.getName(),
-                            "Only .weave files are allowed. Found: " + file.getName()
+                            null,
+                            "Only .weave files are allowed. Found: " + file.getName(),
+                            AwakeningResult.ExecutionTrace.empty()
                         );
                     }
                 }
@@ -71,17 +75,16 @@ public class AnimaWeave {
                 
                 log.info("✨ AnimaWeave awakening initiated for graph: {}", mainGraph.getName());
                 
-                return AwakeningResult.success(
-                        mainGraph.getName(),
-                        "Graph execution started successfully from " + weaveFiles.length + " weave files",
-                        executionId
-                );
+                // 等待图执行完成并返回完整的跟踪信息
+                return graphCoordinator.waitForExecutionComplete(executionId, 60); // 60秒超时
                 
             } catch (Exception e) {
                 log.error("💥 AnimaWeave awakening failed", e);
                 return AwakeningResult.failure(
                         "awakening",
-                        "Awakening failed: " + e.getMessage()
+                        null,
+                        "Awakening failed: " + e.getMessage(),
+                        AwakeningResult.ExecutionTrace.empty()
                 );
             }
         });
@@ -190,7 +193,9 @@ public class AnimaWeave {
                 if (!graphCoordinator.isSystemReady()) {
                     return AwakeningResult.failure(
                         graphDefinition.getName(),
-                        "System is not ready. Please wait for vessel loading to complete."
+                        null,
+                        "System is not ready. Please wait for vessel loading to complete.",
+                        AwakeningResult.ExecutionTrace.empty()
                     );
                 }
                 
@@ -199,17 +204,16 @@ public class AnimaWeave {
                 
                 log.info("✨ AnimaWeave awakening initiated: {}", graphDefinition.getName());
                 
-                return AwakeningResult.success(
-                    graphDefinition.getName(),
-                    "Graph execution started successfully",
-                    executionId
-                );
+                // 等待图执行完成并返回完整的跟踪信息
+                return graphCoordinator.waitForExecutionComplete(executionId, 60); // 60秒超时
                 
             } catch (Exception e) {
                 log.error("💥 AnimaWeave awakening failed for graph: {}", graphDefinition.getName(), e);
                 return AwakeningResult.failure(
                     graphDefinition.getName(),
-                    "Awakening failed: " + e.getMessage()
+                    null,
+                    "Awakening failed: " + e.getMessage(),
+                    AwakeningResult.ExecutionTrace.empty()
                 );
             }
         });

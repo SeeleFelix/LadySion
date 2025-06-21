@@ -68,11 +68,12 @@ public class NodeEventRouter {
             return;
         }
         
-        // 调用Node的模板方法执行
+        // 调用Node的模板方法执行，传递执行ID
         node.executeWithTemplate(
                 request.getNodeId(),
                 request.getInputs(),
-                request.getExecutionContextId()
+                request.getExecutionContextId(),
+                request.getNodeExecutionId()
         );
     }
     

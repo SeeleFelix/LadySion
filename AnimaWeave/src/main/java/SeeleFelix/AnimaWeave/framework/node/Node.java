@@ -31,7 +31,7 @@ public abstract class Node {
      * 执行节点逻辑的模板方法
      * 由NodeEventRouter调用，封装了所有样板代码
      */
-    public void executeWithTemplate(String nodeId, Map<String, Object> inputs, String executionContextId) {
+    public void executeWithTemplate(String nodeId, Map<String, Object> inputs, String executionContextId, String nodeExecutionId) {
         log.debug("Node type {} 开始执行: nodeId={}, inputCount={}", 
                  nodeType, nodeId, inputs.size());
         
@@ -39,21 +39,21 @@ public abstract class Node {
             // 执行具体的业务逻辑
             var outputs = executeNode(inputs);
             
-            // 生成执行ID
-            var nodeExecutionId = generateExecutionId(nodeId);
+            // 使用传入的执行ID
+            var finalExecutionId = nodeExecutionId != null ? nodeExecutionId : generateExecutionId(nodeId);
             
             // 发送成功事件
-            var saveEvent = createSuccessEvent(nodeId, nodeExecutionId, outputs, executionContextId);
+            var saveEvent = createSuccessEvent(nodeId, finalExecutionId, outputs, executionContextId);
             eventPublisher.publishEvent(saveEvent);
             
             log.debug("Node type {} 执行成功: nodeId={}, executionId={}, outputCount={}", 
-                     nodeType, nodeId, nodeExecutionId, outputs.size());
+                     nodeType, nodeId, finalExecutionId, outputs.size());
             
         } catch (Exception e) {
             log.error("Node type {} 执行失败: nodeId={}", nodeType, nodeId, e);
             
-            // 生成错误执行ID
-            var errorExecutionId = generateErrorExecutionId(nodeId);
+            // 使用传入的执行ID或生成错误执行ID
+            var errorExecutionId = nodeExecutionId != null ? nodeExecutionId : generateErrorExecutionId(nodeId);
             
             // 发送错误事件
             var errorEvent = createErrorEvent(nodeId, errorExecutionId, e.getMessage(), executionContextId);

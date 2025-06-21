@@ -1,5 +1,7 @@
 package SeeleFelix.AnimaWeave.framework.graph;
 
+import SeeleFelix.AnimaWeave.framework.awakening.AwakeningResult;
+import SeeleFelix.AnimaWeave.framework.awakening.AwakeningResult.ExecutionTrace;
 import SeeleFelix.AnimaWeave.framework.event.events.NodeExecutionRequest;
 import SeeleFelix.AnimaWeave.framework.event.events.NodeOutputSaveEvent;
 import SeeleFelix.AnimaWeave.framework.startup.SystemReadyEvent;
@@ -88,13 +90,13 @@ public class GraphCoordinator {
         // 更新数据总线
         updateDataBus(context, event);
         
-        // 标记节点为已执行
-        context.markNodeExecuted(event.getNodeName());
+        // 完成节点执行追踪（记录结束时间和输出）
+        var executionRecord = context.completeNodeExecution(event.getNodeExecutionId(), event.getOutputs());
         
         // 触发下一批可执行的节点
         triggerNextNodes(context, event.getNodeName());
         
-        // 检查是否完成
+        // 检查是否完成并输出执行摘要
         checkGraphCompletion(context);
     }
     
@@ -120,6 +122,9 @@ public class GraphCoordinator {
         for (String nodeId : readyNodes) {
             var inputs = collectNodeInputs(context, nodeId);
             var nodeType = context.getGraphDefinition().getNodeInstances().get(nodeId);
+            
+            // 开始执行追踪
+            var executionRecord = context.startNodeExecution(nodeId, nodeType, inputs);
         
             var request = NodeExecutionRequest.of(
                 this,
@@ -130,7 +135,11 @@ public class GraphCoordinator {
                 context.getExecutionId()
             );
             
-            log.debug("Triggering node: {} (type: {}) with {} inputs", nodeId, nodeType, inputs.size());
+            // 设置正确的执行ID
+            request.setNodeExecutionId(executionRecord.nodeExecutionId());
+            
+            log.debug("Triggering node: {} (#{}, type: {}) with {} inputs", 
+                     nodeId, executionRecord.globalSequence(), nodeType, inputs.size());
             eventPublisher.publishEvent(request);
         }
     }
@@ -145,6 +154,9 @@ public class GraphCoordinator {
         for (String nodeId : initialNodes) {
             var nodeType = context.getGraphDefinition().getNodeInstances().get(nodeId);
             
+            // 开始执行追踪
+            var executionRecord = context.startNodeExecution(nodeId, nodeType, Map.of());
+            
             var request = NodeExecutionRequest.of(
                 this,
                 "GraphCoordinator",
@@ -154,7 +166,11 @@ public class GraphCoordinator {
                 context.getExecutionId()
             );
             
-            log.debug("Triggering initial node: {} (type: {})", nodeId, nodeType);
+            // 设置正确的执行ID
+            request.setNodeExecutionId(executionRecord.nodeExecutionId());
+            
+            log.debug("Triggering initial node: {} (#{}, type: {})", 
+                     nodeId, executionRecord.globalSequence(), nodeType);
             eventPublisher.publishEvent(request);
         }
     }
@@ -239,7 +255,7 @@ public class GraphCoordinator {
         
         return true;
     }
-
+    
     /**
      * 收集节点的输入数据
      */
@@ -316,8 +332,52 @@ public class GraphCoordinator {
      * 检查图执行是否完成
      */
     private void checkGraphCompletion(ExecutionContext context) {
-        // TODO: 实现完成检查逻辑
-        log.trace("Checking graph completion for: {}", context.getExecutionId());
+        var summary = context.getExecutionSummary();
+        
+        log.debug("图执行状态检查: {}", summary.getStatusSummary());
+        
+        // 如果图执行完成，输出详细摘要
+        if (summary.isCompleted()) {
+            log.info("🎉 图执行完成: {} - {}", context.getGraphDefinition().getName(), summary.getStatusSummary());
+            log.info("⏱️ 总执行时间: {}ms", summary.totalDuration().toMillis());
+            
+            // 输出详细的执行序列
+            log.info("📋 节点执行序列:");
+            for (var record : summary.executionHistory()) {
+                if (record.isSuccess()) {
+                    log.info("  ✅ #{} {} - {} ({})", 
+                            record.globalSequence(), 
+                            record.getDisplayName(),
+                            record.nodeType(),
+                            record.getFormattedDuration());
+                } else if (record.status() == ExecutionContext.NodeExecutionStatus.FAILED) {
+                    log.error("  ❌ #{} {} - {} ({}) - 错误: {}", 
+                             record.globalSequence(), 
+                             record.getDisplayName(),
+                             record.nodeType(),
+                             record.getFormattedDuration(),
+                             record.errorMessage());
+                }
+            }
+            
+            // 输出性能统计
+            if (summary.successNodes() > 0) {
+                var avgDuration = summary.executionHistory().stream()
+                    .filter(r -> r.isSuccess() && r.duration() != null)
+                    .mapToLong(r -> r.duration().toMillis())
+                    .average()
+                    .orElse(0.0);
+                log.info("📊 平均节点执行时间: {:.1f}ms", avgDuration);
+            }
+            
+            // 如果有失败，输出警告
+            if (summary.failedNodes() > 0) {
+                log.warn("⚠️ 有 {} 个节点执行失败，成功率: {:.1f}%", 
+                        summary.failedNodes(), summary.getSuccessRate() * 100);
+            }
+        } else {
+            log.trace("图执行进行中: 运行中节点数={}", summary.runningNodes());
+        }
     }
     
     /**
@@ -344,5 +404,82 @@ public class GraphCoordinator {
      */
     public boolean isSystemReady() {
         return systemReady.get();
+    }
+    
+    /**
+     * 获取图执行结果 - 如果图执行完成则返回完整的跟踪信息
+     */
+    public AwakeningResult getExecutionResult(String executionId) {
+        var context = executionContexts.get(executionId);
+        if (context == null) {
+            return AwakeningResult.failure("unknown", executionId, "Execution not found: " + executionId, ExecutionTrace.empty());
+        }
+        
+        var summary = context.getExecutionSummary();
+        var executionTrace = ExecutionTrace.fromExecutionContext(context);
+        
+        if (summary.isCompleted()) {
+            // 图执行完成，移除执行上下文
+            executionContexts.remove(executionId);
+            
+            if (summary.failedNodes() > 0) {
+                return AwakeningResult.failure(
+                    context.getGraphDefinition().getName(),
+                    executionId,
+                    String.format("Graph execution completed with %d failed nodes out of %d total nodes", 
+                                 summary.failedNodes(), summary.totalNodes()),
+                    executionTrace
+                );
+            } else {
+                return AwakeningResult.success(
+                    context.getGraphDefinition().getName(),
+                    executionId,
+                    executionTrace
+                );
+            }
+        } else {
+            // 图执行仍在进行中
+            return null;
+        }
+    }
+    
+    /**
+     * 等待图执行完成并获取结果
+     */
+    public AwakeningResult waitForExecutionComplete(String executionId, long timeoutSeconds) {
+        var context = executionContexts.get(executionId);
+        if (context == null) {
+            return AwakeningResult.failure("unknown", executionId, "Execution not found: " + executionId, ExecutionTrace.empty());
+        }
+        
+        long startTime = System.currentTimeMillis();
+        long timeoutMillis = timeoutSeconds * 1000;
+        
+        while (System.currentTimeMillis() - startTime < timeoutMillis) {
+            var result = getExecutionResult(executionId);
+            if (result != null) {
+                return result;
+            }
+            
+            try {
+                Thread.sleep(100); // 100ms polling interval
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return AwakeningResult.failure(
+                    context.getGraphDefinition().getName(),
+                    executionId,
+                    "Execution interrupted while waiting",
+                    ExecutionTrace.fromExecutionContext(context)
+                );
+            }
+        }
+        
+        // 超时
+        return AwakeningResult.failure(
+            context.getGraphDefinition().getName(),
+            executionId,
+            String.format("Execution timeout after %d seconds", timeoutSeconds),
+            ExecutionTrace.fromExecutionContext(context)
+        );
     }
 } 

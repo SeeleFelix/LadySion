@@ -364,6 +364,80 @@ class TimestampPipelineTest {
     }
     
     /**
+     * 测试执行追踪系统 - 验证完整的结构化执行数据
+     */
+    @Test 
+    void shouldProvideCompleteExecutionTrace() throws Exception {
+        // Given: 三节点管道
+        String weaveContent = """
+            -- import
+            basic.anima
+            --
+            
+            -- graph ExecutionTrackingTest
+            nodes {
+                starter basic.Start
+                timestamper basic.GetTimestamp  
+                evenChecker basic.IsEven
+            }
+            
+            datas {
+                timestamper.timestamp -> evenChecker.number;
+            }
+            
+            controls {
+                starter.signal -> timestamper.trigger;
+                timestamper.done -> evenChecker.trigger;
+            }
+            --
+            """;
+        
+        File weaveFile = createTempFile("execution_tracking_test.weave", weaveContent);
+
+        // When: 执行图
+        var result = animaWeave.awakening(weaveFile, "ExecutionTrackingTest").get(10, TimeUnit.SECONDS);
+        
+        // Then: 验证结构化执行跟踪数据
+        assertTrue(result.isSuccess(), "图执行应该成功");
+        
+        var trace = result.getExecutionTrace();
+        assertNotNull(trace, "必须有执行跟踪");
+        assertFalse(trace.isEmpty(), "执行跟踪不能为空");
+        
+        // 验证基本统计数据
+        assertEquals(3, trace.getExecutedNodesCount(), "应该执行3个节点");
+        assertEquals(3, trace.getSuccessfulNodesCount(), "所有节点应该成功");
+        assertEquals(0, trace.getFailedNodesCount(), "不应该有失败节点");
+        assertTrue(trace.getTotalDuration().toMillis() >= 0, "执行时间应该非负");
+        
+        // 验证执行时间线
+        var timeline = trace.getExecutionTimeline();
+        assertEquals(3, timeline.size(), "时间线应该有3个节点执行记录");
+        
+        // 验证节点执行顺序
+        assertEquals("starter", timeline.get(0).getNodeId(), "第一个应该是starter");
+        assertEquals("timestamper", timeline.get(1).getNodeId(), "第二个应该是timestamper");
+        assertEquals("evenChecker", timeline.get(2).getNodeId(), "第三个应该是evenChecker");
+        
+        // 验证节点类型
+        assertEquals("basic.Start", timeline.get(0).getNodeType());
+        assertEquals("basic.GetTimestamp", timeline.get(1).getNodeType());
+        assertEquals("basic.IsEven", timeline.get(2).getNodeType());
+        
+        // 验证所有节点都成功执行
+        assertTrue(timeline.stream().allMatch(ne -> ne.isSuccess()), "所有节点都应该成功");
+        
+        // 验证调试日志存在
+        assertFalse(trace.getDebugLogs().isEmpty(), "应该有调试日志");
+        
+        // 验证元数据
+        var metadata = trace.getExecutionMetadata();
+        assertEquals("3", metadata.get("totalNodes"), "元数据应该记录总节点数");
+        assertEquals("3", metadata.get("successfulNodes"), "元数据应该记录成功节点数");
+        assertEquals("0", metadata.get("failedNodes"), "元数据应该记录失败节点数");
+    }
+    
+    /**
      * 创建临时测试文件的辅助方法
      */
     private File createTempFile(String fileName, String content) throws IOException {

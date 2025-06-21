@@ -22,6 +22,7 @@ public final class NodeExecutionRequest extends AnimaWeaveEvent {
     private final String nodeType;                 // 节点类型 (如 basic.Start)
     private final Map<String, Object> inputs;      // 节点输入数据
     private final String executionContextId;       // 图执行上下文ID
+    private String nodeExecutionId;                // 节点执行ID（由GraphCoordinator设置）
     
     public NodeExecutionRequest(Object source, String sourceIdentifier,
                                String nodeId, String nodeType, Map<String, Object> inputs, 
@@ -54,6 +55,13 @@ public final class NodeExecutionRequest extends AnimaWeaveEvent {
      */
     public int getInputsSize() {
         return inputs.size();
+    }
+    
+    /**
+     * 设置节点执行ID（由GraphCoordinator调用）
+     */
+    public void setNodeExecutionId(String nodeExecutionId) {
+        this.nodeExecutionId = nodeExecutionId;
     }
     
     /**
