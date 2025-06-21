@@ -24,11 +24,11 @@ public interface AnimaVessel {
   /** 插件关闭 */
   void shutdown();
 
-  /** 获取插件状态 */
-  VesselStatus getStatus();
-
-  /** 插件健康检查 */
-  default boolean isHealthy() {
-    return getStatus() == VesselStatus.RUNNING;
+  /** 根据标签名称获取语义标签定义 - 通用辅助方法 */
+  default SemanticLabelDefinition getLabel(String labelName) {
+    return getSupportedLabels().stream()
+        .filter(label -> label.labelName().equals(labelName))
+        .findFirst()
+        .orElseThrow(() -> new IllegalArgumentException("Unknown label: " + labelName));
   }
 }

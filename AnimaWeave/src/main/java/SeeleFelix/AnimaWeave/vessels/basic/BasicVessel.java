@@ -20,8 +20,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class BasicVessel implements AnimaVessel {
 
-  private VesselStatus status = VesselStatus.STOPPED;
-
   @Override
   public VesselMetadata getMetadata() {
     return new VesselMetadata("basic", "1.0.0", "提供基础数据类型和基本操作节点的核心容器", "SeeleFelix", List.of(), "1.0.0");
@@ -139,28 +137,14 @@ public class BasicVessel implements AnimaVessel {
   @Override
   public void initialize(VesselContext context) {
     log.info("🔌 初始化Basic容器 v{}", getMetadata().version());
-    this.status = VesselStatus.RUNNING;
   }
 
   @Override
   public void shutdown() {
     log.info("🔌 关闭Basic容器");
-    this.status = VesselStatus.STOPPED;
-  }
-
-  @Override
-  public VesselStatus getStatus() {
-    return status;
   }
 
   // ========== 辅助方法 ==========
-
-  private SemanticLabelDefinition getLabel(String labelName) {
-    return getSupportedLabels().stream()
-        .filter(label -> label.labelName().equals(labelName))
-        .findFirst()
-        .orElseThrow(() -> new IllegalArgumentException("Unknown label: " + labelName));
-  }
 
   private Function<Object, Object> createStringConverter() {
     return value -> {
