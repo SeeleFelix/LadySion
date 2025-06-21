@@ -46,7 +46,7 @@ public record NodeDefinition(
               if (input == null) {
                 return true; // 可选端口可以为null
               }
-              return port.semanticLabel().isCompatibleWith(input.semanticLabel().labelName());
+              return port.semanticLabel().isCompatibleWith(input.semanticLabel());
             });
   }
 

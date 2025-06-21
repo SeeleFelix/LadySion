@@ -2,6 +2,9 @@ package SeeleFelix.AnimaWeave.framework.node;
 
 import SeeleFelix.AnimaWeave.framework.vessel.AnimaVessel;
 import SeeleFelix.AnimaWeave.framework.vessel.NodeDefinition;
+import SeeleFelix.AnimaWeave.framework.vessel.Port;
+import SeeleFelix.AnimaWeave.framework.vessel.PortValue;
+import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -77,24 +80,33 @@ public class NodeFactory {
     }
 
     @Override
-    protected Map<String, Object> executeNode(Map<String, Object> inputs) {
+    public String getDisplayName() {
+      return nodeDefinition.displayName();
+    }
+
+    @Override
+    public String getDescription() {
+      return nodeDefinition.description();
+    }
+
+    @Override
+    public List<Port> getInputPorts() {
+      return nodeDefinition.inputPorts();
+    }
+
+    @Override
+    public List<Port> getOutputPorts() {
+      return nodeDefinition.outputPorts();
+    }
+
+    @Override
+    protected void executeNode() {
       // TODO: 这里需要根据nodeDefinition来执行实际的计算逻辑
       // 现在先返回一个简单的示例实现
-
-      log.debug("Executing generic node: {} with inputs: {}", getNodeType(), inputs.keySet());
-
-      // 简单的示例逻辑：将所有输入值加1（仅用于演示）
-      var result =
-          inputs.values().stream()
-                  .filter(v -> v instanceof Number)
-                  .mapToDouble(v -> ((Number) v).doubleValue())
-                  .sum()
-              + 1.0;
-
-      var outputs = Map.<String, Object>of("result", result);
-
-      log.debug("Generic node {} produced outputs: {}", getNodeType(), outputs);
-      return outputs;
+      log.debug("Executing generic node: {}", getNodeType());
+      
+      // GenericNode暂时不执行具体逻辑
+      // 实际应用中，这里应该根据nodeDefinition来动态执行
     }
 
     public NodeDefinition getNodeDefinition() {

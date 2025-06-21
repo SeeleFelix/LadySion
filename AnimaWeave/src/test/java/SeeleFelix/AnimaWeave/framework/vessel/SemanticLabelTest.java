@@ -1,5 +1,8 @@
 package SeeleFelix.AnimaWeave.framework.vessel;
 
+import SeeleFelix.AnimaWeave.vessels.basic.labels.BoolLabel;
+import SeeleFelix.AnimaWeave.vessels.basic.labels.IntLabel;
+import SeeleFelix.AnimaWeave.vessels.basic.labels.SignalLabel;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import java.util.Set;
@@ -9,8 +12,8 @@ class SemanticLabelTest {
 
   @Test
   void testPortDefinition() {
-    // 创建语义标签定义
-    var intLabel = new SemanticLabel("Int", Set.of(), Function.identity());
+    // 使用具体的语义标签类
+    var intLabel = IntLabel.getInstance();
     
     // 创建端口定义
     var port = new Port("number", intLabel, true, 0);
@@ -24,8 +27,8 @@ class SemanticLabelTest {
 
   @Test
   void testPortValue() {
-    // 创建语义标签定义
-    var intLabel = new SemanticLabel("Int", Set.of(), Function.identity());
+    // 使用具体的语义标签类
+    var intLabel = IntLabel.getInstance();
     
     // 创建端口定义
     var port = new Port("number", intLabel, true, 0);
@@ -43,8 +46,8 @@ class SemanticLabelTest {
 
   @Test
   void testPortValueWithDefaultValue() {
-    // 创建语义标签定义
-    var intLabel = new SemanticLabel("Int", Set.of(), Function.identity());
+    // 使用具体的语义标签类
+    var intLabel = IntLabel.getInstance();
     
     // 创建端口定义（有默认值）
     var port = new Port("number", intLabel, false, 10);
@@ -59,26 +62,25 @@ class SemanticLabelTest {
 
   @Test
   void testSemanticLabelCompatibility() {
-    // 创建语义标签定义
-    var intLabel = new SemanticLabel("Int", Set.of(), Function.identity());
-    var stringLabel = new SemanticLabel("String", Set.of(intLabel), Function.identity());
+    // 使用具体的语义标签类
+    var intLabel = IntLabel.getInstance();
+    var signalLabel = SignalLabel.getInstance();
     
-    // 测试兼容性
-    assertTrue(stringLabel.isCompatibleWith("Int"));
-    assertFalse(intLabel.isCompatibleWith("String"));
+    // 测试兼容性（这里我们简化测试，因为basic标签都是独立的）
+    assertTrue(intLabel.isCompatibleWith(intLabel)); // 自己与自己兼容
+    assertFalse(intLabel.isCompatibleWith(signalLabel)); // 不同标签不兼容
   }
 
   @Test
   void testPortEquality() {
-    // 创建语义标签定义
-    var intLabel1 = new SemanticLabel("Int", Set.of(), Function.identity());
-    var intLabel2 = new SemanticLabel("Int", Set.of(), Function.identity());
-    var stringLabel = new SemanticLabel("String", Set.of(), Function.identity());
+    // 使用具体的语义标签类
+    var intLabel = IntLabel.getInstance();
+    var signalLabel = SignalLabel.getInstance();
     
     // 创建端口（相同名称，不同属性）
-    var port1 = new Port("number", intLabel1, true, 0);
-    var port2 = new Port("number", stringLabel, false, 10);
-    var port3 = new Port("value", intLabel1, true, 0);
+    var port1 = new Port("number", intLabel, true, 0);
+    var port2 = new Port("number", signalLabel, false, 10);
+    var port3 = new Port("value", intLabel, true, 0);
     
     // 验证端口相等性只基于名称
     assertEquals(port1, port2); // 相同名称，不同属性
@@ -91,17 +93,17 @@ class SemanticLabelTest {
 
   @Test
   void testSemanticLabelEquality() {
-    // 创建语义标签定义（相同名称，不同属性）
-    var label1 = new SemanticLabel("Int", Set.of(), Function.identity());
-    var label2 = new SemanticLabel("Int", Set.of(), x -> x.toString());
-    var label3 = new SemanticLabel("String", Set.of(), Function.identity());
+    // 使用具体的语义标签类
+    var intLabel1 = IntLabel.getInstance();
+    var intLabel2 = IntLabel.getInstance(); // 单例，应该是同一个实例
+    var boolLabel = BoolLabel.getInstance();
     
-    // 验证语义标签定义相等性只基于名称
-    assertEquals(label1, label2); // 相同名称，不同转换器
-    assertNotEquals(label1, label3); // 不同名称
+    // 验证语义标签定义相等性
+    assertEquals(intLabel1, intLabel2); // 同一个单例实例
+    assertNotEquals(intLabel1, boolLabel); // 不同类型
     
     // 验证哈希码一致性
-    assertEquals(label1.hashCode(), label2.hashCode());
-    assertNotEquals(label1.hashCode(), label3.hashCode());
+    assertEquals(intLabel1.hashCode(), intLabel2.hashCode());
+    assertNotEquals(intLabel1.hashCode(), boolLabel.hashCode());
   }
 } 

@@ -9,6 +9,11 @@ import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import SeeleFelix.AnimaWeave.framework.node.Node;
+import SeeleFelix.AnimaWeave.vessels.basic.labels.BoolLabel;
+import SeeleFelix.AnimaWeave.vessels.basic.labels.IntLabel;
+import SeeleFelix.AnimaWeave.vessels.basic.labels.SignalLabel;
+import SeeleFelix.AnimaWeave.vessels.basic.labels.UUIDLabel;
 
 /**
  * Basic Vessel - 基础容器实现 提供基础数据类型和基本操作节点
@@ -26,112 +31,22 @@ public class BasicVessel implements AnimaVessel {
   }
 
   @Override
-  public List<SemanticLabel> getSupportedLabels() {
-    // 先创建基础类型（无依赖）
-    var signal = new SemanticLabel("Signal", Set.of(), Function.identity());
-    var intType = new SemanticLabel("Int", Set.of(), Function.identity());
-    var boolType = new SemanticLabel("Bool", Set.of(), Function.identity());
-    var prompt = new SemanticLabel("Prompt", Set.of(), Function.identity());
-    var prompts = new SemanticLabel("Prompts", Set.of(), Function.identity());
-    
-    // 创建有依赖关系的类型
-    var stringType = new SemanticLabel("String", Set.of(intType, boolType), createStringConverter());
-    var uuidType = new SemanticLabel("UUID", Set.of(stringType), Function.identity());
-    
-    return List.of(signal, intType, boolType, stringType, uuidType, prompt, prompts);
+  public List<Class<? extends Node>> getSupportedNodeTypes() {
+    return List.of(
+        StartNode.class,
+        GetTimestampNode.class,
+        IsEvenNode.class
+    );
   }
 
   @Override
-  public List<NodeDefinition> getSupportedNodes() {
+  public List<Class<? extends SemanticLabel>> getSupportedLabelTypes() {
     return List.of(
-        // Start节点
-        new NodeDefinition(
-            "Start",
-            "启动节点",
-            "图执行的起始点，生成执行ID和信号",
-            List.of(), // 无输入端口
-            List.of(
-                new Port("signal", getLabel("Signal"), true, null),
-                new Port("execution_id", getLabel("UUID"), true, null))),
-
-        // GetTimestamp节点
-        new NodeDefinition(
-            "GetTimestamp",
-            "获取时间戳",
-            "获取当前时间戳",
-            List.of(new Port("trigger", getLabel("Signal"), true, null)),
-            List.of(
-                new Port("timestamp", getLabel("Int"), true, null),
-                new Port("done", getLabel("Signal"), true, null))),
-
-        // IsEven节点
-        new NodeDefinition(
-            "IsEven",
-            "判断偶数",
-            "判断一个数字是否为偶数",
-            List.of(
-                new Port("number", getLabel("Int"), true, null),
-                new Port("trigger", getLabel("Signal"), true, null)),
-            List.of(
-                new Port("result", getLabel("Bool"), true, null),
-                new Port("done", getLabel("Signal"), true, null))),
-
-        // FormatNumber节点
-        new NodeDefinition(
-            "FormatNumber",
-            "格式化数字",
-            "将数字格式化为字符串",
-            List.of(
-                new Port("number", getLabel("Int"), true, null),
-                new Port("trigger", getLabel("Signal"), true, null)),
-            List.of(
-                new Port("formatted", getLabel("String"), true, null),
-                new Port("done", getLabel("Signal"), true, null))),
-
-        // CreatePrompt节点
-        new NodeDefinition(
-            "CreatePrompt",
-            "创建提示",
-            "创建一个提示对象",
-            List.of(
-                new Port("name", getLabel("String"), true, null),
-                new Port("content", getLabel("String"), true, null),
-                new Port("trigger", getLabel("Signal"), true, null)),
-            List.of(
-                new Port("prompt", getLabel("Prompt"), true, null),
-                new Port("done", getLabel("Signal"), true, null))),
-
-        // StringFormatter节点
-        new NodeDefinition(
-            "StringFormatter",
-            "字符串格式化",
-            "格式化字符串",
-            List.of(
-                new Port("input", getLabel("String"), true, null),
-                new Port("trigger", getLabel("Signal"), true, null)),
-            List.of(
-                new Port("formatted", getLabel("String"), true, null),
-                new Port("done", getLabel("Signal"), true, null))),
-
-        // DataProcessor节点
-        new NodeDefinition(
-            "DataProcessor",
-            "数据处理器",
-            "处理数据并返回结果",
-            List.of(new Port("execute", getLabel("Signal"), true, null)),
-            List.of(
-                new Port("result", getLabel("String"), true, null),
-                new Port("done", getLabel("Signal"), true, null))),
-
-        // CompletionMarker节点
-        new NodeDefinition(
-            "CompletionMarker",
-            "完成标记",
-            "标记处理完成并记录时间戳",
-            List.of(new Port("trigger", getLabel("Signal"), true, null)),
-            List.of(
-                new Port("completed", getLabel("Signal"), true, null),
-                new Port("timestamp", getLabel("Int"), true, null))));
+        SignalLabel.class,
+        IntLabel.class,
+        BoolLabel.class,
+        UUIDLabel.class
+    );
   }
 
   @Override
@@ -148,14 +63,8 @@ public class BasicVessel implements AnimaVessel {
 
   private Function<Object, Object> createStringConverter() {
     return value -> {
-      if (value instanceof String str) {
-        // 尝试转换为整数
-        try {
-          return Integer.parseInt(str);
-        } catch (NumberFormatException e) {
-          // 尝试转换为布尔值
-          return Boolean.parseBoolean(str);
-        }
+      if (value instanceof Integer || value instanceof Boolean) {
+        return String.valueOf(value);
       }
       return value;
     };

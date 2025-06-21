@@ -2,19 +2,11 @@
 Signal
 Int
 Bool
-String {
-    Int
-    Bool
-}
-UUID {
-    String
-}
-Prompt
-Prompts
+UUID
 --
 
 -- nodes
-Start {
+basic.Start {
     mode Concurrent
     in {
     }
@@ -24,7 +16,7 @@ Start {
     }
 }
 
-GetTimestamp {
+basic.GetTimestamp {
     mode Concurrent
     in {
         trigger basic.Signal
@@ -35,7 +27,7 @@ GetTimestamp {
     }
 }
 
-IsEven {
+basic.IsEven {
     mode Concurrent
     in {
         number basic.Int
@@ -44,65 +36,6 @@ IsEven {
     out {
         result basic.Bool
         done basic.Signal
-    }
-}
-
-FormatNumber {
-    mode Concurrent
-    in {
-        number basic.Int
-        trigger basic.Signal
-    }
-    out {
-        formatted basic.String
-        done basic.Signal
-    }
-}
-
-CreatePrompt {
-    mode Concurrent
-    in {
-        name basic.String
-        content basic.String
-        trigger basic.Signal
-    }
-    out {
-        prompt basic.Prompt
-        done basic.Signal
-    }
-}
-
-StringFormatter {
-    mode Concurrent
-    in {
-        input basic.String
-        trigger basic.Signal
-    }
-    out {
-        formatted basic.String
-        done basic.Signal
-    }
-}
-
-DataProcessor {
-    mode Concurrent
-    in {
-        execute basic.Signal
-    }
-    out {
-        result basic.String
-        done basic.Signal
-    }
-}
-
-CompletionMarker {
-    mode Concurrent
-    in {
-        trigger basic.Signal
-    }
-    out {
-        completed basic.Signal
-        timestamp basic.Int
     }
 }
 

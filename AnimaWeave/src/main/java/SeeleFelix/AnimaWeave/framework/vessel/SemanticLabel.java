@@ -1,38 +1,56 @@
 package SeeleFelix.AnimaWeave.framework.vessel;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 
-/** 
- * 语义标签类型定义 - 定义语义标签的元信息和兼容性转换
- * 这是语义标签的"类型定义"，不包含实际值
+/**
+ * 语义标签抽象基类
+ * 
+ * 每种具体的语义标签都应该继承此类
+ * 例如：SignalLabel, IntLabel, StringLabel等
  */
-public record SemanticLabel(
-    String labelName,
-    Set<SemanticLabel> compatibleLabels,
-    Function<Object, Object> converter) {
+public abstract class SemanticLabel {
 
-  /** 检查是否与另一个标签兼容 */
-  public boolean isCompatibleWith(String otherLabelName) {
-    return labelName.equals(otherLabelName) || 
-           compatibleLabels.stream().anyMatch(label -> label.labelName().equals(otherLabelName));
-  }
-  
-  /** 检查是否与另一个标签定义兼容 */
-  public boolean isCompatibleWith(SemanticLabel otherLabel) {
-    return this.equals(otherLabel) || compatibleLabels.contains(otherLabel);
+  private final String labelName;
+  private final Set<SemanticLabel> compatibleLabels;
+  private final Function<Object, Object> converter;
+
+  protected SemanticLabel(
+      String labelName, 
+      Set<SemanticLabel> compatibleLabels, 
+      Function<Object, Object> converter) {
+    this.labelName = Objects.requireNonNull(labelName, "标签名称不能为空");
+    this.compatibleLabels = Objects.requireNonNull(compatibleLabels, "兼容标签集合不能为空");
+    this.converter = Objects.requireNonNull(converter, "转换函数不能为空");
   }
 
-  /** 应用转换器 */
-  public Object convert(Object value) {
-    return converter.apply(value);
+  public String labelName() {
+    return labelName;
+  }
+
+  public Set<SemanticLabel> compatibleLabels() {
+    return compatibleLabels;
+  }
+
+  public Function<Object, Object> converter() {
+    return converter;
   }
 
   /**
-   * 基于标签名称的相等性判断
+   * 检查是否与另一个标签兼容
    */
+  public boolean isCompatibleWith(SemanticLabel other) {
+    return this.equals(other) || this.compatibleLabels.contains(other);
+  }
+
+  /**
+   * 转换值到此标签类型
+   */
+  public Object convertValue(Object value) {
+    return converter.apply(value);
+  }
+
   @Override
   public boolean equals(Object obj) {
     if (this == obj) return true;
@@ -41,11 +59,13 @@ public record SemanticLabel(
     return Objects.equals(labelName, that.labelName);
   }
 
-  /**
-   * 基于标签名称的哈希码
-   */
   @Override
   public int hashCode() {
     return Objects.hash(labelName);
+  }
+
+  @Override
+  public String toString() {
+    return String.format("SemanticLabel[%s]", labelName);
   }
 }

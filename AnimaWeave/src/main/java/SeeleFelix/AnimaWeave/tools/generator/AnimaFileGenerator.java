@@ -37,7 +37,7 @@ public class AnimaFileGenerator {
 
     // 生成类型定义部分
     builder.append("-- types\n");
-    generateTypeDefinitions(vessel.getSupportedLabels(), containerName, builder);
+    generateTypeDefinitions(vessel.getSupportedLabelTypes(), containerName, builder);
     builder.append("--\n\n");
 
     // 生成节点定义部分
@@ -50,18 +50,33 @@ public class AnimaFileGenerator {
 
   /** 生成类型定义部分 */
   private void generateTypeDefinitions(
-      List<SemanticLabel> labels, String containerName, StringBuilder builder) {
-    for (var label : labels) {
-      builder.append(label.labelName());
+      List<Class<? extends SemanticLabel>> labelClasses, String containerName, StringBuilder builder) {
+    for (var labelClass : labelClasses) {
+      try {
+        // 创建语义标签实例
+        SemanticLabel label;
+        try {
+          // 尝试调用getInstance()方法获取单例
+          var getInstanceMethod = labelClass.getMethod("getInstance");
+          label = (SemanticLabel) getInstanceMethod.invoke(null);
+        } catch (NoSuchMethodException e) {
+          // 如果没有getInstance方法，尝试使用默认构造函数
+          label = labelClass.getDeclaredConstructor().newInstance();
+        }
+        
+        builder.append(label.labelName());
 
-      // 检查是否需要生成结构定义
-      if (hasCompatibleLabels(label)) {
-        builder.append(" {\n");
-        generateStructureDefinition(label, builder);
-        builder.append("}");
+        // 检查是否需要生成结构定义
+        if (hasCompatibleLabels(label)) {
+          builder.append(" {\n");
+          generateStructureDefinition(label, builder);
+          builder.append("}");
+        }
+
+        builder.append("\n");
+      } catch (Exception e) {
+        log.error("Failed to create instance of semantic label: {}", labelClass.getSimpleName(), e);
       }
-
-      builder.append("\n");
     }
   }
 
