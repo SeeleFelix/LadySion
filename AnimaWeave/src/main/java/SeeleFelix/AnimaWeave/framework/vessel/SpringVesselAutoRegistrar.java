@@ -47,7 +47,7 @@ public class SpringVesselAutoRegistrar {
         // @Component vessel通过Spring依赖注入获取依赖，不需要VesselContext
         vessel.initialize(null); // context可以为null
 
-        // 注册vessel到registry (VesselRegistry会自动发布VesselLoadedEvent)
+        // 注册vessel到registry
         vesselRegistry.register(vesselId, vessel);
         log.info(
             "✅ 自动注册@Component vessel: {} v{} (bean: {})",

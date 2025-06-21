@@ -4,7 +4,6 @@ import SeeleFelix.AnimaWeave.framework.awakening.AwakeningResult;
 import SeeleFelix.AnimaWeave.framework.awakening.AwakeningResult.ExecutionTrace;
 import SeeleFelix.AnimaWeave.framework.event.events.NodeExecutionRequest;
 import SeeleFelix.AnimaWeave.framework.event.events.NodeOutputSaveEvent;
-import SeeleFelix.AnimaWeave.framework.startup.SystemReadyEvent;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -35,24 +34,8 @@ public class GraphCoordinator {
   private final ConcurrentMap<String, ExecutionContext> executionContexts =
       new ConcurrentHashMap<>();
 
-  // 系统就绪状态
-  private final AtomicBoolean systemReady = new AtomicBoolean(false);
-
-  /** 监听系统就绪事件 */
-  @EventListener
-  public void onSystemReady(SystemReadyEvent event) {
-    systemReady.set(true);
-    log.info("🚀 System is ready! Graph execution is now available.");
-    log.info("Available vessels: {}", event.getLoadedVessels());
-  }
-
   /** 启动图执行 */
   public String startGraphExecution(GraphDefinition graphDef) {
-    if (!systemReady.get()) {
-      throw new IllegalStateException(
-          "System is not ready yet. Please wait for all vessels to load.");
-    }
-
     var executionId = "graph_exec_" + System.nanoTime();
     var context = new ExecutionContext(executionId, graphDef);
     executionContexts.put(executionId, context);
@@ -401,11 +384,6 @@ public class GraphCoordinator {
       return true;
     }
     return false;
-  }
-
-  /** 检查系统是否就绪 */
-  public boolean isSystemReady() {
-    return systemReady.get();
   }
 
   /** 获取图执行结果 - 如果图执行完成则返回完整的跟踪信息 */

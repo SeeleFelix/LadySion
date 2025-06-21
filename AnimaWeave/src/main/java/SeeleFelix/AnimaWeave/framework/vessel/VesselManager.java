@@ -116,7 +116,7 @@ public class VesselManager {
           var context = createVesselContext(vessel.getMetadata().name());
           vessel.initialize(context);
 
-          // 注册vessel (VesselRegistry会自动发布VesselLoadedEvent)
+          // 注册vessel到registry
           var vesselName = vessel.getMetadata().name();
           vesselRegistry.register(vesselName, vessel);
           vesselClassLoaders.put(vesselName, classLoader);

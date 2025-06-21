@@ -39,11 +39,11 @@ public class GeneratorConfig {
   public String extractContainerName(String vesselClassName) {
     var matcher = VESSEL_NAME_PATTERN.matcher(vesselClassName);
     if (matcher.matches()) {
-      return matcher.group(1).toLowerCase();
+      return matcher.group(1).toLowerCase(java.util.Locale.ROOT);
     }
 
     // 降级处理：直接转小写并移除"vessel"后缀（如果存在）
-    var name = vesselClassName.toLowerCase();
+    var name = vesselClassName.toLowerCase(java.util.Locale.ROOT);
     if (name.endsWith("vessel")) {
       name = name.substring(0, name.length() - 6);
     }

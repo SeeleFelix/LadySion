@@ -3,7 +3,6 @@ package SeeleFelix.AnimaWeave.framework.awakening;
 import SeeleFelix.AnimaWeave.framework.dsl.DSLGraphBuilder;
 import SeeleFelix.AnimaWeave.framework.graph.GraphCoordinator;
 import SeeleFelix.AnimaWeave.framework.graph.GraphDefinition;
-import SeeleFelix.AnimaWeave.framework.startup.SystemStartupCoordinator;
 import SeeleFelix.AnimaWeave.parser.AnimaWeaveDSLLexer;
 import SeeleFelix.AnimaWeave.parser.AnimaWeaveDSLParser;
 import java.io.File;
@@ -16,9 +15,11 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.springframework.stereotype.Component;
 
 /**
- * AnimaWeave - 图执行的核心引擎
+ * AnimaWeave核心觉醒接口
  *
- * <p>这是AnimaWeave系统的主入口，负责解析和执行图文件 框架自动加载内置的.anima容器文件，用户只需提供.weave图文件
+ * <p>提供图执行的高级API，处理文件解析和执行协调
+ *
+ * <p>简化版本：移除复杂的系统就绪检查，Spring容器启动完成即可使用
  */
 @Slf4j
 @Component
@@ -26,32 +27,19 @@ import org.springframework.stereotype.Component;
 public class AnimaWeave {
 
   private final GraphCoordinator graphCoordinator;
-  private final SystemStartupCoordinator startupCoordinator;
 
   /**
-   * 觉醒：执行图文件集合 (主用户接口)
+   * 觉醒：执行图文件集合
    *
    * @param weaveFiles .weave图文件数组
-   * @param mainGraphName 主图名称，如果为null则自动选择
+   * @param mainGraphName 主图名称（可选）
    * @return 执行结果的Future
    */
   public CompletableFuture<AwakeningResult> awakening(File[] weaveFiles, String mainGraphName) {
     return CompletableFuture.supplyAsync(
         () -> {
           try {
-            log.info(
-                "🌅 AnimaWeave awakening begins with {} weave files, main graph: {}",
-                weaveFiles.length,
-                mainGraphName != null ? mainGraphName : "auto-detect");
-
-            // 检查系统是否就绪
-            if (!graphCoordinator.isSystemReady()) {
-              return AwakeningResult.failure(
-                  "system",
-                  null,
-                  "System is not ready. Please wait for vessel loading to complete.",
-                  AwakeningResult.ExecutionTrace.empty());
-            }
+            log.info("🌅 AnimaWeave awakening begins for {} files", weaveFiles.length);
 
             // 验证所有文件都是.weave文件
             for (File file : weaveFiles) {
@@ -189,15 +177,6 @@ public class AnimaWeave {
           try {
             log.info("🌅 AnimaWeave awakening begins for graph: {}", graphDefinition.getName());
 
-            // 检查系统是否就绪
-            if (!graphCoordinator.isSystemReady()) {
-              return AwakeningResult.failure(
-                  graphDefinition.getName(),
-                  null,
-                  "System is not ready. Please wait for vessel loading to complete.",
-                  AwakeningResult.ExecutionTrace.empty());
-            }
-
             // 开始图执行
             String executionId = graphCoordinator.startGraphExecution(graphDefinition);
 
@@ -215,52 +194,5 @@ public class AnimaWeave {
                 AwakeningResult.ExecutionTrace.empty());
           }
         });
-  }
-
-  /**
-   * 等待系统就绪
-   *
-   * @param timeoutSeconds 超时时间（秒）
-   * @return 是否就绪
-   */
-  public boolean waitForSystemReady(long timeoutSeconds) {
-    log.info("⏳ Waiting for system to be ready (timeout: {}s)...", timeoutSeconds);
-
-    long startTime = System.currentTimeMillis();
-    long timeoutMs = timeoutSeconds * 1000;
-
-    while (!graphCoordinator.isSystemReady()) {
-      if (System.currentTimeMillis() - startTime > timeoutMs) {
-        log.warn("⏰ System readiness timeout after {}s", timeoutSeconds);
-        return false;
-      }
-
-      try {
-        Thread.sleep(100); // 每100ms检查一次
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        return false;
-      }
-    }
-
-    log.info("✅ System is ready!");
-    return true;
-  }
-
-  /** 获取系统启动状态 */
-  public String getSystemStatus() {
-    var status = startupCoordinator.getStartupStatus();
-    return status.getStatusSummary();
-  }
-
-  /** 检查系统是否就绪 */
-  public boolean isSystemReady() {
-    return graphCoordinator.isSystemReady();
-  }
-
-  /** 强制系统就绪（仅用于测试环境） */
-  public void forceSystemReadyForTesting() {
-    log.info("🧪 Forcing system ready for testing environment");
-    startupCoordinator.forceSystemReady();
   }
 }

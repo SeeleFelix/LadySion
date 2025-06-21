@@ -114,9 +114,13 @@ public class AnimaFileGenerator {
   /** 生成复杂类型结构 */
   private void generateComplexTypeStructure(SemanticLabelDefinition label, StringBuilder builder) {
     switch (label.labelName()) {
-      case "UUID" -> builder.append("    String\n");
-      case "Prompt" -> builder.append("    String\n");
+      case "UUID", "Prompt" -> builder.append("    String\n");
       case "Prompts" -> builder.append("    Prompt\n");
+      default -> {
+        // 未知复杂类型，生成注释
+        builder.append("    // Unknown complex type: ").append(label.labelName()).append("\n");
+        log.warn("Unknown complex type structure for label: {}", label.labelName());
+      }
     }
   }
 

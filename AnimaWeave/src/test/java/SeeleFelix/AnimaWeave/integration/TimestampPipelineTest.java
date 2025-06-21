@@ -27,11 +27,7 @@ class TimestampPipelineTest {
   @BeforeEach
   void setUp() throws IOException, InterruptedException {
     tempDir = Files.createTempDirectory("animaweave-test");
-
-    if (!animaWeave.waitForSystemReady(2)) {
-      animaWeave.forceSystemReadyForTesting();
-      Thread.sleep(200);
-    }
+    // Spring容器启动完成后，所有vessel都已注册，无需等待系统就绪
   }
 
   @AfterEach

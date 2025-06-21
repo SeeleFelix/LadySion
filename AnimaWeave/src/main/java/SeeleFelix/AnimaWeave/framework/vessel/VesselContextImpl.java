@@ -57,11 +57,11 @@ public class VesselContextImpl implements VesselContext {
   public void log(String level, String message) {
     String logMessage = String.format("[%s] %s", vesselName, message);
 
-    switch (level.toUpperCase()) {
+    switch (level.toUpperCase(java.util.Locale.ROOT)) {
       case "TRACE" -> logger.trace(logMessage);
       case "DEBUG" -> logger.debug(logMessage);
-      case "INFO" -> logger.info(logMessage);
-      case "WARN" -> logger.warn(logMessage);
+      case "INFO", "INFORMATION" -> logger.info(logMessage);
+      case "WARN", "WARNING" -> logger.warn(logMessage);
       case "ERROR" -> logger.error(logMessage);
       default -> logger.info(logMessage);
     }
@@ -84,11 +84,17 @@ public class VesselContextImpl implements VesselContext {
       Path tempDir = Paths.get(tempDirectory);
 
       if (!workDir.toFile().exists()) {
-        workDir.toFile().mkdirs();
+        boolean workDirCreated = workDir.toFile().mkdirs();
+        if (!workDirCreated) {
+          logger.warn("Failed to create working directory: {}", workingDirectory);
+        }
       }
 
       if (!tempDir.toFile().exists()) {
-        tempDir.toFile().mkdirs();
+        boolean tempDirCreated = tempDir.toFile().mkdirs();
+        if (!tempDirCreated) {
+          logger.warn("Failed to create temp directory: {}", tempDirectory);
+        }
       }
     } catch (Exception e) {
       logger.warn("Failed to create directories for vessel: {}", vesselName, e);
