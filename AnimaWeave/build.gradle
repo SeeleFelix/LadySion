@@ -114,8 +114,10 @@ tasks.named('test') {
 		key.startsWith("selfie")
 	}
 	
-	// 强制测试总是运行 - 用于开发调试
+	// 彻底禁用测试缓存 - 确保每次都重新运行
 	outputs.upToDateWhen { false }
+	outputs.cacheIf { false }
+	doNotTrackState("测试应该每次都运行")
 }
 
 // 代码质量检查配置 - 使用现有配置文件
@@ -135,8 +137,8 @@ tasks.withType(Checkstyle) {
 spotbugs {
 	toolVersion = '4.9.3'
 	excludeFilter = file('config/spotbugs/exclude.xml')
-	effort = 'max'
-	reportLevel = 'low'
+	effort = 'MAX'
+	reportLevel = 'LOW'
 	ignoreFailures = false
 }
 

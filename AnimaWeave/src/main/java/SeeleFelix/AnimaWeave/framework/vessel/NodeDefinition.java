@@ -16,24 +16,7 @@ public record NodeDefinition(
     List<PortDefinition> outputPorts // 输出端口定义
     ) {
 
-  /** 创建简单节点定义 */
-  public static NodeDefinition of(
-      String nodeType,
-      String displayName,
-      List<PortDefinition> inputPorts,
-      List<PortDefinition> outputPorts) {
-    return new NodeDefinition(nodeType, displayName, "", inputPorts, outputPorts);
-  }
 
-  /** 创建带描述的节点定义 */
-  public static NodeDefinition withDescription(
-      String nodeType,
-      String displayName,
-      String description,
-      List<PortDefinition> inputPorts,
-      List<PortDefinition> outputPorts) {
-    return new NodeDefinition(nodeType, displayName, description, inputPorts, outputPorts);
-  }
 
   /** 获取指定名称的输入端口 */
   public PortDefinition getInputPort(String portName) {

@@ -1,6 +1,7 @@
 package SeeleFelix.AnimaWeave.framework.vessel;
 
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 
 /** 
@@ -9,7 +10,7 @@ import java.util.function.Function;
  */
 public record SemanticLabelDefinition(
     String labelName,
-    List<SemanticLabelDefinition> compatibleLabels,
+    Set<SemanticLabelDefinition> compatibleLabels,
     Function<Object, Object> converter) {
 
   /** 检查是否与另一个标签兼容 */

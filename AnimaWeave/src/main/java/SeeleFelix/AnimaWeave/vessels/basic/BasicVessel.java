@@ -3,6 +3,7 @@ package SeeleFelix.AnimaWeave.vessels.basic;
 import SeeleFelix.AnimaWeave.framework.event.EventDispatcher;
 import SeeleFelix.AnimaWeave.framework.vessel.*;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
@@ -19,29 +20,25 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class BasicVessel implements AnimaVessel {
 
-  // Spring自动注入的依赖 - 不需要通过VesselContext传递！
-  private final VesselRegistry vesselRegistry;
-  private final EventDispatcher eventDispatcher;
-
   private VesselStatus status = VesselStatus.STOPPED;
 
   @Override
   public VesselMetadata getMetadata() {
-    return VesselMetadata.of("basic", "1.0.0", "提供基础数据类型和基本操作节点的核心容器", "SeeleFelix");
+    return new VesselMetadata("basic", "1.0.0", "提供基础数据类型和基本操作节点的核心容器", "SeeleFelix", List.of(), "1.0.0");
   }
 
   @Override
   public List<SemanticLabelDefinition> getSupportedLabels() {
     // 先创建基础类型（无依赖）
-    var signal = new SemanticLabelDefinition("Signal", List.of(), Function.identity());
-    var intType = new SemanticLabelDefinition("Int", List.of(), Function.identity());
-    var boolType = new SemanticLabelDefinition("Bool", List.of(), Function.identity());
-    var prompt = new SemanticLabelDefinition("Prompt", List.of(), Function.identity());
-    var prompts = new SemanticLabelDefinition("Prompts", List.of(), Function.identity());
+    var signal = new SemanticLabelDefinition("Signal", Set.of(), Function.identity());
+    var intType = new SemanticLabelDefinition("Int", Set.of(), Function.identity());
+    var boolType = new SemanticLabelDefinition("Bool", Set.of(), Function.identity());
+    var prompt = new SemanticLabelDefinition("Prompt", Set.of(), Function.identity());
+    var prompts = new SemanticLabelDefinition("Prompts", Set.of(), Function.identity());
     
     // 创建有依赖关系的类型
-    var stringType = new SemanticLabelDefinition("String", List.of(intType, boolType), createStringConverter());
-    var uuidType = new SemanticLabelDefinition("UUID", List.of(stringType), Function.identity());
+    var stringType = new SemanticLabelDefinition("String", Set.of(intType, boolType), createStringConverter());
+    var uuidType = new SemanticLabelDefinition("UUID", Set.of(stringType), Function.identity());
     
     return List.of(signal, intType, boolType, stringType, uuidType, prompt, prompts);
   }
@@ -50,93 +47,93 @@ public class BasicVessel implements AnimaVessel {
   public List<NodeDefinition> getSupportedNodes() {
     return List.of(
         // Start节点
-        NodeDefinition.withDescription(
+        new NodeDefinition(
             "Start",
             "启动节点",
             "图执行的起始点，生成执行ID和信号",
             List.of(), // 无输入端口
             List.of(
-                PortDefinition.required("signal", "信号", getLabel("Signal")),
-                PortDefinition.required("execution_id", "执行ID", getLabel("UUID")))),
+                new PortDefinition("signal", "信号", getLabel("Signal"), true, null),
+                new PortDefinition("execution_id", "执行ID", getLabel("UUID"), true, null))),
 
         // GetTimestamp节点
-        NodeDefinition.withDescription(
+        new NodeDefinition(
             "GetTimestamp",
             "获取时间戳",
             "获取当前时间戳",
-            List.of(PortDefinition.required("trigger", "触发信号", getLabel("Signal"))),
+            List.of(new PortDefinition("trigger", "触发信号", getLabel("Signal"), true, null)),
             List.of(
-                PortDefinition.required("timestamp", "时间戳", getLabel("Int")),
-                PortDefinition.required("done", "完成信号", getLabel("Signal")))),
+                new PortDefinition("timestamp", "时间戳", getLabel("Int"), true, null),
+                new PortDefinition("done", "完成信号", getLabel("Signal"), true, null))),
 
         // IsEven节点
-        NodeDefinition.withDescription(
+        new NodeDefinition(
             "IsEven",
             "判断偶数",
             "判断一个数字是否为偶数",
             List.of(
-                PortDefinition.required("number", "数字", getLabel("Int")),
-                PortDefinition.required("trigger", "触发信号", getLabel("Signal"))),
+                new PortDefinition("number", "数字", getLabel("Int"), true, null),
+                new PortDefinition("trigger", "触发信号", getLabel("Signal"), true, null)),
             List.of(
-                PortDefinition.required("result", "结果", getLabel("Bool")),
-                PortDefinition.required("done", "完成信号", getLabel("Signal")))),
+                new PortDefinition("result", "结果", getLabel("Bool"), true, null),
+                new PortDefinition("done", "完成信号", getLabel("Signal"), true, null))),
 
         // FormatNumber节点
-        NodeDefinition.withDescription(
+        new NodeDefinition(
             "FormatNumber",
             "格式化数字",
             "将数字格式化为字符串",
             List.of(
-                PortDefinition.required("number", "数字", getLabel("Int")),
-                PortDefinition.required("trigger", "触发信号", getLabel("Signal"))),
+                new PortDefinition("number", "数字", getLabel("Int"), true, null),
+                new PortDefinition("trigger", "触发信号", getLabel("Signal"), true, null)),
             List.of(
-                PortDefinition.required("formatted", "格式化结果", getLabel("String")),
-                PortDefinition.required("done", "完成信号", getLabel("Signal")))),
+                new PortDefinition("formatted", "格式化结果", getLabel("String"), true, null),
+                new PortDefinition("done", "完成信号", getLabel("Signal"), true, null))),
 
         // CreatePrompt节点
-        NodeDefinition.withDescription(
+        new NodeDefinition(
             "CreatePrompt",
             "创建提示",
             "创建一个提示对象",
             List.of(
-                PortDefinition.required("name", "名称", getLabel("String")),
-                PortDefinition.required("content", "内容", getLabel("String")),
-                PortDefinition.required("trigger", "触发信号", getLabel("Signal"))),
+                new PortDefinition("name", "名称", getLabel("String"), true, null),
+                new PortDefinition("content", "内容", getLabel("String"), true, null),
+                new PortDefinition("trigger", "触发信号", getLabel("Signal"), true, null)),
             List.of(
-                PortDefinition.required("prompt", "提示对象", getLabel("Prompt")),
-                PortDefinition.required("done", "完成信号", getLabel("Signal")))),
+                new PortDefinition("prompt", "提示对象", getLabel("Prompt"), true, null),
+                new PortDefinition("done", "完成信号", getLabel("Signal"), true, null))),
 
         // StringFormatter节点
-        NodeDefinition.withDescription(
+        new NodeDefinition(
             "StringFormatter",
             "字符串格式化",
             "格式化字符串",
             List.of(
-                PortDefinition.required("input", "输入字符串", getLabel("String")),
-                PortDefinition.required("trigger", "触发信号", getLabel("Signal"))),
+                new PortDefinition("input", "输入字符串", getLabel("String"), true, null),
+                new PortDefinition("trigger", "触发信号", getLabel("Signal"), true, null)),
             List.of(
-                PortDefinition.required("formatted", "格式化结果", getLabel("String")),
-                PortDefinition.required("done", "完成信号", getLabel("Signal")))),
+                new PortDefinition("formatted", "格式化结果", getLabel("String"), true, null),
+                new PortDefinition("done", "完成信号", getLabel("Signal"), true, null))),
 
         // DataProcessor节点
-        NodeDefinition.withDescription(
+        new NodeDefinition(
             "DataProcessor",
             "数据处理器",
             "处理数据并返回结果",
-            List.of(PortDefinition.required("execute", "执行信号", getLabel("Signal"))),
+            List.of(new PortDefinition("execute", "执行信号", getLabel("Signal"), true, null)),
             List.of(
-                PortDefinition.required("result", "处理结果", getLabel("String")),
-                PortDefinition.required("done", "完成信号", getLabel("Signal")))),
+                new PortDefinition("result", "处理结果", getLabel("String"), true, null),
+                new PortDefinition("done", "完成信号", getLabel("Signal"), true, null))),
 
         // CompletionMarker节点
-        NodeDefinition.withDescription(
+        new NodeDefinition(
             "CompletionMarker",
             "完成标记",
             "标记处理完成并记录时间戳",
-            List.of(PortDefinition.required("trigger", "触发信号", getLabel("Signal"))),
+            List.of(new PortDefinition("trigger", "触发信号", getLabel("Signal"), true, null)),
             List.of(
-                PortDefinition.required("completed", "完成信号", getLabel("Signal")),
-                PortDefinition.required("timestamp", "时间戳", getLabel("Int")))));
+                new PortDefinition("completed", "完成信号", getLabel("Signal"), true, null),
+                new PortDefinition("timestamp", "时间戳", getLabel("Int"), true, null))));
   }
 
   @Override

@@ -3,14 +3,15 @@ package SeeleFelix.AnimaWeave.framework.vessel;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 
 class SemanticLabelTest {
 
-  @Test
+    @Test
   void testSimpleSemanticLabel() {
     // 创建简单语义标签定义
-    var intDefinition = new SemanticLabelDefinition("Int", List.of(), Function.identity());
+    var intDefinition = new SemanticLabelDefinition("Int", Set.of(), Function.identity());
     
     // 创建语义标签实例
     var intLabel = new SemanticLabel(intDefinition, 42);
@@ -24,12 +25,12 @@ class SemanticLabelTest {
   @Test
   void testCompatibilityAndConversion() {
     // 先创建基础类型
-    var intDefinition = new SemanticLabelDefinition("Int", List.of(), Function.identity());
+    var intDefinition = new SemanticLabelDefinition("Int", Set.of(), Function.identity());
     
     // 创建带兼容性的语义标签定义
     var stringDefinition = new SemanticLabelDefinition(
         "String", 
-        List.of(intDefinition), 
+        Set.of(intDefinition), 
         value -> {
           if (value instanceof String str) {
             try {
@@ -40,7 +41,7 @@ class SemanticLabelTest {
           }
           return value;
         });
-    
+        
     // 创建字符串标签
     var stringLabel = new SemanticLabel(stringDefinition, "123");
     
@@ -56,7 +57,7 @@ class SemanticLabelTest {
 
   @Test
   void testEmptySemanticLabel() {
-    var definition = new SemanticLabelDefinition("Signal", List.of(), Function.identity());
+    var definition = new SemanticLabelDefinition("Signal", Set.of(), Function.identity());
     var emptyLabel = new SemanticLabel(definition, null);
     
     assertEquals("Signal", emptyLabel.labelName());
@@ -68,15 +69,15 @@ class SemanticLabelTest {
   @Test
   void testNodeValidation() {
     // 创建端口定义
-    var intDefinition = new SemanticLabelDefinition("Int", List.of(), Function.identity());
-    var signalDefinition = new SemanticLabelDefinition("Signal", List.of(), Function.identity());
+    var intDefinition = new SemanticLabelDefinition("Int", Set.of(), Function.identity());
+    var signalDefinition = new SemanticLabelDefinition("Signal", Set.of(), Function.identity());
     
-    var inputPort = PortDefinition.required("number", "数字", intDefinition);
-    var triggerPort = PortDefinition.required("trigger", "触发", signalDefinition);
-    var outputPort = PortDefinition.required("result", "结果", intDefinition);
+    var inputPort = new PortDefinition("number", "数字", intDefinition, true, null);
+    var triggerPort = new PortDefinition("trigger", "触发", signalDefinition, true, null);
+    var outputPort = new PortDefinition("result", "结果", intDefinition, true, null);
     
     // 创建节点定义
-    var nodeDefinition = NodeDefinition.withDescription(
+    var nodeDefinition = new NodeDefinition(
         "TestNode", "测试节点", "用于测试的节点",
         List.of(inputPort, triggerPort),
         List.of(outputPort));
