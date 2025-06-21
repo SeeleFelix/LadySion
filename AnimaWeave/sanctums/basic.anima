@@ -3,8 +3,8 @@ Signal
 Int
 Bool
 String {
-    Bool
     Int
+    Bool
 }
 UUID {
     String

@@ -2,7 +2,7 @@ package SeeleFelix.AnimaWeave.tools.generator;
 
 import SeeleFelix.AnimaWeave.framework.vessel.AnimaVessel;
 import SeeleFelix.AnimaWeave.framework.vessel.NodeDefinition;
-import SeeleFelix.AnimaWeave.framework.vessel.SemanticLabelDefinition;
+import SeeleFelix.AnimaWeave.framework.vessel.SemanticLabel;
 import SeeleFelix.AnimaWeave.framework.vessel.VesselsRegistry;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -50,7 +50,7 @@ public class AnimaFileGenerator {
 
   /** 生成类型定义部分 */
   private void generateTypeDefinitions(
-      List<SemanticLabelDefinition> labels, String containerName, StringBuilder builder) {
+      List<SemanticLabel> labels, String containerName, StringBuilder builder) {
     for (var label : labels) {
       builder.append(label.labelName());
 
@@ -103,13 +103,13 @@ public class AnimaFileGenerator {
   }
 
   /** 检查是否有兼容标签需要生成结构 */
-  private boolean hasCompatibleLabels(SemanticLabelDefinition label) {
+  private boolean hasCompatibleLabels(SemanticLabel label) {
     // 如果有兼容类型，需要生成结构定义
     return !label.compatibleLabels().isEmpty();
   }
 
   /** 生成语义标签的结构定义 */
-  private void generateStructureDefinition(SemanticLabelDefinition label, StringBuilder builder) {
+  private void generateStructureDefinition(SemanticLabel label, StringBuilder builder) {
     // 从兼容标签列表生成结构
     for (var compatibleLabel : label.compatibleLabels()) {
       builder.append("    ").append(compatibleLabel.labelName()).append("\n");
@@ -123,7 +123,7 @@ public class AnimaFileGenerator {
   }
 
   /** 获取限定类型名称，动态使用容器名称 */
-  private String getQualifiedTypeName(SemanticLabelDefinition label, String containerName) {
+  private String getQualifiedTypeName(SemanticLabel label, String containerName) {
     return containerName + "." + label.labelName();
   }
 

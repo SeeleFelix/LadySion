@@ -9,7 +9,7 @@ public interface AnimaVessel {
   VesselMetadata getMetadata();
 
   /** 获取支持的语义标签定义 */
-  List<SemanticLabelDefinition> getSupportedLabels();
+  List<SemanticLabel> getSupportedLabels();
 
   /** 获取支持的节点类型定义 */
   List<NodeDefinition> getSupportedNodes();
@@ -25,7 +25,7 @@ public interface AnimaVessel {
   void shutdown();
 
   /** 根据标签名称获取语义标签定义 - 通用辅助方法 */
-  default SemanticLabelDefinition getLabel(String labelName) {
+  default SemanticLabel getLabel(String labelName) {
     return getSupportedLabels().stream()
         .filter(label -> label.labelName().equals(labelName))
         .findFirst()

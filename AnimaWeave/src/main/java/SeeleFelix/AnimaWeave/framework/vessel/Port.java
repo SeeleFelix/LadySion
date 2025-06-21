@@ -3,77 +3,49 @@ package SeeleFelix.AnimaWeave.framework.vessel;
 import java.util.Objects;
 
 /**
- * 端口 - 包含名字、语义标签定义和实际值
- * 这是运行时使用的端口实例，包含端口名称、类型定义和具体的数据
+ * 端口定义 - 定义节点的输入或输出接口规格
+ * 不包含实际值，只定义端口的名称、语义标签、是否必需和默认值
+ * 类似于函数参数的定义
  */
 public record Port(
-    String name,
-    SemanticLabelDefinition semanticLabel,
-    Object value) {
+    String name,                    // 端口名称
+    SemanticLabel semanticLabel,  // 语义标签定义
+    boolean required,               // 是否必需
+    Object defaultValue) {          // 默认值
 
   public Port {
     Objects.requireNonNull(name, "端口名称不能为空");
     Objects.requireNonNull(semanticLabel, "语义标签定义不能为空");
-    // 值可以为null，代表空值或未初始化状态
   }
 
-
-
-  /** 获取语义标签名称 */
-  public String labelName() {
-    return semanticLabel.labelName();
+  /**
+   * 创建必需端口的便利构造方法
+   */
+  public Port(String name, SemanticLabel semanticLabel) {
+    this(name, semanticLabel, true, null);
   }
 
-  /** 检查是否有值 */
-  public boolean hasValue() {
-    return value != null;
+  /**
+   * 基于端口名称的相等性判断
+   */
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) return true;
+    if (obj == null || getClass() != obj.getClass()) return false;
+    Port port = (Port) obj;
+    return Objects.equals(name, port.name);
   }
 
-  /** 检查是否为空值 */
-  public boolean isEmpty() {
-    return value == null;
-  }
-
-  /** 检查是否与另一个端口兼容 */
-  public boolean isCompatibleWith(Port other) {
-    return semanticLabel.isCompatibleWith(other.labelName());
-  }
-
-  /** 检查是否与指定类型兼容 */
-  public boolean isCompatibleWith(String labelName) {
-    return semanticLabel.isCompatibleWith(labelName);
-  }
-
-  /** 应用转换器进行类型转换 */
-  public Port convertTo(SemanticLabelDefinition targetDefinition) {
-    if (!isCompatibleWith(targetDefinition.labelName())) {
-      throw new IllegalArgumentException(
-          String.format("端口 %s 的语义标签 %s 不兼容目标类型 %s", name, labelName(), targetDefinition.labelName()));
-    }
-    Object convertedValue = semanticLabel.convert(value);
-    return new Port(name, targetDefinition, convertedValue);
-  }
-
-  /** 获取值的字符串表示 */
-  public String getValueAsString() {
-    return value != null ? value.toString() : "";
-  }
-
-  /** 尝试获取值作为指定类型 */
-  @SuppressWarnings("unchecked")
-  public <T> T getValueAs(Class<T> type) {
-    if (value == null) {
-      return null;
-    }
-    if (type.isInstance(value)) {
-      return (T) value;
-    }
-    throw new IllegalArgumentException(
-        String.format("无法将值 %s 转换为类型 %s", value, type.getSimpleName()));
+  /**
+   * 基于端口名称的哈希码
+   */
+  @Override
+  public int hashCode() {
+    return Objects.hash(name);
   }
 
   @Override
   public String toString() {
-    return String.format("%s[%s](%s)", name, labelName(), value);
+    return String.format("%s[%s]%s", name, semanticLabel.labelName(), required ? "*" : "");
   }
 } 
