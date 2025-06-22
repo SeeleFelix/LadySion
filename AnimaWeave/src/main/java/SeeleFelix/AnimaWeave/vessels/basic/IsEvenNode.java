@@ -5,9 +5,11 @@ import SeeleFelix.AnimaWeave.framework.node.Node;
 import SeeleFelix.AnimaWeave.framework.node.NodeMeta;
 import SeeleFelix.AnimaWeave.framework.node.OutputPort;
 import SeeleFelix.AnimaWeave.framework.vessel.Port;
+import SeeleFelix.AnimaWeave.framework.vessel.SemanticLabel;
 import SeeleFelix.AnimaWeave.vessels.basic.labels.BoolLabel;
-import SeeleFelix.AnimaWeave.vessels.basic.labels.IntLabel;
+import SeeleFelix.AnimaWeave.vessels.basic.labels.NumberLabel;
 import SeeleFelix.AnimaWeave.vessels.basic.labels.SignalLabel;
+import java.math.BigDecimal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
@@ -20,7 +22,7 @@ public class IsEvenNode extends Node {
 
   // 输入端口定义 - 使用泛型Port
   @InputPort("number")
-  private final Port<IntLabel> numberPort;
+  private final Port<NumberLabel> numberPort;
 
   @InputPort("trigger")
   private final Port<SignalLabel> triggerPort;
@@ -33,10 +35,10 @@ public class IsEvenNode extends Node {
   private final Port<SignalLabel> donePort;
 
   public IsEvenNode(ApplicationEventPublisher eventPublisher) {
-    super("IsEven", "basic.IsEven", eventPublisher);
+    super("IsEven", eventPublisher);
 
     // 初始化端口定义 - 泛型化的Port
-    this.numberPort = new Port<>("number", IntLabel.class);
+    this.numberPort = new Port<>("number", NumberLabel.class);
     this.triggerPort = new Port<>("trigger", SignalLabel.class);
     this.resultPort = new Port<>("result", BoolLabel.class);
     this.donePort = new Port<>("done", SignalLabel.class);
@@ -47,21 +49,21 @@ public class IsEvenNode extends Node {
     log.debug("IsEven节点开始执行");
 
     // 获取输入Label实例
-    IntLabel numberInput = getInput("number");
+    NumberLabel numberInput = getInput("number");
     SignalLabel triggerInput = getInput("trigger");
 
     // 从Label中获取实际值
-    Integer numberValue = numberInput.getValue();
+    BigDecimal numberValue = numberInput.getValue();
 
     if (numberValue == null) {
       throw new IllegalArgumentException("输入数字不能为null");
     }
 
-    // 判断是否为偶数
-    boolean resultValue = numberValue % 2 == 0;
+    // 判断是否为偶数：使用BigDecimal的remainder方法检查与2的余数
+    boolean resultValue = numberValue.remainder(BigDecimal.valueOf(2)).compareTo(BigDecimal.ZERO) == 0;
 
     // 创建输出Label实例并设置
-    BoolLabel resultOutput = BoolLabel.of(resultValue);
+    BoolLabel resultOutput = SemanticLabel.withValue(BoolLabel.class, resultValue);
     SignalLabel doneOutput = SignalLabel.trigger();
 
     setOutput("result", resultOutput);

@@ -73,7 +73,7 @@ public class NodeFactory {
         String nodeType,
         ApplicationEventPublisher eventPublisher,
         NodeDefinition nodeDefinition) {
-      super(nodeName, nodeType, eventPublisher);
+      super(nodeName, eventPublisher);
       this.nodeDefinition = nodeDefinition;
     }
 

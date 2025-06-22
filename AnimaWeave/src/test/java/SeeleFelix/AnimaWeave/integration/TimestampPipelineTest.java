@@ -73,7 +73,7 @@ class TimestampPipelineTest {
             """;
 
     File weaveFile = createTempFile("basic_pipeline.weave", weaveContent);
-    var result = animaWeave.awakening(weaveFile).get(10, TimeUnit.SECONDS);
+    var result = animaWeave.awakening(new File[]{weaveFile}, null).get(10, TimeUnit.SECONDS);
 
     assertTrue(result.isSuccess());
     assertNotNull(result.getExecutionId());
@@ -105,7 +105,7 @@ class TimestampPipelineTest {
             """;
 
     File weaveFile = createTempFile("named_pipeline.weave", weaveContent);
-    var result = animaWeave.awakening(weaveFile, "TimestampPipeline").get(10, TimeUnit.SECONDS);
+    var result = animaWeave.awakening(new File[]{weaveFile}, "TimestampPipeline").get(10, TimeUnit.SECONDS);
 
     assertTrue(result.isSuccess());
     assertNotNull(result.getExecutionId());
@@ -131,7 +131,7 @@ class TimestampPipelineTest {
             """;
 
     File weaveFile = createTempFile("simple.weave", weaveContent);
-    var result = animaWeave.awakening(weaveFile).get(10, TimeUnit.SECONDS);
+    var result = animaWeave.awakening(new File[]{weaveFile}, null).get(10, TimeUnit.SECONDS);
 
     assertTrue(result.isSuccess());
     assertNotNull(result.getExecutionId());
@@ -144,7 +144,7 @@ class TimestampPipelineTest {
   @Test
   void shouldRejectNonWeaveFile() throws Exception {
     File txtFile = createTempFile("not_a_weave.txt", "This is not a weave file");
-    var result = animaWeave.awakening(txtFile).get(5, TimeUnit.SECONDS);
+    var result = animaWeave.awakening(new File[]{txtFile}, null).get(5, TimeUnit.SECONDS);
 
     assertTrue(result.isFailure());
     assertNotNull(result.getMessage());
@@ -168,7 +168,7 @@ class TimestampPipelineTest {
             """;
 
     File invalidWeaveFile = createTempFile("invalid_syntax.weave", invalidWeaveContent);
-    var result = animaWeave.awakening(invalidWeaveFile).get(5, TimeUnit.SECONDS);
+    var result = animaWeave.awakening(new File[]{invalidWeaveFile}, null).get(5, TimeUnit.SECONDS);
 
     assertTrue(result.isFailure());
     assertNotNull(result.getMessage());
@@ -241,7 +241,7 @@ class TimestampPipelineTest {
             """;
 
     File weaveFile = createTempFile("execution_tracking_test.weave", weaveContent);
-    var result = animaWeave.awakening(weaveFile, "ExecutionTrackingTest").get(10, TimeUnit.SECONDS);
+    var result = animaWeave.awakening(new File[]{weaveFile}, "ExecutionTrackingTest").get(10, TimeUnit.SECONDS);
 
     assertTrue(result.isSuccess());
 

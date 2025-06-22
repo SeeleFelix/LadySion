@@ -1,12 +1,14 @@
 -- types
 Signal
-Int
+Number
 Bool
+String
+Timestamp
 UUID
 --
 
 -- nodes
-basic.Start {
+Start {
     mode Concurrent
     in {
     }
@@ -16,25 +18,25 @@ basic.Start {
     }
 }
 
-basic.GetTimestamp {
+IsEven {
+    mode Concurrent
+    in {
+        number basic.NumberLabel
+        trigger basic.SignalLabel
+    }
+    out {
+        result basic.BoolLabel
+        done basic.SignalLabel
+    }
+}
+
+GetTimestamp {
     mode Concurrent
     in {
         trigger basic.SignalLabel
     }
     out {
         timestamp basic.UUIDLabel
-        done basic.SignalLabel
-    }
-}
-
-basic.IsEven {
-    mode Concurrent
-    in {
-        number basic.IntLabel
-        trigger basic.SignalLabel
-    }
-    out {
-        result basic.BoolLabel
         done basic.SignalLabel
     }
 }

@@ -30,7 +30,7 @@ public class GetTimestampNode extends Node {
   private final Port<SignalLabel> donePort;
 
   public GetTimestampNode(ApplicationEventPublisher eventPublisher) {
-    super("GetTimestamp", "basic.GetTimestamp", eventPublisher);
+    super("GetTimestamp", eventPublisher);
 
     // 初始化端口定义 - 泛型化的Port
     this.triggerPort = new Port<>("trigger", SignalLabel.class);
@@ -49,7 +49,7 @@ public class GetTimestampNode extends Node {
     UUID timestampValue = UUID.randomUUID(); // 简化实现，实际可能用时间戳
 
     // 创建输出Label实例并设置
-    UUIDLabel timestampOutput = UUIDLabel.of(timestampValue);
+    UUIDLabel timestampOutput = UUIDLabel.random();
     SignalLabel doneOutput = SignalLabel.trigger();
 
     setOutput("timestamp", timestampOutput);

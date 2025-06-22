@@ -20,6 +20,32 @@ public interface AnimaVessel {
    */
   List<Class<? extends Node>> getSupportedNodeTypes();
 
+  /**
+   * 检查是否支持指定的节点类型
+   * 
+   * @param nodeType 节点类型名称，如 "Start"
+   * @return 是否支持该节点类型
+   */
+  default boolean hasNode(String nodeType) {
+    return getSupportedNodeTypes().stream()
+        .anyMatch(nodeClass -> {
+          String className = nodeClass.getSimpleName();
+          
+          if (className.equals(nodeType)) {
+            return true;
+          }
+          
+          if (className.endsWith("Node")) {
+            String nodeNameWithoutSuffix = className.substring(0, className.length() - 4);
+            if (nodeNameWithoutSuffix.equals(nodeType)) {
+              return true;
+            }
+          }
+          
+          return false;
+        });
+  }
+
   /** 从Node类推导出NodeDefinition列表 这是默认实现，通过创建Node实例来获取端口信息 */
   default List<NodeDefinition> getSupportedNodes() {
     return getSupportedNodeTypes().stream().map(this::createNodeDefinitionFromClass).toList();

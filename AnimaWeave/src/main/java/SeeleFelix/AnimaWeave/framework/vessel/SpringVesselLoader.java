@@ -67,6 +67,9 @@ public class SpringVesselLoader {
       }
     }
 
+    // 完成vessel注册后，构建索引
+    vesselRegistry.finishInitialization();
+
     var result = new LoadResult(successCount, failureCount, vesselBeans.size());
     log.info("📊 @Component vessel加载完成: {}", result);
 

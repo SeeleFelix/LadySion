@@ -25,7 +25,7 @@ public class StartNode extends Node {
   private final Port<UUIDLabel> executionIdPort;
 
   public StartNode(ApplicationEventPublisher eventPublisher) {
-    super("Start", "basic.Start", eventPublisher);
+    super("Start", eventPublisher);
 
     // 初始化输出端口定义 - 泛型化的Port
     this.signalPort = new Port<>("signal", SignalLabel.class);
@@ -41,7 +41,7 @@ public class StartNode extends Node {
 
     // 创建输出Label实例并设置到输出
     SignalLabel signalOutput = SignalLabel.trigger();
-    UUIDLabel executionIdOutput = UUIDLabel.of(execId);
+    UUIDLabel executionIdOutput = UUIDLabel.random();
 
     // 使用新的setOutput方法设置输出
     setOutput("signal", signalOutput);

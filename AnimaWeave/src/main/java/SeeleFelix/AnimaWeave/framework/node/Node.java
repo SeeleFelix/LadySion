@@ -27,15 +27,30 @@ import org.springframework.context.ApplicationEventPublisher;
 @RequiredArgsConstructor
 public abstract class Node {
 
-  private final String nodeName; // 节点实例名称
-  private final String nodeType; // 节点类型（如basic.Start等）
+  private final String nodeName; // 节点实例名称  
   private final ApplicationEventPublisher eventPublisher;
+  
+  // 缓存节点类型名称
+  private String cachedNodeType;
 
   // 缓存字段
   private String cachedDisplayName;
   private String cachedDescription;
   private List<Port<?>> cachedInputPorts;
   private List<Port<?>> cachedOutputPorts;
+
+  /** 获取节点类型 - 从类名自动推导并缓存 */
+  public String getNodeType() {
+    if (cachedNodeType == null) {
+      String className = getClass().getSimpleName();
+      if (className.endsWith("Node")) {
+        cachedNodeType = className.substring(0, className.length() - 4);
+      } else {
+        cachedNodeType = className;
+      }
+    }
+    return cachedNodeType;
+  }
 
   // 运行时数据存储
   private final Map<String, SemanticLabel<?>> currentInputs = new HashMap<>();
@@ -179,7 +194,7 @@ public abstract class Node {
       Map<String, SemanticLabel<?>> inputs,
       String executionContextId,
       String nodeExecutionId) {
-    log.debug("Node type {} 开始执行: nodeId={}, inputCount={}", nodeType, nodeId, inputs.size());
+    log.debug("Node type {} 开始执行: nodeId={}, inputCount={}", getNodeType(), nodeId, inputs.size());
 
     try {
       // 清理之前的状态
@@ -205,13 +220,13 @@ public abstract class Node {
 
       log.debug(
           "Node type {} 执行成功: nodeId={}, executionId={}, outputCount={}",
-          nodeType,
+          getNodeType(),
           nodeId,
           finalExecutionId,
           outputs.size());
 
     } catch (Exception e) {
-      log.error("Node type {} 执行失败: nodeId={}", nodeType, nodeId, e);
+      log.error("Node type {} 执行失败: nodeId={}", getNodeType(), nodeId, e);
 
       // 使用传入的执行ID或生成错误执行ID
       var errorExecutionId =
@@ -246,7 +261,7 @@ public abstract class Node {
 
     return NodeOutputSaveEvent.of(
         this, // source
-        nodeType, // sourceIdentifier
+        getNodeType(), // sourceIdentifier
         nodeId, // nodeName
         executionId, // nodeExecutionId
         objectOutputs, // outputs
@@ -260,7 +275,7 @@ public abstract class Node {
 
     return NodeOutputSaveEvent.of(
         this, // source
-        nodeType, // sourceIdentifier
+        getNodeType(), // sourceIdentifier
         nodeId, // nodeName
         errorExecutionId, // nodeExecutionId
         errorOutputs, // outputs

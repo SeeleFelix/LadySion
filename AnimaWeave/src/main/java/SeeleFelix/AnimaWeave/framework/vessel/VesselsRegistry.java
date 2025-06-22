@@ -1,46 +1,84 @@
 package SeeleFelix.AnimaWeave.framework.vessel;
 
+import SeeleFelix.AnimaWeave.framework.graph.GraphDefinition;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Vessel注册表 线程安全的vessel插件注册表，使用lombok和Java 21现代化实现
- *
- * <p>简化版本：专注于vessel生命周期管理，移除不必要的接口抽象
+ * Vessel注册表 - 简化版本
+ * 系统启动时一次性构建，之后只读
+ * 不支持动态加载/卸载，更新需要重启
  */
 @Slf4j
 @Component
 public class VesselsRegistry {
 
-  private final ConcurrentMap<String, AnimaVessel> vessels = new ConcurrentHashMap<>();
+  private final Map<String, AnimaVessel> vessels = new HashMap<>();
+  
+  // 节点类型索引 - 启动时构建，之后只读
+  private final Map<String, String> nodeTypeIndex = new HashMap<>(); // nodeClassName -> vesselName
+  private final Set<String> availableNodeTypes = new HashSet<>();
+  
+  // 标记是否已经初始化完成
+  private boolean initialized = false;
 
-  /** 注册vessel插件 */
+  /** 注册vessel插件 - 只在系统启动时调用 */
   public void register(String vesselName, AnimaVessel vessel) {
+    if (initialized) {
+      throw new IllegalStateException("VesselsRegistry已初始化完成，不支持动态注册");
+    }
+    
     if (vesselName == null || vessel == null) {
       throw new IllegalArgumentException("Vessel name and vessel cannot be null");
     }
 
-    var existing = vessels.put(vesselName, vessel);
-    if (existing != null) {
-      log.info("Replacing existing vessel: {} with {}", vesselName, vessel.getMetadata().version());
-      shutdownVesselSafely(existing, "replaced vessel: " + vesselName);
-    } else {
-      log.info("Registered new vessel: {} v{}", vesselName, vessel.getMetadata().version());
+    if (vessels.containsKey(vesselName)) {
+      throw new IllegalArgumentException("Vessel已存在: " + vesselName);
     }
+    
+    vessels.put(vesselName, vessel);
+    log.info("注册vessel: {} v{}", vesselName, vessel.getMetadata().version());
   }
 
-  /** 注销vessel插件 */
-  public void unregister(String vesselName) {
-    var vessel = vessels.remove(vesselName);
-    if (vessel != null) {
-      log.info("Unregistered vessel: {}", vesselName);
-      shutdownVesselSafely(vessel, "unregistered vessel: " + vesselName);
-    } else {
-      log.warn("Attempted to unregister non-existent vessel: {}", vesselName);
+  /** 完成初始化 - 构建索引并设为只读 */
+  public void finishInitialization() {
+    if (initialized) {
+      log.warn("VesselsRegistry已经初始化过了");
+      return;
     }
+    
+    log.info("🔨 开始构建vessel索引...");
+    
+    // 构建节点类型索引
+    vessels.forEach((vesselName, vessel) -> {
+      try {
+        vessel.getSupportedNodeTypes().forEach(nodeClass -> {
+          String nodeClassName = nodeClass.getSimpleName();
+          
+          if (nodeTypeIndex.containsKey(nodeClassName)) {
+            String existingVessel = nodeTypeIndex.get(nodeClassName);
+            throw new IllegalStateException(
+                String.format("节点类型冲突: %s 同时存在于 vessel %s 和 %s", 
+                    nodeClassName, existingVessel, vesselName));
+          }
+          
+          nodeTypeIndex.put(nodeClassName, vesselName);
+          availableNodeTypes.add(nodeClassName);
+          log.debug("索引节点类型: {} -> {}", nodeClassName, vesselName);
+        });
+        
+        log.info("为vessel {} 索引了 {} 个节点类型", vesselName, vessel.getSupportedNodeTypes().size());
+      } catch (Exception e) {
+        log.error("为vessel {} 构建节点索引时失败", vesselName, e);
+        throw new RuntimeException("构建vessel索引失败", e);
+      }
+    });
+    
+    initialized = true;
+    log.info("✅ VesselsRegistry初始化完成，共 {} 个vessel，{} 个节点类型", 
+        vessels.size(), availableNodeTypes.size());
+    log.debug("可用节点类型: {}", availableNodeTypes);
   }
 
   /** 获取指定的vessel插件 */
@@ -72,14 +110,56 @@ public class VesselsRegistry {
         .sorted()
         .toList();
   }
+  
+  // ========== 节点类型查询 - 高性能只读操作 ==========
+  
+  /**
+   * 检查节点类型是否存在（O(1)查询）
+   */
+  public boolean isNodeTypeAvailable(String nodeClassName) {
+    ensureInitialized();
+    return availableNodeTypes.contains(nodeClassName);
+  }
+  
+  /**
+   * 获取节点类型所属的vessel名称
+   */
+  public Optional<String> getVesselForNodeType(String nodeClassName) {
+    ensureInitialized();
+    return Optional.ofNullable(nodeTypeIndex.get(nodeClassName));
+  }
+  
+  /**
+   * 获取所有可用的节点类型名称
+   */
+  public Set<String> getAvailableNodeTypes() {
+    ensureInitialized();
+    return Set.copyOf(availableNodeTypes);
+  }
+  
+  /**
+   * 查找相似的节点类型（用于错误提示）
+   */
+  public List<String> findSimilarNodeTypes(String nodeClassName) {
+    ensureInitialized();
+    String lowerQuery = nodeClassName.toLowerCase();
+    return availableNodeTypes.stream()
+        .filter(nodeType -> {
+          String lowerNodeType = nodeType.toLowerCase();
+          return lowerNodeType.contains(lowerQuery) || lowerQuery.contains(lowerNodeType);
+        })
+        .sorted()
+        .limit(5)
+        .toList();
+  }
 
-  /** 安全关闭vessel - 使用Java 21的现代化异常处理 */
-  private void shutdownVesselSafely(AnimaVessel vessel, String context) {
-    try {
-      vessel.shutdown();
-      log.debug("Successfully shut down {}", context);
-    } catch (Exception e) {
-      log.warn("Failed to shutdown {}: {}", context, e.getMessage());
+
+  
+  private void ensureInitialized() {
+    if (!initialized) {
+      throw new IllegalStateException("VesselsRegistry尚未初始化完成");
     }
   }
+  
+
 }

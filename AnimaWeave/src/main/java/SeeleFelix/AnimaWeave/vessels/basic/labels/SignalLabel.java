@@ -33,26 +33,4 @@ public class SignalLabel extends SemanticLabel<Void> {
   public static SignalLabel signal() {
     return new SignalLabel();
   }
-
-  // Signal的hasValue()和isEmpty()使用父类的final实现
-  // hasValue() 返回 false，因为getValue()返回null
-  // isEmpty() 返回 true，因为getValue()返回null
-
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj) return true;
-    if (obj == null || getClass() != obj.getClass()) return false;
-    // 所有Signal实例都相等，因为值都是null
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    return getLabelName().hashCode(); // 基于标签名称
-  }
-
-  @Override
-  public String toString() {
-    return "SignalLabel[Signal=triggered]";
-  }
 }
