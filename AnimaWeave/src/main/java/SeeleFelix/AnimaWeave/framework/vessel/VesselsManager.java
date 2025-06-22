@@ -7,11 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-/** 
- * Vessel插件管理器 - 统一协调器
- * 负责协调SpringVesselLoader和JarVesselLoader
- * 提供统一的vessel管理接口
- */
+/** Vessel插件管理器 - 统一协调器 负责协调SpringVesselLoader和JarVesselLoader 提供统一的vessel管理接口 */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -31,25 +27,25 @@ public class VesselsManager {
     log.info("Spring vessel加载结果: {}", springResult);
 
     // 然后加载JAR文件vessel
-    jarVesselLoader.loadJarVessels()
-        .whenComplete((jarResult, throwable) -> {
-          if (throwable != null) {
-            log.error("❌ Failed to load JAR vessels during initialization", throwable);
-          } else {
-            log.info("JAR vessel加载结果: {}", jarResult);
-            log.info("✅ VesselManager initialization completed");
-            log.info("📊 Total vessels in registry: {}", vesselRegistry.getVesselNames().size());
-          }
-        });
+    jarVesselLoader
+        .loadJarVessels()
+        .whenComplete(
+            (jarResult, throwable) -> {
+              if (throwable != null) {
+                log.error("❌ Failed to load JAR vessels during initialization", throwable);
+              } else {
+                log.info("JAR vessel加载结果: {}", jarResult);
+                log.info("✅ VesselManager initialization completed");
+                log.info(
+                    "📊 Total vessels in registry: {}", vesselRegistry.getVesselNames().size());
+              }
+            });
   }
 
-  /** 
-   * 卸载vessel插件 
-   * 自动判断是Spring vessel还是JAR vessel
-   */
+  /** 卸载vessel插件 自动判断是Spring vessel还是JAR vessel */
   public CompletableFuture<Void> unloadVessel(String vesselName) {
     log.info("Unloading vessel: {}", vesselName);
-    
+
     // 尝试从JAR loader卸载，如果不是JAR vessel，则只从registry中移除
     return jarVesselLoader.unloadVessel(vesselName);
   }
@@ -64,5 +60,4 @@ public class VesselsManager {
     log.info("Shutting down all vessels");
     return jarVesselLoader.shutdown();
   }
-
 }

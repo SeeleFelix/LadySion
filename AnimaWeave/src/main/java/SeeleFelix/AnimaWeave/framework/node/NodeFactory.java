@@ -4,7 +4,6 @@ import SeeleFelix.AnimaWeave.framework.vessel.AnimaVessel;
 import SeeleFelix.AnimaWeave.framework.vessel.NodeDefinition;
 import SeeleFelix.AnimaWeave.framework.vessel.Port;
 import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
@@ -103,7 +102,7 @@ public class NodeFactory {
       // TODO: 这里需要根据nodeDefinition来执行实际的计算逻辑
       // 现在先返回一个简单的示例实现
       log.debug("Executing generic node: {}", getNodeType());
-      
+
       // GenericNode暂时不执行具体逻辑
       // 实际应用中，这里应该根据nodeDefinition来动态执行
     }

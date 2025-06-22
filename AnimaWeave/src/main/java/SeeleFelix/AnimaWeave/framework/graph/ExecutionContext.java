@@ -128,7 +128,8 @@ public class ExecutionContext {
             nodeType,
             inputs,
             Instant.now(),
-            null, // endTime will be set when completed
+            null, // endTime will be set when
+            // completed
             null, // duration will be calculated when completed
             NodeExecutionStatus.RUNNING,
             null, // outputs will be set when completed

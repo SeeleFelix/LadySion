@@ -50,7 +50,9 @@ public class AnimaFileGenerator {
 
   /** 生成类型定义部分 */
   private void generateTypeDefinitions(
-      List<Class<? extends SemanticLabel>> labelClasses, String containerName, StringBuilder builder) {
+      List<Class<? extends SemanticLabel>> labelClasses,
+      String containerName,
+      StringBuilder builder) {
     for (var labelClass : labelClasses) {
       try {
         // 创建语义标签实例
@@ -63,8 +65,8 @@ public class AnimaFileGenerator {
           // 如果没有getInstance方法，尝试使用默认构造函数
           label = labelClass.getDeclaredConstructor().newInstance();
         }
-        
-                    builder.append(label.getLabelName());
+
+        builder.append(label.getLabelName());
 
         // 检查是否需要生成结构定义
         if (hasCompatibleLabels(label)) {
@@ -119,24 +121,16 @@ public class AnimaFileGenerator {
 
   /** 检查是否有兼容标签需要生成结构 */
   private boolean hasCompatibleLabels(SemanticLabel label) {
-    // 如果有兼容类型，需要生成结构定义
-    return !label.getCompatibleLabels().isEmpty();
+    // 暂时简化：不生成复杂的结构定义
+    // 在新的@Converter系统中，兼容性是通过转换器自动推断的
+    return false;
   }
 
   /** 生成语义标签的结构定义 */
   private void generateStructureDefinition(SemanticLabel label, StringBuilder builder) {
-    // 从兼容标签列表生成结构
-    for (var compatibleLabelClass : label.getCompatibleLabels()) {
-      if (compatibleLabelClass instanceof Class<?> clazz) {
-        builder.append("    ").append(clazz.getSimpleName()).append("\n");
-      }
-    }
-    
-    // 如果没有兼容标签，生成注释（理论上不应该到这里）
-    if (label.getCompatibleLabels().isEmpty()) {
-      builder.append("    // No compatible labels defined\n");
-      log.warn("Label {} should not reach here without compatible labels", label.getLabelName());
-    }
+    // 在新的设计中，转换器关系通过@Converter注解自动发现
+    // 这里暂时不生成复杂的结构定义
+    builder.append("    // Converter relationships auto-discovered via @Converter annotations\n");
   }
 
   /** 获取限定类型名称，动态使用容器名称 */
@@ -195,9 +189,10 @@ public class AnimaFileGenerator {
         if (vessel.isPresent()) {
           try {
             // 使用自定义输出目录生成文件路径
-            var outputPath = customOutputDir
-                .map(dir -> dir.resolve(vesselName + ".anima"))
-                .orElse(config.getOutputPath(vessel.get()));
+            var outputPath =
+                customOutputDir
+                    .map(dir -> dir.resolve(vesselName + ".anima"))
+                    .orElse(config.getOutputPath(vessel.get()));
             saveToFile(vessel.get(), outputPath);
           } catch (IOException e) {
             log.error("生成{}的.anima文件失败", vesselName, e);

@@ -65,7 +65,7 @@ public final class NodeExecutionRequest extends AnimaWeaveEvent {
     // 将SemanticLabel转换为Object以保持兼容性
     Map<String, Object> inputs = new HashMap<>();
     semanticInputs.forEach((key, value) -> inputs.put(key, value));
-    
+
     return new NodeExecutionRequest(
         source, sourceIdentifier, nodeId, nodeType, inputs, executionContextId);
   }

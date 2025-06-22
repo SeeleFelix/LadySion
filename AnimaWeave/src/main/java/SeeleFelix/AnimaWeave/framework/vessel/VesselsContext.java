@@ -1,16 +1,14 @@
 package SeeleFelix.AnimaWeave.framework.vessel;
 
 import SeeleFelix.AnimaWeave.framework.event.EventDispatcher;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** 
- * Vessel上下文
- * 为vessel插件提供框架服务的数据容器
- * 
+/**
+ * Vessel上下文 为vessel插件提供框架服务的数据容器
+ *
  * <p>简化版本：移除接口抽象，直接作为数据类使用
  */
 @Getter
@@ -86,4 +84,3 @@ public class VesselsContext {
     }
   }
 }
-

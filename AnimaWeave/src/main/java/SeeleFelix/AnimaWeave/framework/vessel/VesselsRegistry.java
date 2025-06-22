@@ -7,8 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Vessel注册表 
- * 线程安全的vessel插件注册表，使用lombok和Java 21现代化实现
+ * Vessel注册表 线程安全的vessel插件注册表，使用lombok和Java 21现代化实现
  *
  * <p>简化版本：专注于vessel生命周期管理，移除不必要的接口抽象
  */

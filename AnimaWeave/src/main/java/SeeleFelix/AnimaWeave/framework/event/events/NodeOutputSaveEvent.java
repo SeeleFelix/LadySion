@@ -14,7 +14,7 @@ import lombok.ToString;
 @Getter
 @ToString(
     callSuper = true,
-    of = {"nodeName", "nodeExecutionId", "outputsSize"})
+    of = {"nodeName", "nodeExecutionId", "outputs"})
 @EqualsAndHashCode(
     callSuper = false,
     of = {"nodeName", "nodeExecutionId", "graphExecutionId"})

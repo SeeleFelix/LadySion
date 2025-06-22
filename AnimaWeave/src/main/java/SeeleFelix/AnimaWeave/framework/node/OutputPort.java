@@ -5,16 +5,11 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * 标识Node类中的输出端口字段
- * 字段类型必须是PortValue
- */
+/** 标识Node类中的输出端口字段 字段类型必须是PortValue */
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface OutputPort {
-    
-    /**
-     * 端口名称
-     */
-    String value();
-} 
+
+  /** 端口名称 */
+  String value();
+}

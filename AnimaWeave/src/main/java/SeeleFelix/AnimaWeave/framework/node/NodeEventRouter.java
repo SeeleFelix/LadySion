@@ -59,15 +59,20 @@ public class NodeEventRouter {
 
     // 转换输入类型：Object -> SemanticLabel
     Map<String, SemanticLabel<?>> semanticInputs = new HashMap<>();
-    request.getInputs().forEach((key, value) -> {
-        if (value instanceof SemanticLabel<?> label) {
-            semanticInputs.put(key, label);
-        } else {
-            log.warn("Expected SemanticLabel but got {} for input {}", 
-                     value != null ? value.getClass().getSimpleName() : "null", key);
-        }
-    });
-    
+    request
+        .getInputs()
+        .forEach(
+            (key, value) -> {
+              if (value instanceof SemanticLabel<?> label) {
+                semanticInputs.put(key, label);
+              } else {
+                log.warn(
+                    "Expected SemanticLabel but got {} for input {}",
+                    value != null ? value.getClass().getSimpleName() : "null",
+                    key);
+              }
+            });
+
     // 调用Node的模板方法执行，传递执行ID
     node.executeWithTemplate(
         request.getNodeId(),

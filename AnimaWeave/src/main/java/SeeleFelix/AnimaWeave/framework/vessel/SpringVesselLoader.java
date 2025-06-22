@@ -7,10 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
-/**
- * Spring Vessel加载器
- * 专门负责发现和加载Spring容器中的@Component vessel
- */
+/** Spring Vessel加载器 专门负责发现和加载Spring容器中的@Component vessel */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -22,6 +19,7 @@ public class SpringVesselLoader {
 
   /**
    * 加载Spring容器中的@Component vessel
+   *
    * @return 加载统计信息
    */
   public LoadResult loadSpringVessels() {
@@ -79,13 +77,11 @@ public class SpringVesselLoader {
     return result;
   }
 
-  /**
-   * 加载结果统计
-   */
+  /** 加载结果统计 */
   public record LoadResult(int successCount, int failureCount, int totalFound) {
     @Override
     public String toString() {
       return "成功 %d, 失败 %d, 总计 %d".formatted(successCount, failureCount, totalFound);
     }
   }
-} 
+}

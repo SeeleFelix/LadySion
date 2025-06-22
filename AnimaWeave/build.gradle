@@ -48,39 +48,39 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
-	
+
 	// 事件驱动架构
 	implementation 'org.springframework:spring-context:6.2.8'
 	implementation 'org.springframework.boot:spring-boot-starter-aop'
-	
+
 	// DSL解析 - ANTLR
 	antlr 'org.antlr:antlr4:4.13.2'
 	implementation 'org.antlr:antlr4-runtime:4.13.2'
-	
+
 	// JSON处理
 	implementation 'com.fasterxml.jackson.core:jackson-core:2.19.1'
 	implementation 'com.fasterxml.jackson.core:jackson-databind:2.19.1'
-	
+
 	// 并发处理工具
 	implementation 'org.springframework.boot:spring-boot-starter-cache'
-	
+
 	// Lombok
 	compileOnly 'org.projectlombok:lombok:1.18.38'
 	annotationProcessor 'org.projectlombok:lombok:1.18.38'
-	
+
 	// 开发工具
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
-	
+
 	// 测试依赖 - 统一版本避免冲突
 	testImplementation platform('org.junit:junit-bom:5.12.2')
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-	
+
 	// 添加Selfie JVM Snapshot Testing依赖 - 现代化替代方案
 	testImplementation 'com.diffplug.selfie:selfie-runner-junit5:2.5.3'
-	
+
 	// TODO: Error Prone 和 NullAway 依赖（暂时禁用）
 	// errorprone 'com.google.errorprone:error_prone_core:2.35.1'
 	// errorprone 'com.uber.nullaway:nullaway:0.12.3'
@@ -102,18 +102,18 @@ tasks.named('test') {
 	useJUnitPlatform()
 	// 启用Virtual Threads用于测试
 	jvmArgs += ["--enable-preview"]
-	
+
 	// Selfie JVM snapshot testing配置 - 按照官方文档配置
 	environment project.properties.subMap(["selfie"])
 	inputs.files(fileTree("src/test") {
 		include "**/*.ss"
 	})
-	
+
 	// 添加Selfie需要的系统属性传递
 	systemProperties System.properties.findAll { key, value ->
 		key.startsWith("selfie")
 	}
-	
+
 	// 彻底禁用测试缓存 - 确保每次都重新运行
 	outputs.upToDateWhen { false }
 	outputs.cacheIf { false }
@@ -146,20 +146,20 @@ spotbugs {
 task generateAnimaFiles(type: JavaExec) {
 	group = 'vessel'
 	description = '从Java Vessel定义生成.anima文件到sanctums目录'
-	
+
 	dependsOn compileJava
 	classpath = sourceSets.main.runtimeClasspath
 	mainClass = 'SeeleFelix.AnimaWeave.tools.generator.AnimaGeneratorCliApp'  // 修复类名
-	
+
 	// 可以传递参数
 	if (project.hasProperty('outputDir')) {
 		args project.property('outputDir')
 	}
-	
+
 	doFirst {
 		println '🔨 开始生成vessel .anima文件...'
 	}
-	
+
 	doLast {
 		println '✅ .anima文件生成完成！'
 		println '📁 文件保存在: ./sanctums/ 目录'
@@ -173,7 +173,7 @@ tasks.named("dependencyUpdates").configure {
 	outputFormatter = "json"
 	outputDir = "build/dependencyUpdates"
 	reportfileName = "report"
-	
+
 	// 版本过滤规则 - 排除不稳定版本
 	rejectVersionIf { selection ->
 		selection.candidate.version.contains('-alpha') ||
@@ -184,7 +184,7 @@ tasks.named("dependencyUpdates").configure {
 		selection.candidate.version.contains('-dev') ||
 		selection.candidate.version.contains('-SNAPSHOT')
 	}
-	
+
 	// 只检查稳定版本
 	revision = "release"
 }
@@ -197,10 +197,18 @@ spotless {
 			include '**/*.java'
 			exclude '**/build/**', '**/generated-src/**'
 		}
-		
 		googleJavaFormat()
+		indentWithSpaces(4)
+		// 使用Apache Avro的Eclipse格式化配置（支持record参数竖向排列，2空格缩进）
+		// eclipse().configFile('config/spotless/p3c-eclipse-formatter.xml')
+
+		// 移除未使用的import语句
 		removeUnusedImports()
+
+		// 清理行尾空格
 		trimTrailingWhitespace()
+
+		// 文件末尾添加换行符
 		endWithNewline()
 	}
 }
@@ -221,11 +229,11 @@ pmd {
 // 	options.errorprone {
 // 		disableWarningsInGeneratedCode = true
 // 		excludedPaths = '.*/build/generated-src/.*'
-// 		
+//
 // 		// 启用严格的检查
 // 		allErrorsAsWarnings = false
 // 		allDisabledChecksAsWarnings = false
-// 		
+//
 // 		// 一些有用的检查
 // 		error('NullAway')
 // 		error('DeadException')
@@ -233,7 +241,7 @@ pmd {
 // 		error('UnusedMethod')
 // 		warn('MissingOverride')
 // 		warn('DefaultCharset')
-// 		
+//
 // 		// NullAway任务级配置
 // 		nullaway {
 // 			error()
@@ -256,7 +264,7 @@ task quickCheck {
 	group = 'verification'
 	description = '快速代码质量检查（格式化 + 静态分析 + 测试）'
 	dependsOn 'spotlessApply', 'checkstyleMain', 'pmdMain', 'spotbugsMain', 'test'
-	
+
 	doLast {
 		println '✅ 快速代码质量检查完成！'
 	}
@@ -267,7 +275,7 @@ task qualityReport {
 	group = 'verification'
 	description = '生成所有质量检查报告的汇总'
 	dependsOn 'check'
-	
+
 	doLast {
 		println '📊 质量报告已生成：'
 		println '  - Checkstyle: build/reports/checkstyle/'
@@ -276,4 +284,3 @@ task qualityReport {
 		println '  - 测试报告: build/reports/tests/'
 	}
 }
-

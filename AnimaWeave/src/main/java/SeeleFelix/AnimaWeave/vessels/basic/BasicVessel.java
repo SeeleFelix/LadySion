@@ -1,19 +1,17 @@
 package SeeleFelix.AnimaWeave.vessels.basic;
 
-import SeeleFelix.AnimaWeave.framework.event.EventDispatcher;
+import SeeleFelix.AnimaWeave.framework.node.Node;
 import SeeleFelix.AnimaWeave.framework.vessel.*;
+import SeeleFelix.AnimaWeave.vessels.basic.labels.BoolLabel;
+import SeeleFelix.AnimaWeave.vessels.basic.labels.IntLabel;
+import SeeleFelix.AnimaWeave.vessels.basic.labels.SignalLabel;
+import SeeleFelix.AnimaWeave.vessels.basic.labels.UUIDLabel;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import SeeleFelix.AnimaWeave.framework.node.Node;
-import SeeleFelix.AnimaWeave.vessels.basic.labels.BoolLabel;
-import SeeleFelix.AnimaWeave.vessels.basic.labels.IntLabel;
-import SeeleFelix.AnimaWeave.vessels.basic.labels.SignalLabel;
-import SeeleFelix.AnimaWeave.vessels.basic.labels.UUIDLabel;
 
 /**
  * Basic Vessel - 基础容器实现 提供基础数据类型和基本操作节点
@@ -27,26 +25,18 @@ public class BasicVessel implements AnimaVessel {
 
   @Override
   public VesselMetadata getMetadata() {
-    return new VesselMetadata("basic", "1.0.0", "提供基础数据类型和基本操作节点的核心容器", "SeeleFelix", List.of(), "1.0.0");
+    return new VesselMetadata(
+        "basic", "1.0.0", "提供基础数据类型和基本操作节点的核心容器", "SeeleFelix", List.of(), "1.0.0");
   }
 
   @Override
   public List<Class<? extends Node>> getSupportedNodeTypes() {
-    return List.of(
-        StartNode.class,
-        GetTimestampNode.class,
-        IsEvenNode.class
-    );
+    return List.of(StartNode.class, GetTimestampNode.class, IsEvenNode.class);
   }
 
   @Override
   public List<Class<? extends SemanticLabel>> getSupportedLabelTypes() {
-    return List.of(
-        SignalLabel.class,
-        IntLabel.class,
-        BoolLabel.class,
-        UUIDLabel.class
-    );
+    return List.of(SignalLabel.class, IntLabel.class, BoolLabel.class, UUIDLabel.class);
   }
 
   @Override

@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -104,7 +103,7 @@ public class GraphCoordinator {
       // 将SemanticLabel转换为Object以保持与ExecutionContext的兼容性
       Map<String, Object> objectInputs = new HashMap<>();
       inputs.forEach((key, value) -> objectInputs.put(key, value));
-      
+
       // 开始执行追踪
       var executionRecord = context.startNodeExecution(nodeId, nodeType, objectInputs);
 
@@ -269,8 +268,11 @@ public class GraphCoordinator {
             sourcePort,
             label);
       } else if (value != null) {
-        log.warn("Expected SemanticLabel but got {} for {}.{}", 
-                 value.getClass().getSimpleName(), nodeId, targetPort);
+        log.warn(
+            "Expected SemanticLabel but got {} for {}.{}",
+            value.getClass().getSimpleName(),
+            nodeId,
+            targetPort);
       }
     }
 
@@ -296,8 +298,11 @@ public class GraphCoordinator {
             sourcePort,
             label);
       } else if (value != null) {
-        log.warn("Expected SemanticLabel but got {} for {}.{}", 
-                 value.getClass().getSimpleName(), nodeId, targetPort);
+        log.warn(
+            "Expected SemanticLabel but got {} for {}.{}",
+            value.getClass().getSimpleName(),
+            nodeId,
+            targetPort);
       }
     }
 

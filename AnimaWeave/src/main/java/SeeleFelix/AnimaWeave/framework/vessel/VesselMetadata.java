@@ -11,8 +11,6 @@ public record VesselMetadata(
     List<String> dependencies,
     String minFrameworkVersion) {
 
-
-
   /** 检查是否依赖特定vessel */
   public boolean dependsOn(String vesselName) {
     return dependencies.contains(vesselName);
