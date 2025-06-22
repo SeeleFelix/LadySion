@@ -121,10 +121,11 @@ deno task lint            # 代码检查
 
 ### 架构设计
 
-| 文档                                        | 状态    | 描述             |
-| ------------------------------------------- | ------- | ---------------- |
-| [后端架构](./docs/architecture/backend.md)  | ✅ 完成 | 后端DDD架构设计  |
-| [前端架构](./docs/architecture/frontend.md) | ✅ 完成 | 前端Vue3架构设计 |
+| 文档                                                                         | 状态    | 描述                       |
+| ---------------------------------------------------------------------------- | ------- | -------------------------- |
+| [后端架构](./docs/architecture/backend.md)                                   | ✅ 完成 | 后端DDD架构设计            |
+| [前端架构](./docs/architecture/frontend.md)                                  | ✅ 完成 | 前端Vue3架构设计           |
+| [AnimaWeave全景类图](./docs/architecture/animaweave-class-diagram.md)        | ✅ 完成 | AnimaWeave系统完整类图结构 |
 
 ### 开发指南
 

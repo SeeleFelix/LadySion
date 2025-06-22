@@ -3,7 +3,6 @@ package SeeleFelix.AnimaWeave.framework.node;
 import SeeleFelix.AnimaWeave.framework.vessel.AnimaVessel;
 import SeeleFelix.AnimaWeave.framework.vessel.NodeDefinition;
 import SeeleFelix.AnimaWeave.framework.vessel.Port;
-import SeeleFelix.AnimaWeave.framework.vessel.PortValue;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -90,12 +89,12 @@ public class NodeFactory {
     }
 
     @Override
-    public List<Port> getInputPorts() {
+    public List<Port<?>> getInputPorts() {
       return nodeDefinition.inputPorts();
     }
 
     @Override
-    public List<Port> getOutputPorts() {
+    public List<Port<?>> getOutputPorts() {
       return nodeDefinition.outputPorts();
     }
 

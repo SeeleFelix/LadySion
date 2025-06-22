@@ -12,51 +12,49 @@ public record NodeDefinition(
     String nodeType, // 节点类型（如 "Add", "Multiply"）
     String displayName, // 显示名称
     String description, // 描述
-    List<Port> inputPorts, // 输入端口
-    List<Port> outputPorts // 输出端口
+    List<Port<?>> inputPorts, // 输入端口
+    List<Port<?>> outputPorts // 输出端口
     ) {
 
-
-
   /** 获取指定名称的输入端口 */
-  public Port getInputPort(String portName) {
+  public Port<?> getInputPort(String portName) {
     return inputPorts.stream()
-        .filter(port -> port.name().equals(portName))
+        .filter(port -> port.getName().equals(portName))
         .findFirst()
         .orElse(null);
   }
 
   /** 获取指定名称的输出端口 */
-  public Port getOutputPort(String portName) {
+  public Port<?> getOutputPort(String portName) {
     return outputPorts.stream()
-        .filter(port -> port.name().equals(portName))
+        .filter(port -> port.getName().equals(portName))
         .findFirst()
         .orElse(null);
   }
 
-  /** 验证输入端口值是否符合端口定义 */
-  public boolean validateInputs(Map<String, PortValue> inputs) {
+  /** 验证输入Label是否符合端口定义 */
+  public boolean validateInputs(Map<String, SemanticLabel<?>> inputs) {
     return inputPorts.stream()
         .allMatch(
             port -> {
-              PortValue input = inputs.get(port.name());
-              if (port.required() && (input == null || !input.hasValue())) {
+              SemanticLabel<?> input = inputs.get(port.getName());
+              if (port.isRequired() && input == null) {
                 return false;
               }
               if (input == null) {
                 return true; // 可选端口可以为null
               }
-              return port.semanticLabel().isCompatibleWith(input.semanticLabel());
+              return port.validateLabel(input);
             });
   }
 
   /** 检查节点是否有必需的输入端口 */
   public boolean hasRequiredInputs() {
-    return inputPorts.stream().anyMatch(Port::required);
+    return inputPorts.stream().anyMatch(Port::isRequired);
   }
 
   /** 获取所有必需输入端口的名称 */
   public List<String> getRequiredInputPortNames() {
-    return inputPorts.stream().filter(Port::required).map(Port::name).toList();
+    return inputPorts.stream().filter(Port::isRequired).map(Port::getName).toList();
   }
 }

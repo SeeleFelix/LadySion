@@ -64,7 +64,7 @@ public class AnimaFileGenerator {
           label = labelClass.getDeclaredConstructor().newInstance();
         }
         
-        builder.append(label.labelName());
+                    builder.append(label.getLabelName());
 
         // 检查是否需要生成结构定义
         if (hasCompatibleLabels(label)) {
@@ -94,9 +94,9 @@ public class AnimaFileGenerator {
       for (var port : node.inputPorts()) {
         builder
             .append("        ")
-            .append(port.name())
+            .append(port.getName())
             .append(" ")
-            .append(getQualifiedTypeName(port.semanticLabel(), containerName))
+            .append(getQualifiedTypeName(port.getLabelType().getSimpleName(), containerName))
             .append("\n");
       }
       builder.append("    }\n");
@@ -106,9 +106,9 @@ public class AnimaFileGenerator {
       for (var port : node.outputPorts()) {
         builder
             .append("        ")
-            .append(port.name())
+            .append(port.getName())
             .append(" ")
-            .append(getQualifiedTypeName(port.semanticLabel(), containerName))
+            .append(getQualifiedTypeName(port.getLabelType().getSimpleName(), containerName))
             .append("\n");
       }
       builder.append("    }\n");
@@ -120,26 +120,28 @@ public class AnimaFileGenerator {
   /** 检查是否有兼容标签需要生成结构 */
   private boolean hasCompatibleLabels(SemanticLabel label) {
     // 如果有兼容类型，需要生成结构定义
-    return !label.compatibleLabels().isEmpty();
+    return !label.getCompatibleLabels().isEmpty();
   }
 
   /** 生成语义标签的结构定义 */
   private void generateStructureDefinition(SemanticLabel label, StringBuilder builder) {
     // 从兼容标签列表生成结构
-    for (var compatibleLabel : label.compatibleLabels()) {
-      builder.append("    ").append(compatibleLabel.labelName()).append("\n");
+    for (var compatibleLabelClass : label.getCompatibleLabels()) {
+      if (compatibleLabelClass instanceof Class<?> clazz) {
+        builder.append("    ").append(clazz.getSimpleName()).append("\n");
+      }
     }
     
     // 如果没有兼容标签，生成注释（理论上不应该到这里）
-    if (label.compatibleLabels().isEmpty()) {
+    if (label.getCompatibleLabels().isEmpty()) {
       builder.append("    // No compatible labels defined\n");
-      log.warn("Label {} should not reach here without compatible labels", label.labelName());
+      log.warn("Label {} should not reach here without compatible labels", label.getLabelName());
     }
   }
 
   /** 获取限定类型名称，动态使用容器名称 */
-  private String getQualifiedTypeName(SemanticLabel label, String containerName) {
-    return containerName + "." + label.labelName();
+  private String getQualifiedTypeName(String labelName, String containerName) {
+    return containerName + "." + labelName;
   }
 
   /** 将vessel的定义保存为.anima文件 */

@@ -1,6 +1,8 @@
 package SeeleFelix.AnimaWeave.framework.event.events;
 
 import SeeleFelix.AnimaWeave.framework.event.AnimaWeaveEvent;
+import SeeleFelix.AnimaWeave.framework.vessel.SemanticLabel;
+import java.util.HashMap;
 import java.util.Map;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -48,6 +50,22 @@ public final class NodeExecutionRequest extends AnimaWeaveEvent {
       String nodeType,
       Map<String, Object> inputs,
       String executionContextId) {
+    return new NodeExecutionRequest(
+        source, sourceIdentifier, nodeId, nodeType, inputs, executionContextId);
+  }
+
+  /** 新的工厂方法 - 支持SemanticLabel输入 */
+  public static NodeExecutionRequest withSemanticLabels(
+      Object source,
+      String sourceIdentifier,
+      String nodeId,
+      String nodeType,
+      Map<String, SemanticLabel<?>> semanticInputs,
+      String executionContextId) {
+    // 将SemanticLabel转换为Object以保持兼容性
+    Map<String, Object> inputs = new HashMap<>();
+    semanticInputs.forEach((key, value) -> inputs.put(key, value));
+    
     return new NodeExecutionRequest(
         source, sourceIdentifier, nodeId, nodeType, inputs, executionContextId);
   }

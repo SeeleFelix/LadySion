@@ -3,108 +3,40 @@
 Signal
 Int
 Bool
-String
-UUID {
-    String
-}
-Prompt {
-    String
-}
-Prompts {
-    Prompt
-}
+UUID
 --
 
 -- nodes
-Start {
+basic.Start {
     mode Concurrent
     in {
     }
     out {
-        signal basic.Signal
-        execution_id basic.UUID
+        signal basic.SignalLabel
+        execution_id basic.UUIDLabel
     }
 }
 
-GetTimestamp {
+basic.GetTimestamp {
     mode Concurrent
     in {
-        trigger basic.Signal
+        trigger basic.SignalLabel
     }
     out {
-        timestamp basic.Int
-        done basic.Signal
+        timestamp basic.UUIDLabel
+        done basic.SignalLabel
     }
 }
 
-IsEven {
+basic.IsEven {
     mode Concurrent
     in {
-        number basic.Int
-        trigger basic.Signal
+        number basic.IntLabel
+        trigger basic.SignalLabel
     }
     out {
-        result basic.Bool
-        done basic.Signal
-    }
-}
-
-FormatNumber {
-    mode Concurrent
-    in {
-        number basic.Int
-        trigger basic.Signal
-    }
-    out {
-        formatted basic.String
-        done basic.Signal
-    }
-}
-
-CreatePrompt {
-    mode Concurrent
-    in {
-        name basic.String
-        content basic.String
-        trigger basic.Signal
-    }
-    out {
-        prompt basic.Prompt
-        done basic.Signal
-    }
-}
-
-StringFormatter {
-    mode Concurrent
-    in {
-        input basic.String
-        trigger basic.Signal
-    }
-    out {
-        formatted basic.String
-        done basic.Signal
-    }
-}
-
-DataProcessor {
-    mode Concurrent
-    in {
-        execute basic.Signal
-    }
-    out {
-        result basic.String
-        done basic.Signal
-    }
-}
-
-CompletionMarker {
-    mode Concurrent
-    in {
-        trigger basic.Signal
-    }
-    out {
-        completed basic.Signal
-        timestamp basic.Int
+        result basic.BoolLabel
+        done basic.SignalLabel
     }
 }
 

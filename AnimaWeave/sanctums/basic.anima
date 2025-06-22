@@ -11,31 +11,31 @@ basic.Start {
     in {
     }
     out {
-        signal basic.Signal
-        execution_id basic.UUID
+        signal basic.SignalLabel
+        execution_id basic.UUIDLabel
     }
 }
 
 basic.GetTimestamp {
     mode Concurrent
     in {
-        trigger basic.Signal
+        trigger basic.SignalLabel
     }
     out {
-        timestamp basic.Int
-        done basic.Signal
+        timestamp basic.UUIDLabel
+        done basic.SignalLabel
     }
 }
 
 basic.IsEven {
     mode Concurrent
     in {
-        number basic.Int
-        trigger basic.Signal
+        number basic.IntLabel
+        trigger basic.SignalLabel
     }
     out {
-        result basic.Bool
-        done basic.Signal
+        result basic.BoolLabel
+        done basic.SignalLabel
     }
 }
 

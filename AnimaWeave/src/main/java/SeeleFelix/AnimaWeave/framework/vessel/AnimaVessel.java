@@ -101,7 +101,7 @@ public interface AnimaVessel {
             }
           }
         })
-        .filter(label -> label.labelName().equals(labelName))
+        .filter(label -> label.getLabelName().equals(labelName))
         .findFirst()
         .orElseThrow(() -> new IllegalArgumentException("Unknown label: " + labelName));
   }
