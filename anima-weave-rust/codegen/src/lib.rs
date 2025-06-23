@@ -1,5 +1,5 @@
 //! # Anima Codegen
-//! 
+//!
 //! TODO: Implement code generation based on trait abstractions
 
 // TODO: Implement code generation
@@ -11,4 +11,4 @@ pub fn generate_vessel_code() {
 
 pub fn generate_node_registration() {
     // TODO: Implement node registration code generation
-} 
+}

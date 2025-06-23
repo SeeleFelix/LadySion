@@ -1,5 +1,5 @@
 //! # Anima Registry - Compile-time Registration System
-//! 
+//!
 //! This crate provides compile-time registration of vessels using the inventory crate.
 //! All vessels are discovered at compile time for zero-cost lookup.
 
@@ -25,10 +25,18 @@ impl std::fmt::Display for RegistryError {
         match self {
             RegistryError::VesselNotFound { name } => write!(f, "Vessel not found: {}", name),
             RegistryError::NodeNotFound { full_name } => write!(f, "Node not found: {}", full_name),
-            RegistryError::LabelNotFound { full_name } => write!(f, "Label not found: {}", full_name),
-            RegistryError::ConverterNotFound { from, to } => write!(f, "Converter not found: {} -> {}", from, to),
-            RegistryError::InvalidFullName { name } => write!(f, "Invalid full name format: {}", name),
-            RegistryError::GraphValidationFailed { message } => write!(f, "Graph validation failed: {}", message),
+            RegistryError::LabelNotFound { full_name } => {
+                write!(f, "Label not found: {}", full_name)
+            }
+            RegistryError::ConverterNotFound { from, to } => {
+                write!(f, "Converter not found: {} -> {}", from, to)
+            }
+            RegistryError::InvalidFullName { name } => {
+                write!(f, "Invalid full name format: {}", name)
+            }
+            RegistryError::GraphValidationFailed { message } => {
+                write!(f, "Graph validation failed: {}", message)
+            }
         }
     }
 }
@@ -73,19 +81,19 @@ impl DefaultRegistry {
         let mut registry = Self {
             vessels: HashMap::new(),
         };
-        
+
         // Load all vessels registered via inventory
         registry.load_vessels();
         registry
     }
-    
+
     /// Get global registry instance (singleton pattern)
     pub fn global() -> &'static DefaultRegistry {
         use std::sync::OnceLock;
         static REGISTRY: OnceLock<DefaultRegistry> = OnceLock::new();
         REGISTRY.get_or_init(|| DefaultRegistry::new())
     }
-    
+
     fn load_vessels(&mut self) {
         for registration in inventory::iter::<VesselRegistration> {
             let vessel = (registration.factory)();
@@ -104,11 +112,11 @@ impl Registry for DefaultRegistry {
         self.vessels.insert(name, vessel);
         Ok(())
     }
-    
+
     fn get_vessel(&self, vessel_name: &str) -> Option<&dyn Vessel> {
         self.vessels.get(vessel_name).map(|v| v.as_ref())
     }
-    
+
     fn list_vessels(&self) -> Vec<String> {
         self.vessels.keys().cloned().collect()
     }
@@ -135,4 +143,4 @@ macro_rules! register_vessel {
 // Re-exports
 // ============================================================================
 
-pub use inventory; 
+pub use inventory;

@@ -1,5 +1,5 @@
 //! # Basic Vessel
-//! 
+//!
 //! TODO: Implement basic vessel based on trait abstractions
 
 // Placeholder for basic vessel implementation
@@ -8,4 +8,4 @@
 pub fn create_basic_vessel() {
     // TODO: Implement basic vessel with Start, GetTimestamp, IsEven nodes
     // This will be done in a future story
-} 
+}

@@ -1,5 +1,5 @@
 //! # Anima DSL Parser
-//! 
+//!
 //! TODO: Implement DSL parser based on trait abstractions
 
 // TODO: Implement DSL parser
@@ -13,4 +13,4 @@ pub fn parse_weave_file(_content: &str) -> Result<(), String> {
 pub fn validate_dsl(_content: &str) -> Result<(), String> {
     // TODO: Implement DSL validation
     Ok(())
-} 
+}

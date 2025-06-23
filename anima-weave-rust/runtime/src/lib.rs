@@ -1,5 +1,5 @@
 //! # Anima Runtime - Execution Engine
-//! 
+//!
 //! TODO: Implement execution engine based on trait abstractions
 
 // Placeholder for runtime implementation
@@ -13,4 +13,4 @@ pub fn create_execution_engine() {
 pub fn create_event_bus() {
     // TODO: Implement event-driven execution system
     // This will be done in a future story
-} 
+}
