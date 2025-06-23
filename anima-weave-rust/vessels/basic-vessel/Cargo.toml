@@ -1,0 +1,8 @@
+[package]
+name = "basic-vessel"
+version = "0.1.0"
+edition = "2021"
+description = "Basic vessel providing fundamental nodes for Anima Weave"
+
+[dependencies]
+# No dependencies for placeholder implementation 

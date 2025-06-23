@@ -1,0 +1,8 @@
+[package]
+name = "cli"
+version = "0.1.0"
+edition = "2021"
+description = "Command-line interface for Anima Weave"
+
+[dependencies]
+# No dependencies for placeholder implementation 

@@ -156,3 +156,5 @@ web/.vite/deps_temp_c193f07d/vue-router.js
 web/.vite/deps_temp_c193f07d/vue-router.js.map
 web/.vite/deps_temp_c193f07d/vue.js
 web/.vite/deps_temp_c193f07d/vue.js.map
+anima-weave-rust/target/**
+anima-weave-rust/target/

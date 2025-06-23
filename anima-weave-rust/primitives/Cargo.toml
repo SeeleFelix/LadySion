@@ -1,0 +1,10 @@
+[package]
+name = "primitives"
+version = "0.1.0"
+edition = "2021"
+description = "Core primitive abstractions for Anima Weave"
+authors = ["SeeleFelix Team"]
+
+# Core traits package should have zero dependencies to maintain clean abstractions
+[dependencies]
+# No dependencies - pure trait definitions only 

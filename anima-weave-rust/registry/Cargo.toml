@@ -1,0 +1,9 @@
+[package]
+name = "registry"
+version = "0.1.0"
+edition = "2021"
+description = "Compile-time registration and vessel management for Anima Weave"
+
+[dependencies]
+primitives = { path = "../primitives" }
+inventory = { workspace = true } 

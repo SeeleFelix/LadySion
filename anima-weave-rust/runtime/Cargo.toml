@@ -1,0 +1,8 @@
+[package]
+name = "runtime"
+version = "0.1.0"
+edition = "2021"
+description = "Async execution engine for Anima Weave"
+
+[dependencies]
+# No dependencies for placeholder implementation 
