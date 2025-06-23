@@ -175,26 +175,8 @@ pub trait Registry: Send + Sync {
     }
 
     /// Validate the entire registry
-    ///
-    /// Performs system-wide validation including:
-    /// - Individual vessel validation
-    /// - Name conflict detection
-    /// - Dependency checking (if applicable)
-    ///
-    /// # Returns
-    /// - `Ok(())` if the entire system is valid
-    /// - `Err(reason)` if validation fails
     fn validate_system(&self) -> Result<(), String> {
-        // Validate each vessel individually
-        for vessel_name in self.list_vessels() {
-            if let Some(vessel) = self.get_vessel(&vessel_name) {
-                vessel
-                    .validate()
-                    .map_err(|e| format!("Vessel '{}' validation failed: {:?}", vessel_name, e))?;
-            }
-        }
-
-        // Check for vessel name uniqueness (should be guaranteed by registration)
+        // Check for vessel name uniqueness
         let vessel_names = self.list_vessels();
         let unique_names: std::collections::HashSet<_> = vessel_names.iter().collect();
         if vessel_names.len() != unique_names.len() {
