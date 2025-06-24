@@ -3,8 +3,19 @@
 version = 4
 
 [[package]]
+name = "anima-weave-primitives"
+version = "0.1.0"
+dependencies = [
+ "paste",
+]
+
+[[package]]
 name = "basic-vessel"
 version = "0.1.0"
+dependencies = [
+ "anima-weave-primitives",
+ "paste",
+]
 
 [[package]]
 name = "cli"
@@ -32,15 +43,17 @@ name = "math-vessel"
 version = "0.1.0"
 
 [[package]]
-name = "primitives"
-version = "0.1.0"
+name = "paste"
+version = "1.0.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
 
 [[package]]
 name = "registry"
 version = "0.1.0"
 dependencies = [
+ "anima-weave-primitives",
  "inventory",
- "primitives",
 ]
 
 [[package]]

@@ -5,5 +5,5 @@ edition = "2021"
 description = "Compile-time registration and vessel management for Anima Weave"
 
 [dependencies]
-primitives = { path = "../primitives" }
+anima-weave-primitives = { path = "../primitives" }
 inventory = { workspace = true } 

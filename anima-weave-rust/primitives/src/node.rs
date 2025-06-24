@@ -7,7 +7,8 @@ use std::collections::HashMap;
 use std::future::Future;
 use std::pin::Pin;
 
-use crate::{AnimaError, PortCollection, SemanticLabel};
+use crate::{AnimaError, DynamicLabel};
+use crate::port::PortCollection;
 
 /// Handle for tracking asynchronous node execution
 ///
@@ -58,7 +59,7 @@ pub trait NodeExecution: Send {
     /// The result contains either the output data or an error.
     fn result(
         &self,
-    ) -> Option<Result<HashMap<String, Box<dyn SemanticLabel>>, Box<dyn AnimaError>>>;
+    ) -> Option<Result<HashMap<String, Box<dyn DynamicLabel>>, Box<dyn AnimaError>>>;
 
     /// Convert this handle into a future for awaiting
     ///
@@ -69,7 +70,7 @@ pub trait NodeExecution: Send {
     ) -> Pin<
         Box<
             dyn Future<
-                    Output = Result<HashMap<String, Box<dyn SemanticLabel>>, Box<dyn AnimaError>>,
+                    Output = Result<HashMap<String, Box<dyn DynamicLabel>>, Box<dyn AnimaError>>,
                 > + Send,
         >,
     >
@@ -154,7 +155,7 @@ pub trait Node: Send + Sync {
     /// - Output data types match port specifications
     fn execute_boxed(
         &self,
-        inputs: HashMap<String, Box<dyn SemanticLabel>>,
+        inputs: HashMap<String, Box<dyn DynamicLabel>>,
     ) -> Box<dyn NodeExecution>;
 
     /// Get a human-readable description of this node

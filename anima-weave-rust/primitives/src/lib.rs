@@ -5,7 +5,7 @@
 //! This crate contains only trait definitions with zero dependencies.
 //! All implementations are provided by higher-level crates.
 
-pub mod converter;
+pub mod databus;
 pub mod error;
 pub mod label;
 pub mod node;
@@ -13,10 +13,10 @@ pub mod port;
 pub mod registry;
 pub mod vessel;
 
-pub use converter::Converter;
+// Re-export commonly used types and traits
+pub use databus::DataBus;
 pub use error::AnimaError;
-pub use label::SemanticLabel;
-pub use node::{Node, NodeExecution};
-pub use port::{PortCollection, PortDefinition};
+pub use label::{SemanticLabel, LabelFactory, DynamicLabel};
+pub use node::Node;
 pub use registry::Registry;
 pub use vessel::Vessel;

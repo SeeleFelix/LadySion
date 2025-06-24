@@ -3,6 +3,6 @@ name = "math-vessel"
 version = "0.1.0"
 edition = "2021"
 description = "Mathematical operations vessel for Anima Weave"
-
+ 
 [dependencies]
 # No dependencies for placeholder implementation 

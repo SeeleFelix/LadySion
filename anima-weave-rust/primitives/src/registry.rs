@@ -4,7 +4,7 @@
 //! collection of vessels and enables resource resolution across
 //! the entire AnimaWeave system.
 
-use crate::{Converter, Node, SemanticLabel, Vessel};
+use crate::{Node, DynamicLabel, Vessel};
 use std::collections::HashMap;
 
 /// Core trait for vessel registry implementations
@@ -129,7 +129,7 @@ pub trait Registry: Send + Sync {
     /// ```rust
     /// let label = registry.create_label("math.complex");
     /// ```
-    fn create_label(&self, path: &str) -> Option<Box<dyn SemanticLabel>> {
+    fn create_label(&self, path: &str) -> Option<Box<dyn DynamicLabel>> {
         let parts: Vec<&str> = path.splitn(2, '.').collect();
         if parts.len() != 2 {
             return None;
@@ -144,14 +144,12 @@ pub trait Registry: Send + Sync {
     ///
     /// Collects and returns all converters provided by all registered
     /// vessels. Used for building the global conversion system.
-    fn get_all_converters(&self) -> Vec<&dyn Converter> {
+    fn get_all_converters(&self) -> Vec<String> {
         let converters = Vec::new();
         for vessel_name in self.list_vessels() {
             if let Some(_vessel) = self.get_vessel(&vessel_name) {
                 // TODO: Get converters from vessel
-                // for converter in vessel.converters() {
-                //     converters.push(converter.as_ref());
-                // }
+                // converters.push(format!("{}::converter", vessel_name));
             }
         }
         converters
