@@ -4,40 +4,31 @@ import java.util.concurrent.Executors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.event.ApplicationEventMulticaster;
+import org.springframework.context.event.EventListener;
 import org.springframework.context.event.SimpleApplicationEventMulticaster;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.scheduling.annotation.EnableAsync;
 
-/** AnimaWeave主应用类 配置了Virtual Threads和现代化的Spring特性 */
+/**
+ * AnimaWeave Application 启动类
+ * 图形化可视化数据流编程框架
+ */
 @Slf4j
 @SpringBootApplication
 @EnableAsync
 public class AnimaWeaveApplication {
 
   public static void main(String[] args) {
-    // 启用Virtual Threads和现代化特性
-    configureJavaFeatures();
-
-    var context = SpringApplication.run(AnimaWeaveApplication.class, args);
-    log.info(
-        "🚀 AnimaWeave started successfully with {} vessels",
-        context.getBeansOfType(org.springframework.stereotype.Component.class).size());
+    SpringApplication.run(AnimaWeaveApplication.class, args);
   }
 
-  /** 配置Java特性 */
-  private static void configureJavaFeatures() {
-    // 启用Virtual Threads
-    System.setProperty("spring.threads.virtual.enabled", "true");
-    // 启用Java 21特性
-    System.setProperty(
-        "java.util.concurrent.ForkJoinPool.common.parallelism",
-        String.valueOf(Runtime.getRuntime().availableProcessors()));
-
-    log.info(
-        "🧵 Enabled Virtual Threads with {} processors",
-        Runtime.getRuntime().availableProcessors());
+  @EventListener(ApplicationReadyEvent.class)
+  public void onApplicationReady() {
+    log.info("🚀 AnimaWeave应用启动成功！");
+    log.info("💫 一个关于图形可视化数据流编程的探索...");
   }
 
   /** 配置Virtual Thread执行器 - 使用Java 21的现代化写法 */

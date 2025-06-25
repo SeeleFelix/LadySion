@@ -1,8 +1,11 @@
 [package]
-name = "dsl"
+name = "anima-weave-dsl"
 version = "0.1.0"
 edition = "2021"
-description = "DSL parser for Anima Weave"
 
 [dependencies]
-# No dependencies for placeholder implementation 
+pest = "2.7"
+pest_derive = "2.7"
+serde = { version = "1.0", features = ["derive"] }
+thiserror = "1.0"
+anima-weave-core = { path = "../core" }

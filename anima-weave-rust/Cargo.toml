@@ -1,28 +1,33 @@
 [workspace]
 members = [
-    "primitives",
-    "registry", 
-    "runtime",
-    "cli",
-    "dsl",
-    "codegen",
-    "test",
-    "vessels/basic-vessel",
-    "vessels/math-vessel"
+    "core",           # 核心类型：DynamicLabel, AnimaEvent, Graph定义
+    "runtime",        # Kameo Actor运行时：CoordinatorActor, NodeActor
+    "dsl",            # DSL解析器：.anima文件解析和图构建
+    "cli",            # 命令行工具：awakening和执行
 ]
 resolver = "2"
 
 [workspace.dependencies]
+# Actor系统
+kameo = "0.14"
 tokio = { version = "1.0", features = ["full"] }
-async-trait = "0.1"
+
+# 序列化
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+
+# 错误处理
 thiserror = "1.0"
-uuid = { version = "1.0", features = ["v4"] }
-inventory = "0.3"
+anyhow = "1.0"
+
+# 其他工具
 clap = { version = "4.0", features = ["derive"] }
 
-[profile.release]
-opt-level = 3
-lto = true
-codegen-units = 1 
+# AnimaWeave v2 - Kameo Actor架构
+# 
+# 核心设计原则：
+# 1. 每个Node = NodeActor (独立的Kameo Actor)
+# 2. Coordinator = CoordinatorActor (全局状态和调度)
+# 3. 严格遵循数学定义：NodeReady(n,Ω) ⟺ DataReady(n,Ω) ∧ ControlActive(n,Ω)
+# 4. 纯Actor消息传递，无共享状态
+# 5. DSL → Graph → Actor系统完整流水线 

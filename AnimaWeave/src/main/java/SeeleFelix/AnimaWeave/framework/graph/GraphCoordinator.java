@@ -4,7 +4,7 @@ import SeeleFelix.AnimaWeave.framework.awakening.AwakeningResult;
 import SeeleFelix.AnimaWeave.framework.awakening.AwakeningResult.ExecutionTrace;
 import SeeleFelix.AnimaWeave.framework.event.events.NodeExecutionRequest;
 import SeeleFelix.AnimaWeave.framework.event.events.NodeOutputSaveEvent;
-import SeeleFelix.AnimaWeave.framework.vessel.SemanticLabel;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -100,15 +100,11 @@ public class GraphCoordinator {
       var inputs = collectNodeInputs(context, nodeId);
       var nodeType = context.getGraphDefinition().getNodeInstances().get(nodeId);
 
-      // 将SemanticLabel转换为Object以保持与ExecutionContext的兼容性
-      Map<String, Object> objectInputs = new HashMap<>();
-      inputs.forEach((key, value) -> objectInputs.put(key, value));
-
       // 开始执行追踪
-      var executionRecord = context.startNodeExecution(nodeId, nodeType, objectInputs);
+      var executionRecord = context.startNodeExecution(nodeId, nodeType, inputs);
 
-      var request =
-          NodeExecutionRequest.withSemanticLabels(
+      NodeExecutionRequest request =
+          NodeExecutionRequest.of(
               this, "GraphCoordinator", nodeId, nodeType, inputs, context.getExecutionId());
 
       // 设置正确的执行ID
@@ -135,8 +131,8 @@ public class GraphCoordinator {
       // 开始执行追踪
       var executionRecord = context.startNodeExecution(nodeId, nodeType, Map.of());
 
-      var request =
-          NodeExecutionRequest.withSemanticLabels(
+      NodeExecutionRequest request =
+          NodeExecutionRequest.of(
               this,
               "GraphCoordinator",
               nodeId,
@@ -241,10 +237,10 @@ public class GraphCoordinator {
     return true;
   }
 
-  /** 收集节点的输入数据 */
-  private Map<String, SemanticLabel<?>> collectNodeInputs(ExecutionContext context, String nodeId) {
+  /** 收集节点的输入数据 - 极简版本，直接传递Object */
+  private Map<String, Object> collectNodeInputs(ExecutionContext context, String nodeId) {
     var graphDef = context.getGraphDefinition();
-    var inputs = new HashMap<String, SemanticLabel<?>>();
+    var inputs = new HashMap<String, Object>();
 
     // 收集数据输入
     var incomingDataConnections =
@@ -258,25 +254,19 @@ public class GraphCoordinator {
       String targetPort = connection.getTargetPortName();
 
       Object value = context.getNodeOutput(sourceNode, sourcePort);
-      if (value instanceof SemanticLabel<?> label) {
-        inputs.put(targetPort, label);
+      if (value != null) {
+        inputs.put(targetPort, value);
         log.trace(
             "Collected data input for {}.{} from {}.{}: {}",
             nodeId,
             targetPort,
             sourceNode,
             sourcePort,
-            label);
-      } else if (value != null) {
-        log.warn(
-            "Expected SemanticLabel but got {} for {}.{}",
-            value.getClass().getSimpleName(),
-            nodeId,
-            targetPort);
+            value);
       }
     }
 
-    // 收集控制输入（通常是Signal类型）
+    // 收集控制输入
     var incomingControlConnections =
         graphDef.getControlConnections().stream()
             .filter(conn -> conn.getTargetNodeName().equals(nodeId))
@@ -288,21 +278,15 @@ public class GraphCoordinator {
       String targetPort = connection.getTargetPortName();
 
       Object value = context.getNodeOutput(sourceNode, sourcePort);
-      if (value instanceof SemanticLabel<?> label) {
-        inputs.put(targetPort, label);
+      if (value != null) {
+        inputs.put(targetPort, value);
         log.trace(
             "Collected control input for {}.{} from {}.{}: {}",
             nodeId,
             targetPort,
             sourceNode,
             sourcePort,
-            label);
-      } else if (value != null) {
-        log.warn(
-            "Expected SemanticLabel but got {} for {}.{}",
-            value.getClass().getSimpleName(),
-            nodeId,
-            targetPort);
+            value);
       }
     }
 

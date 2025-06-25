@@ -1,105 +1,109 @@
 package SeeleFelix.AnimaWeave.framework.node;
 
-import SeeleFelix.AnimaWeave.framework.event.events.NodeExecutionRequest;
-import SeeleFelix.AnimaWeave.framework.vessel.AnimaVessel;
-import SeeleFelix.AnimaWeave.framework.vessel.SemanticLabel;
 import jakarta.annotation.PostConstruct;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
- * 节点事件路由器 - 智能路由执行请求
+ * 节点注册器 - 管理节点元数据
  *
- * <p>功能： - 自动注册所有Node实现 - 接收NodeExecutionRequest事件 - 根据nodeType路由到对应的Node实例 - 无需SpEL条件，直接O(1)查找
+ * 只负责注册节点执行器和提供元数据查询，不再路由执行
+ * 每个NodeExecutor直接监听自己的事件
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class NodeEventRouter {
 
-  private final List<Node> nodes;
-  private final Map<String, Node> nodeMap = new ConcurrentHashMap<>();
+    private final ApplicationContext applicationContext;
+    
+    // 节点执行器缓存 - nodeType -> NodeExecutor
+    private final Map<String, NodeExecutor> executorCache = new ConcurrentHashMap<>();
+    // 节点元数据缓存 - nodeType -> AnimaNode
+    private final Map<String, AnimaNode> metadataCache = new ConcurrentHashMap<>();
 
-  /** 系统启动时自动注册所有Node实现 */
   @PostConstruct
-  public void registerAllNodes() {
-    log.info("开始注册Node实现...");
-
-    for (Node node : nodes) {
-      String nodeType = node.getNodeType(); // 例如: "Start"
-      String vesselName = extractVesselName(node.getClass()); // 例如: "basic"
-      String fullNodeType = vesselName + "." + nodeType; // 例如: "basic.Start"
-      
-      nodeMap.put(fullNodeType, node);
-      log.debug("已注册Node: nodeType={}, class={}", fullNodeType, node.getClass().getSimpleName());
+    public void registerNodeExecutors() {
+        log.info("🔍 开始注册NodeExecutor...");
+        
+        // 获取所有NodeExecutor Bean
+        Map<String, NodeExecutor> executors = applicationContext.getBeansOfType(NodeExecutor.class);
+        
+        for (Map.Entry<String, NodeExecutor> entry : executors.entrySet()) {
+            String beanName = entry.getKey();
+            NodeExecutor executor = entry.getValue();
+            
+            // 获取AnimaNode注解
+            AnimaNode nodeAnnotation = executor.getClass().getAnnotation(AnimaNode.class);
+            if (nodeAnnotation == null) {
+                log.warn("节点执行器 {} 缺少 @AnimaNode 注解，跳过注册", beanName);
+                continue;
+            }
+            
+            String nodeType = nodeAnnotation.vessel() + "." + nodeAnnotation.node();
+            
+            executorCache.put(nodeType, executor);
+            metadataCache.put(nodeType, nodeAnnotation);
+            
+            log.debug("注册节点执行器: {} -> {} ({})", 
+                nodeType, beanName, nodeAnnotation.description());
+            
+            // 显示端口信息
+            logPortInfo(nodeType, executor);
+    }
+        
+        log.info("✅ 节点执行器注册完成，共 {} 个执行器", executorCache.size());
+        log.debug("可用节点类型: {}", executorCache.keySet());
+    }
+    
+    private void logPortInfo(String nodeType, NodeExecutor executor) {
+        var inputPorts = executor.getInputPorts();
+        var outputPorts = executor.getOutputPorts();
+        
+        if (!inputPorts.isEmpty()) {
+            log.debug("  输入端口: {}", inputPorts.stream()
+                .map(p -> p.name() + ":" + p.getTypeName())
+                .toList());
+        }
+        
+        if (!outputPorts.isEmpty()) {
+            log.debug("  输出端口: {}", outputPorts.stream()
+                .map(p -> p.name() + ":" + p.getTypeName())
+                .toList());
+        }
     }
 
-    log.info("Node注册完成，共注册{}个类型: {}", nodeMap.size(), nodeMap.keySet());
-  }
-
-  /** 从Node类的包名中提取vessel名称 */
-  private String extractVesselName(Class<? extends Node> nodeClass) {
-    String packageName = nodeClass.getPackageName();
-    // SeeleFelix.AnimaWeave.vessels.basic.StartNode -> basic
-    if (packageName.startsWith("SeeleFelix.AnimaWeave.vessels.")) {
-      String vesselPart = packageName.substring("SeeleFelix.AnimaWeave.vessels.".length());
-      // 取第一个点之前的部分作为vessel名，如果没有点就取全部
-      int dotIndex = vesselPart.indexOf('.');
-      return dotIndex > 0 ? vesselPart.substring(0, dotIndex) : vesselPart;
+    /**
+     * 获取所有已注册的节点类型和元数据
+     */
+    public Map<String, AnimaNode> getRegisteredNodeTypes() {
+        return Map.copyOf(metadataCache);
     }
-    return "unknown"; // 默认值
-  }
-
-  /** 处理节点执行请求 - 无需SpEL条件 直接根据nodeType进行O(1)路由 */
-  @EventListener
-  @Async("virtualThreadExecutor")
-  public void routeExecution(NodeExecutionRequest request) {
-    String nodeType = request.getNodeType();
-    String nodeId = request.getNodeId();
-
-    log.debug("收到节点执行请求: nodeId={}, nodeType={}", nodeId, nodeType);
-
-    // O(1)查找对应的Node
-    Node node = nodeMap.get(nodeType);
-
-    if (node == null) {
-      log.error("未找到Node实现: nodeType={}, 可用类型: {}", nodeType, nodeMap.keySet());
-      return; 
-    }
-
-    // 转换输入类型：Object -> SemanticLabel
-    Map<String, SemanticLabel<?>> semanticInputs = new HashMap<>();
-    request
-        .getInputs()
-        .forEach(
-            (key, value) -> {
-              if (value instanceof SemanticLabel<?> label) {
-                semanticInputs.put(key, label);
-              } else {
-                log.warn(
-                    "Expected SemanticLabel but got {} for input {}",
-                    value != null ? value.getClass().getSimpleName() : "null",
-                    key);
+    
+    /**
+     * 检查节点类型是否可用
+     */
+    public boolean isNodeTypeAvailable(String nodeType) {
+        return executorCache.containsKey(nodeType);
               }
-            });
-
-    // 调用Node的模板方法执行，传递执行ID
-    node.executeWithTemplate(
-        request.getNodeId(),
-        semanticInputs,
-        request.getExecutionContextId(),
-        request.getNodeExecutionId());
+    
+    /**
+     * 获取节点描述
+     */
+    public String getNodeDescription(String nodeType) {
+        AnimaNode metadata = metadataCache.get(nodeType);
+        return metadata != null ? metadata.description() : "未知节点";
   }
 
-  /** 获取已注册的节点类型 */
-  public Map<String, Node> getRegisteredNodeTypes() {
-    return Map.copyOf(nodeMap);
+    /**
+     * 获取节点执行器
+     */
+    public NodeExecutor getNodeExecutor(String nodeType) {
+        return executorCache.get(nodeType);
   }
 }

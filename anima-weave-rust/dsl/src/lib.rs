@@ -1,16 +1,22 @@
-//! # Anima DSL Parser
-//!
-//! TODO: Implement DSL parser based on trait abstractions
+use anima_weave_core::Graph;
+use thiserror::Error;
 
-// TODO: Implement DSL parser
-
-// Placeholder for future DSL implementation
-pub fn parse_weave_file(_content: &str) -> Result<(), String> {
-    // TODO: Implement pest-based parser for .weave files
-    Err("DSL parser not yet implemented".to_string())
+#[derive(Error, Debug)]
+pub enum ParseError {
+    #[error("Parse error: {0}")]
+    ParseError(String),
 }
 
-pub fn validate_dsl(_content: &str) -> Result<(), String> {
-    // TODO: Implement DSL validation
-    Ok(())
+/// 解析trait
+pub trait Parse {
+    fn parse(&self, content: &str) -> Result<Graph, ParseError>;
+}
+
+/// DSL解析器
+pub struct DslParser;
+
+impl Parse for DslParser {
+    fn parse(&self, _content: &str) -> Result<Graph, ParseError> {
+        todo!("解析DSL内容并返回Graph")
+    }
 }
