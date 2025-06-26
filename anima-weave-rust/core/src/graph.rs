@@ -18,7 +18,7 @@ pub enum ConcurrentMode {
 pub struct Port {
     pub node_id: String,
     pub port_name: String,
-    pub activation_mode: Option<ActivationMode>,
+    pub activation_mode: ActivationMode,
 }
 
 /// 连接关系
@@ -33,7 +33,7 @@ pub struct Connection {
 pub struct Node {
     pub node_id: String,
     pub node_type: String,
-    pub concurrent_mode: Option<ConcurrentMode>,
+    pub concurrent_mode: ConcurrentMode,
 }
 
 /// 图定义
