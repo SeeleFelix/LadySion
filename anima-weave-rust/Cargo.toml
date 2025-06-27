@@ -4,6 +4,7 @@ members = [
     "runtime",        # Kameo Actor运行时：CoordinatorActor, NodeActor
     "dsl",            # DSL解析器：.anima文件解析和图构建
     "cli",            # 命令行工具：awakening和执行
+    "vessels"
 ]
 resolver = "2"
 

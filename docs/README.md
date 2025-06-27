@@ -68,6 +68,7 @@ docs/
 | TRA配置管理指南     | TypeScript Resource API配置系统指南 | [tra-configuration-guide.md](technical/tra-configuration-guide.md) |
 | 索引文件指南        | 项目文件索引和导航指南              | [index-files-guide.md](technical/index-files-guide.md)             |
 | Vessel架构重构      | 容器系统架构重构设计                | [vessel-architecture-refactor.md](technical/vessel-architecture-refactor.md) |
+| AnimaWeave Actor模型设计 | Actor模型架构重构和多输入节点处理方案 | [anima-weave-actor-model-design.md](technical/anima-weave-actor-model-design.md) |
 
 ## 📖 操作指南 (Guides)
 

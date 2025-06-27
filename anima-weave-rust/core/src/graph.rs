@@ -1,7 +1,7 @@
 /// 激活模式
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ActivationMode {
-    And,        
+    And,
     Or,
     Xor,
 }
@@ -22,7 +22,7 @@ pub struct Port {
 }
 
 /// 连接关系
-#[derive(Debug, Clone)] 
+#[derive(Debug, Clone)]
 pub struct Connection {
     pub from_port: Port,
     pub to_port: Port,
