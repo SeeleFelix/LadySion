@@ -18,7 +18,7 @@ use std::time::SystemTime;
 /// - 节点状态管理 → Coordinator内部处理
 /// - 端口数据缓存 → DataStore内部处理  
 /// - 执行统计收集 → 监控系统处理
-/// 
+///
 /// 外部只需要通过`ExecutionStatus`获取必要的状态信息。
 #[derive(Debug)]
 pub struct GlobalState {

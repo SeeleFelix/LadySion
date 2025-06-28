@@ -34,6 +34,7 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror 1.0.69",
+ "tokio",
 ]
 
 [[package]]
@@ -157,6 +158,12 @@ dependencies = [
  "block-buffer",
  "crypto-common",
 ]
+
+[[package]]
+name = "downcast-rs"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ea8a8b81cacc08888170eef4d13b775126db426d0b348bee9d18c2c1eaf123cf"
 
 [[package]]
 name = "dyn-clone"
@@ -305,25 +312,25 @@ dependencies = [
 
 [[package]]
 name = "kameo"
-version = "0.14.0"
+version = "0.17.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c1542e1113415cdfd5dac5f663cb69f6be472cff28e90adf6e284e520e399312"
+checksum = "41a73be96f616ca2784f597b5b6635582f5a7b3ba73b1dbe7afa5d9667955d39"
 dependencies = [
+ "downcast-rs",
  "dyn-clone",
  "futures",
  "kameo_macros",
  "once_cell",
  "serde",
  "tokio",
- "tokio-stream",
  "tracing",
 ]
 
 [[package]]
 name = "kameo_macros"
-version = "0.14.0"
+version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8d7adf8a6a19b8582095d1819f4e992817f7dce2b85cd205b6386f9079a2cc81"
+checksum = "b3f384b32bf6426ae93a8b37da62c85073b676a31a82a86d608ad86453878de0"
 dependencies = [
  "heck",
  "proc-macro2",
@@ -684,17 +691,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "tokio-stream"
-version = "0.1.17"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eca58d7bba4a75707817a2c44174253f9236b2d5fbd055602e9d5c07c139a047"
-dependencies = [
- "futures-core",
- "pin-project-lite",
- "tokio",
 ]
 
 [[package]]

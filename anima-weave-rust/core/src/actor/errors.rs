@@ -18,21 +18,25 @@ pub enum CoordinatorError {
     /// Coordinator启动时出现问题，通常是配置或依赖服务的问题
     StartupFailed(String),
 
+    /// 已经启动
+    ///
+    /// Coordinator已经在运行状态，无法重复启动
+    AlreadyStarted,
+
+    /// 未运行
+    ///
+    /// Coordinator尚未启动或已停止，无法处理请求
+    NotRunning,
+
     /// 事件处理失败
     ///
     /// 处理DataEvent、ControlEvent或NodeExecutionEvent时出现错误
-    EventProcessingFailed {
-        event_type: String,
-        reason: String,
-    },
+    EventProcessingFailed { event_type: String, reason: String },
 
     /// 调度失败
     ///
     /// 无法调度节点执行，可能是节点不存在或状态异常
-    SchedulingFailed {
-        node_name: NodeName,
-        reason: String,
-    },
+    SchedulingFailed { node_name: NodeName, reason: String },
 
     /// 停止失败
     ///
@@ -54,9 +58,7 @@ pub enum DataStoreError {
     /// 数据未找到
     ///
     /// 查询的端口数据不存在
-    DataNotFound {
-        port: String,
-    },
+    DataNotFound { port: String },
 
     /// 类型转换失败
     ///
@@ -82,10 +84,7 @@ pub enum NodeExecutionError {
     /// 输入数据问题
     ///
     /// 输入数据缺失、类型不匹配或内容无效
-    InputError {
-        port_name: PortName,
-        reason: String,
-    },
+    InputError { port_name: PortName, reason: String },
 
     /// 业务逻辑执行失败
     ///
@@ -95,10 +94,7 @@ pub enum NodeExecutionError {
     /// 输出生成失败
     ///
     /// 无法生成预期的输出数据
-    OutputError {
-        port_name: PortName,
-        reason: String,
-    },
+    OutputError { port_name: PortName, reason: String },
 
     /// 节点配置错误
     ///
@@ -115,6 +111,12 @@ impl fmt::Display for CoordinatorError {
         match self {
             CoordinatorError::StartupFailed(reason) => {
                 write!(f, "Coordinator startup failed: {}", reason)
+            }
+            CoordinatorError::AlreadyStarted => {
+                write!(f, "Coordinator is already started")
+            }
+            CoordinatorError::NotRunning => {
+                write!(f, "Coordinator is not running")
             }
             CoordinatorError::EventProcessingFailed { event_type, reason } => {
                 write!(f, "Failed to process {} event: {}", event_type, reason)
@@ -193,8 +195,21 @@ impl CoordinatorError {
         Self::StartupFailed(reason.into())
     }
 
+    /// 创建已启动错误
+    pub fn already_started() -> Self {
+        Self::AlreadyStarted
+    }
+
+    /// 创建未运行错误
+    pub fn not_running() -> Self {
+        Self::NotRunning
+    }
+
     /// 创建事件处理失败错误
-    pub fn event_processing_failed(event_type: impl Into<String>, reason: impl Into<String>) -> Self {
+    pub fn event_processing_failed(
+        event_type: impl Into<String>,
+        reason: impl Into<String>,
+    ) -> Self {
         Self::EventProcessingFailed {
             event_type: event_type.into(),
             reason: reason.into(),
@@ -223,9 +238,7 @@ impl DataStoreError {
 
     /// 创建数据未找到错误
     pub fn data_not_found(port: impl Into<String>) -> Self {
-        Self::DataNotFound {
-            port: port.into(),
-        }
+        Self::DataNotFound { port: port.into() }
     }
 
     /// 创建类型转换失败错误
@@ -283,7 +296,10 @@ mod tests {
     fn test_coordinator_error_creation() {
         let error = CoordinatorError::startup_failed("dependency missing");
         assert!(matches!(error, CoordinatorError::StartupFailed(_)));
-        assert_eq!(error.to_string(), "Coordinator startup failed: dependency missing");
+        assert_eq!(
+            error.to_string(),
+            "Coordinator startup failed: dependency missing"
+        );
 
         let error = CoordinatorError::scheduling_failed("test_node", "input missing");
         assert!(matches!(error, CoordinatorError::SchedulingFailed { .. }));
@@ -295,7 +311,8 @@ mod tests {
         assert!(matches!(error, DataStoreError::DataNotFound { .. }));
         assert_eq!(error.to_string(), "Data not found for port: test_port");
 
-        let error = DataStoreError::conversion_failed("StringLabel", "NumberLabel", "invalid format");
+        let error =
+            DataStoreError::conversion_failed("StringLabel", "NumberLabel", "invalid format");
         assert!(matches!(error, DataStoreError::ConversionFailed { .. }));
     }
 
@@ -303,7 +320,10 @@ mod tests {
     fn test_node_execution_error_creation() {
         let error = NodeExecutionError::input_error("input_port", "missing data");
         assert!(matches!(error, NodeExecutionError::InputError { .. }));
-        assert_eq!(error.to_string(), "Input error for port 'input_port': missing data");
+        assert_eq!(
+            error.to_string(),
+            "Input error for port 'input_port': missing data"
+        );
 
         let error = NodeExecutionError::execution_failed("division by zero");
         assert!(matches!(error, NodeExecutionError::ExecutionFailed(_)));

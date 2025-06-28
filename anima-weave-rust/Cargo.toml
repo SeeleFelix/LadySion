@@ -10,7 +10,7 @@ resolver = "2"
 
 [workspace.dependencies]
 # Actor系统
-kameo = "0.14"
+kameo = "0.17.2"
 tokio = { version = "1.0", features = ["full"] }
 
 # 序列化
