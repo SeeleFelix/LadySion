@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 
 /// 转换错误类型
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum TransformError {
     IncompatibleTypes {
         from: &'static str,
@@ -13,6 +13,21 @@ pub enum TransformError {
         reason: String,
     },
 }
+
+impl std::fmt::Display for TransformError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TransformError::IncompatibleTypes { from, to } => {
+                write!(f, "Incompatible types: {} -> {}", from, to)
+            }
+            TransformError::ConversionFailed { reason } => {
+                write!(f, "Conversion failed: {}", reason)
+            }
+        }
+    }
+}
+
+impl std::error::Error for TransformError {}
 
 /// 转换函数类型
 pub type ConversionFn =
@@ -139,7 +154,7 @@ macro_rules! semantic_label {
             }
 
             fn conversion_map(&self) -> std::collections::HashMap<&'static str, $crate::ConversionFn> {
-
+                #[allow(unused_mut)]
                 let mut map = std::collections::HashMap::new();
 
                 $(

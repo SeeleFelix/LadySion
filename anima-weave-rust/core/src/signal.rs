@@ -76,4 +76,4 @@ mod tests {
         let signal = SignalLabel::active();
         assert_eq!(signal.type_name(), "SignalLabel");
     }
-} 
+}
