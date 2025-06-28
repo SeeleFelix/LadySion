@@ -1,4 +1,4 @@
-use anima_weave_core::semantic_label;
+use crate::semantic_label;
 
 semantic_label! {
     /// Signal语义标签 - 控制流的核心
@@ -18,7 +18,7 @@ semantic_label! {
     /// # 示例
     ///
     /// ```rust
-    /// use anima_weave_vessels::SignalLabel;
+    /// use anima_weave_core::SignalLabel;
     ///
     /// let active_signal = SignalLabel::active();
     /// let inactive_signal = SignalLabel::inactive();
@@ -27,11 +27,8 @@ semantic_label! {
     /// assert!(inactive_signal.is_inactive());
     /// ```
     SignalLabel(active: bool) {
-        // Signal是控制流的原始类型，通常不需要转换到其他类型
-        // 但在某些情况下可能需要转换为String用于调试输出
-        super::StringLabel => |this| super::StringLabel {
-            value: if this.active { "ACTIVE".to_string() } else { "INACTIVE".to_string() }
-        },
+        // Signal是控制流的核心类型，通常不需要转换到其他类型
+        // 转换功能留给vessels层的具体实现
     }
 }
 
@@ -60,7 +57,7 @@ impl SignalLabel {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use anima_weave_core::SemanticLabel;
+    use crate::SemanticLabel;
 
     #[test]
     fn test_signal_creation() {
@@ -79,35 +76,4 @@ mod tests {
         let signal = SignalLabel::active();
         assert_eq!(signal.type_name(), "SignalLabel");
     }
-
-    #[test]
-    fn test_signal_to_string_conversion() {
-        use crate::StringLabel;
-
-        let active_signal = SignalLabel::active();
-        let inactive_signal = SignalLabel::inactive();
-
-        // 测试转换到StringLabel
-        let active_result = active_signal.try_convert_to("super::StringLabel");
-        let inactive_result = inactive_signal.try_convert_to("super::StringLabel");
-
-        assert!(active_result.is_ok());
-        assert!(inactive_result.is_ok());
-
-        // 验证转换结果
-        let active_converted = active_result.unwrap();
-        let inactive_converted = inactive_result.unwrap();
-
-        if let Some(string_label) = active_converted.as_any().downcast_ref::<StringLabel>() {
-            assert_eq!(string_label.value, "ACTIVE");
-        } else {
-            panic!("ACTIVE signal转换为StringLabel失败");
-        }
-
-        if let Some(string_label) = inactive_converted.as_any().downcast_ref::<StringLabel>() {
-            assert_eq!(string_label.value, "INACTIVE");
-        } else {
-            panic!("INACTIVE signal转换为StringLabel失败");
-        }
-    }
-}
+} 

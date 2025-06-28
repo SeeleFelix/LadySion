@@ -1,13 +1,13 @@
 pub mod labels;
 pub mod nodes;
 
-pub use labels::{NumberLabel, PromptLabel, SignalLabel, StringLabel};
+pub use labels::{NumberLabel, PromptLabel, StringLabel};
 pub use nodes::*;
 
 #[cfg(test)]
 mod integration_tests {
     use super::*;
-    use anima_weave_core::SemanticLabel;
+    use anima_weave_core::{SemanticLabel, SignalLabel};
 
     #[test]
     fn test_cross_package_type_consistency() {
@@ -53,16 +53,15 @@ mod integration_tests {
         // 所有类型都应该能转换到StringLabel
         let number_to_string = number.try_convert_to("super::StringLabel");
         let prompt_to_string = prompt.try_convert_to("super::StringLabel");
-        let signal_to_string = signal.try_convert_to("super::StringLabel");
+        // SignalLabel现在在core中，没有到StringLabel的转换了
+        // let signal_to_string = signal.try_convert_to("super::StringLabel");
 
         assert!(number_to_string.is_ok());
         assert!(prompt_to_string.is_ok());
-        assert!(signal_to_string.is_ok());
 
         // 验证转换结果都是StringLabel类型
         assert_eq!(number_to_string.unwrap().type_name(), "StringLabel");
         assert_eq!(prompt_to_string.unwrap().type_name(), "StringLabel");
-        assert_eq!(signal_to_string.unwrap().type_name(), "StringLabel");
     }
 
     #[test]

@@ -7,9 +7,10 @@ edition = "2021"
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
+kameo = { workspace = true }
 
 # Core类型和数据结构
-# - DynamicLabel: 语义标签系统
-# - AnimaEvent: 数据事件vs控制事件
+# - SemanticLabel: 语义标签系统
+# - AnimaEvent: 数据事件vs控制事件 (实现kameo::Message)
 # - Graph: 图定义和验证
 # - Omega: 全局执行状态 
