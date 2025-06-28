@@ -66,13 +66,10 @@ mod integration_tests {
         let prompt = PromptLabel {
             content: "Hello".to_string(),
         };
-        let signal = SignalLabel::active();
 
         // 所有类型都应该能转换到StringLabel
         let number_to_string = number.try_convert_to("super::StringLabel");
         let prompt_to_string = prompt.try_convert_to("super::StringLabel");
-        // SignalLabel现在在core中，没有到StringLabel的转换了
-        // let signal_to_string = signal.try_convert_to("super::StringLabel");
 
         assert!(number_to_string.is_ok());
         assert!(prompt_to_string.is_ok());

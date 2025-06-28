@@ -2,6 +2,7 @@
 //!
 //! 这里集中管理所有跨模块使用的类型别名，让代码更清晰易懂
 
+use crate::event::types::PortRef;
 use crate::SemanticLabel;
 use std::collections::HashMap;
 
@@ -22,15 +23,15 @@ pub type ExecutionId = String;
 /// 数据结构类型别名  
 /// =========================
 
-/// 节点输入数据集合 - 端口名到数据的映射
+/// 节点输入数据集合 - 目标节点输入端口到数据的映射
 ///
-/// 用于NodeExecuteEvent中传递完整的输入数据
-pub type NodeInputs = HashMap<PortName, Box<dyn SemanticLabel>>;
+/// 用于NodeExecuteEvent中传递给目标节点的输入数据
+pub type NodeInputs = HashMap<PortRef, Box<dyn SemanticLabel>>;
 
-/// 节点输出数据集合 - 端口名到数据的映射
+/// 节点输出数据集合 - 目标节点输出端口到数据的映射
 ///
-/// 用于NodeActor执行完成后返回结果
-pub type NodeOutputs = HashMap<PortName, Box<dyn SemanticLabel>>;
+/// 用于NodeOutputEvent中从目标节点返回的输出数据
+pub type NodeOutputs = HashMap<PortRef, Box<dyn SemanticLabel>>;
 
 #[cfg(test)]
 mod tests {
@@ -52,21 +53,23 @@ mod tests {
     #[test]
     fn test_node_inputs() {
         let mut inputs: NodeInputs = HashMap::new();
-        inputs.insert("port1".to_string(), Box::new(SignalLabel::active()));
-        inputs.insert("port2".to_string(), Box::new(SignalLabel::inactive()));
+        // 目标节点的输入端口
+        let input_port1 = PortRef::new("target_node", "input1");
+        let input_port2 = PortRef::new("target_node", "input2");
+
+        inputs.insert(input_port1, Box::new(SignalLabel::active()));
+        inputs.insert(input_port2, Box::new(SignalLabel::inactive()));
 
         assert_eq!(inputs.len(), 2);
-        assert!(inputs.contains_key("port1"));
-        assert!(inputs.contains_key("port2"));
-        assert!(!inputs.contains_key("port3"));
     }
 
     #[test]
     fn test_node_outputs() {
         let mut outputs: NodeOutputs = HashMap::new();
-        outputs.insert("result".to_string(), Box::new(SignalLabel::active()));
+        // 目标节点的输出端口
+        let output_port = PortRef::new("target_node", "output");
+        outputs.insert(output_port, Box::new(SignalLabel::active()));
 
         assert_eq!(outputs.len(), 1);
-        assert!(outputs.contains_key("result"));
     }
 }

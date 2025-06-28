@@ -3,8 +3,7 @@
 //! 定义了AnimaWeave Actor系统中外部需要的核心类型。
 //! 所有内部实现细节都被封装，不暴露给外部使用者。
 
-use crate::{ExecutionId, NodeName};
-use std::collections::HashMap;
+use crate::ExecutionId;
 use std::time::SystemTime;
 
 /// 全局状态
@@ -200,7 +199,8 @@ mod tests {
         stats.failed_executions = 2;
 
         assert_eq!(stats.success_rate(), 0.8);
-        assert_eq!(stats.failure_rate(), 0.2);
+        // 使用近似比较来避免浮点数精度问题
+        assert!((stats.failure_rate() - 0.2).abs() < f64::EPSILON);
         assert!(stats.has_executions());
     }
 }

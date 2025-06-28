@@ -9,7 +9,7 @@
 //! - 职责单一：只管业务逻辑执行，不管验证、监控、配置等
 //! - 接口简单：只有2个核心方法，外部容易使用和测试
 
-use crate::{actor::NodeExecutionError, NodeInputs, NodeOutputs, PortName};
+use crate::{actor::NodeExecutionError, NodeInputs, NodeOutputs};
 use async_trait::async_trait;
 
 /// NodeExecutor 核心接口
@@ -44,36 +44,42 @@ use async_trait::async_trait;
 /// # Examples
 ///
 /// ```rust
-/// use anima_weave_core::actor::NodeExecutor;
-/// use anima_weave_core::{NodeInputs, NodeOutputs};
+/// use anima_weave_core::actor::{NodeExecutor, NodeExecutionError};
+/// use anima_weave_core::actor::node::{NodeInfo, PortDef};
+/// use anima_weave_core::{NodeInputs, NodeOutputs, PortRef, SignalLabel};
+/// use async_trait::async_trait;
 ///
-/// struct AddNode;
+/// struct EchoNode;
 ///
 /// #[async_trait]
-/// impl NodeExecutor for AddNode {
+/// impl NodeExecutor for EchoNode {
 ///     async fn execute(&self, inputs: NodeInputs) -> Result<NodeOutputs, NodeExecutionError> {
-///         let a = inputs.get("a").unwrap().try_convert_to("NumberLabel")?;
-///         let b = inputs.get("b").unwrap().try_convert_to("NumberLabel")?;
+///         let input_port = PortRef::new("echo_node", "input");
+///         let output_port = PortRef::new("echo_node", "output");
 ///         
-///         // 纯业务逻辑：加法运算
-///         let result = a + b;
+///         let input_data = inputs.get(&input_port)
+///             .ok_or_else(|| NodeExecutionError::input_error("input", "missing required input"))?;
 ///         
+///         // 纯业务逻辑：简单的回显（创建新的SignalLabel）
 ///         let mut outputs = NodeOutputs::new();
-///         outputs.insert("sum".to_string(), Box::new(NumberLabel::new(result)));
+///         outputs.insert(output_port, Box::new(SignalLabel::active()));
 ///         Ok(outputs)
 ///     }
 ///
 ///     fn get_node_info(&self) -> &NodeInfo {
-///         &NodeInfo {
-///             node_type: "AddNode",
-///             input_ports: vec![
-///                 PortDef::required("a", "NumberLabel"),
-///                 PortDef::required("b", "NumberLabel"),
-///             ],
-///             output_ports: vec![
-///                 PortDef::output("sum", "NumberLabel"),
-///             ],
-///         }
+///         use std::sync::OnceLock;
+///         static NODE_INFO: OnceLock<NodeInfo> = OnceLock::new();
+///         NODE_INFO.get_or_init(|| {
+///             NodeInfo {
+///                 node_type: "EchoNode",
+///                 input_ports: vec![
+///                     PortDef { name: "input", semantic_type: "SignalLabel", required: true },
+///                 ],
+///                 output_ports: vec![
+///                     PortDef { name: "output", semantic_type: "SignalLabel", required: false },
+///                 ],
+///             }
+///         })
 ///     }
 /// }
 /// ```

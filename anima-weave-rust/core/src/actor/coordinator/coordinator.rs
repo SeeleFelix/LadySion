@@ -2,14 +2,13 @@
 //!
 //! 最简单的协调器实现，专注于处理控制事件
 
-use kameo::message::{Context, Message};
-use kameo::prelude::*;
+use crate::actor::errors::CoordinatorError;
+use crate::event::{DataReadyEvent, NodeExecutionEvent};
+use crate::types::NodeName;
+use kameo::message::Context;
+use kameo::{actor::ActorRef, message::Message, Actor};
 use std::collections::HashSet;
 use std::time::SystemTime;
-
-use super::CoordinatorError;
-use crate::event::{ControlEvent, DataEvent, NodeExecutionEvent};
-use crate::types::NodeName;
 
 /// 执行状态信息
 ///
@@ -143,17 +142,13 @@ impl Coordinator {
         }
     }
 
-    /// 尝试执行节点（如果不在运行中）
-    async fn try_execute_node(&mut self, node_name: &NodeName) {
+    /// 处理DataReadyEvent：依赖满足通知
+    fn handle_data_ready(&mut self, event: &DataReadyEvent) {
+        let node_name = &event.target_node_name;
+
         // 🚫 同名节点不能并发执行
         if self.running_nodes.contains(node_name) {
             println!("⏸️ Node {} is already running, skipping", node_name);
-            return;
-        }
-
-        // TODO: 检查节点是否ready（所有输入数据和控制信号都满足）
-        if !self.is_node_ready(node_name) {
-            println!("⏳ Node {} is not ready yet", node_name);
             return;
         }
 
@@ -162,60 +157,45 @@ impl Coordinator {
         self.total_executions += 1;
         self.last_activity = Some(SystemTime::now());
 
-        // 执行节点
-        self.execute_node(node_name).await;
-    }
-
-    /// 检查节点是否ready执行
-    fn is_node_ready(&self, _node_name: &NodeName) -> bool {
-        // TODO: 基于图结构检查：
-        // 1. 所有必需的输入端口都有数据
-        // 2. 所有必需的控制信号都是active
-        // 3. 前置依赖节点都已完成
-        true // 暂时返回true
-    }
-
-    /// 执行节点
-    async fn execute_node(&mut self, node_name: &NodeName) {
-        let execution_id = format!("exec_{}_{}", node_name, self.total_executions);
-
         println!(
-            "▶️ Executing node {} with execution_id {}",
-            node_name, execution_id
+            "▶️ Executing node {} (execution {})",
+            node_name, self.total_executions
         );
 
-        /* TODO: 启用这段代码当NodeActor实现后
-        // 通过lookup查找节点Actor
-        if let Ok(Some(node_ref)) = ActorRef::<NodeActor>::lookup(node_name).await {
-            // 准备执行事件
-            let execute_event = NodeExecuteEvent::new(
-                node_name.clone(),
-                execution_id.clone(),
-                self.collect_node_inputs(node_name), // 从DataStore收集输入
-            );
-
-            // 发送执行命令
-            if let Err(e) = node_ref.tell(execute_event).await {
-                eprintln!("❌ Failed to send execute command to node {}: {}", node_name, e);
-                self.current_error = Some(format!("Node execution failed: {}", e));
-                self.running_nodes.remove(node_name); // 执行失败，移除运行标记
-            }
-        } else {
-            eprintln!("❌ Node {} not found in registry", node_name);
-            self.current_error = Some(format!("Node {} not found", node_name));
-            self.running_nodes.remove(node_name); // 节点不存在，移除运行标记
-        }
-        */
-
-        // 暂时模拟执行（移除当实现NodeActor后）
-        tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
-        self.handle_node_completion(node_name, true);
+        // TODO: 发送NodeExecuteEvent到具体的NodeActor
+        // let execution_id = format!("exec_{}_{}", node_name, self.total_executions);
+        // let execute_event = NodeExecuteEvent::new(node_name, execution_id, event.prepared_inputs);
+        // node_actor_ref.send(execute_event).await;
     }
 
-    /// 收集节点的输入数据
-    fn collect_node_inputs(&self, _node_name: &NodeName) -> crate::types::NodeInputs {
-        // TODO: 从DataStore收集指定节点的所有输入数据
-        crate::types::NodeInputs::new()
+    /// 处理NodeExecutionEvent：节点执行状态通知
+    fn handle_node_execution(&mut self, event: &NodeExecutionEvent) {
+        let node_name = &event.node_name;
+
+        // 移除运行标记
+        self.running_nodes.remove(node_name);
+        self.last_activity = Some(SystemTime::now());
+
+        // 更新统计
+        match &event.status {
+            crate::event::types::NodeStatus::Completed => {
+                self.successful_executions += 1;
+                println!(
+                    "✅ Node {} completed successfully ({})",
+                    node_name, event.node_execute_id
+                );
+            }
+            crate::event::types::NodeStatus::Failed(error) => {
+                self.failed_executions += 1;
+                println!(
+                    "❌ Node {} failed ({}): {}",
+                    node_name, event.node_execute_id, error
+                );
+            }
+            _ => {
+                println!("📊 Node {} status: {:?}", node_name, event.status);
+            }
+        }
     }
 
     /// 处理节点执行完成
@@ -227,8 +207,8 @@ impl Coordinator {
             self.successful_executions += 1;
             println!("✅ Node {} completed successfully", node_name);
 
-            // 🔄 检查下游节点是否可以执行
-            self.check_downstream_nodes(node_name);
+            // 🔄 当节点完成时，由DataBus负责检查下游依赖
+            // 这里不需要手动检查，等待DataReadyEvent即可
         } else {
             self.failed_executions += 1;
             println!("❌ Node {} failed", node_name);
@@ -237,25 +217,8 @@ impl Coordinator {
         self.last_activity = Some(SystemTime::now());
     }
 
-    /// 检查下游节点是否可以执行
-    fn check_downstream_nodes(&mut self, _completed_node: &NodeName) {
-        // TODO: 基于图结构查找所有下游节点
-        // TODO: 对每个下游节点调用try_execute_node
-        println!("🔍 Checking downstream nodes of {}", _completed_node);
-    }
-
-    /// 处理新数据到达，检查相关节点
-    fn handle_data_arrival(&mut self, _event: &DataEvent) {
-        // TODO: 基于数据端口找到相关节点
-        // TODO: 对相关节点调用try_execute_node
-        println!("📊 Data arrived, checking related nodes");
-    }
-
-    /// 处理控制信号变化，检查相关节点  
-    fn handle_control_change(&mut self, _event: &ControlEvent) {
-        // TODO: 基于控制端口找到相关节点
-        // TODO: 对相关节点调用try_execute_node
-        println!("🎛️ Control signal changed, checking related nodes");
+    pub fn is_node_running(&self, node_name: &NodeName) -> bool {
+        self.running_nodes.contains(node_name)
     }
 }
 
@@ -300,40 +263,29 @@ impl Message<NodeExecutionEvent> for Coordinator {
                 self.current_error = Some(error.clone());
             }
             crate::event::types::NodeStatus::Running => {
-                println!("🔄 Node {} started running", event.node_name);
+                self.handle_node_execution(&event);
             }
             crate::event::types::NodeStatus::Pending => {
-                println!("⏳ Node {} is pending", event.node_name);
+                self.handle_node_execution(&event);
             }
         }
     }
 }
 
-// 🎛️ ControlEvent: Node -> Coordinator
-impl Message<ControlEvent> for Coordinator {
+// 🔔 DataReadyEvent: DataBus -> Coordinator
+impl Message<DataReadyEvent> for Coordinator {
     type Reply = ();
 
     async fn handle(
         &mut self,
-        event: ControlEvent,
+        event: DataReadyEvent,
         _ctx: &mut Context<Self, Self::Reply>,
     ) -> Self::Reply {
-        self.handle_control_change(&event);
-        self.last_activity = Some(SystemTime::now());
-    }
-}
-
-// 📊 DataEvent: Node -> Coordinator
-impl Message<DataEvent> for Coordinator {
-    type Reply = ();
-
-    async fn handle(
-        &mut self,
-        event: DataEvent,
-        _ctx: &mut Context<Self, Self::Reply>,
-    ) -> Self::Reply {
-        self.handle_data_arrival(&event);
-        self.last_activity = Some(SystemTime::now());
+        println!(
+            "🔔 Coordinator received DataReadyEvent for {}",
+            event.target_node_name
+        );
+        self.handle_data_ready(&event);
     }
 }
 
@@ -342,14 +294,16 @@ impl Message<DataEvent> for Coordinator {
 pub struct GetStatusQuery;
 
 impl Message<GetStatusQuery> for Coordinator {
-    type Reply = Result<ExecutionStatus, CoordinatorError>;
+    type Reply = ();
 
     async fn handle(
         &mut self,
         _query: GetStatusQuery,
         _ctx: &mut Context<Self, Self::Reply>,
     ) -> Self::Reply {
-        Ok(self.get_status())
+        let status = self.get_status();
+        // 通过 ctx 发送回复
+        println!("📊 Current status: {:?}", status);
     }
 }
 

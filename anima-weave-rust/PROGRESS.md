@@ -1,69 +1,113 @@
 # AnimaWeave Rust 实现进度
 
-## 架构图
+## 最新架构图 (2024-12-19更新)
 
 ```mermaid
 graph TB
-    subgraph "用户输入"
-        WeaveFile["用户手写 .weave 文件<br/>定义图结构和连接"]
-        AnimaFile["Java生成 .anima 文件<br/>定义节点类型和端口"]
+    %% 用户输入层
+    subgraph "📄 用户输入层"
+        WeaveFile["📝 .weave 文件<br/>用户手写图结构定义"]
+        AnimaFile["🏭 .anima 文件<br/>Java生成节点类型定义"]
     end
-
-    subgraph "DSL解析层"
-        WeaveParser["WeaveParser<br/>解析.weave文件"]
-        AnimaLoader["AnimaLoader<br/>加载.anima文件"]
+    
+    %% DSL解析层 (未实现)
+    subgraph "🔤 DSL解析层 [TODO]"
+        WeaveParser["WeaveParser<br/>解析.weave → AST<br/>❌ 待实现"]
+        AnimaLoader["AnimaLoader<br/>加载.anima → NodeDef<br/>❌ 待实现"]
+        GraphBuilder["GraphBuilder<br/>AST → GraphDefinition<br/>❌ 待实现"]
     end
-
-    subgraph "Core数学层"
-        Omega["全局状态 Ω<br/>Σ_data + Σ_control + Σ_node"]
-        GraphDef["Graph定义<br/>节点+连接"]
-        NodeReady["NodeReady检查<br/>DataReady ∧ ControlActive"]
-        SemanticLabels["语义标签系统<br/>StringLabel + NumberLabel<br/>+ PromptLabel + SignalLabel"]
+    
+    %% Core数学抽象层 (已完成)
+    subgraph "🎯 Core数学抽象层 [✅ 已完成]"
+        GraphDef["📊 GraphDefinition<br/>✅ 图结构定义<br/>Node + Port + Connection"]
+        SemanticLabels["🏷️ SemanticLabel System<br/>✅ 类型系统 + 自动转换<br/>StringLabel | NumberLabel<br/>PromptLabel | SignalLabel"]
+        EventSystem["📡 Event System<br/>✅ 四大事件类型<br/>DataEvent | ControlEvent<br/>NodeExecuteEvent | NodeExecutionEvent"]
+        StateSystem["🌍 State System<br/>✅ 全局状态Ω管理<br/>Σ_data + Σ_control + Σ_node"]
     end
-
-    subgraph "Vessels实现层"
-        StringLabel["StringLabel<br/>基础字符串类型"]
-        NumberLabel["NumberLabel<br/>数值类型 → String"]
-        PromptLabel["PromptLabel<br/>提示类型 → String"]
-        SignalLabel["SignalLabel<br/>信号类型 → String"]
+    
+    %% Vessels实现层 (已完成)
+    subgraph "⚗️ Vessels实现层 [✅ 已完成]"
+        StringLabelImpl["StringLabel<br/>✅ 基础字符串类型"]
+        NumberLabelImpl["NumberLabel<br/>✅ 数值 → String转换"]
+        PromptLabelImpl["PromptLabel<br/>✅ 提示 → String转换"]
+        SignalLabelImpl["SignalLabel<br/>✅ 信号控制类型"]
     end
-
-    subgraph "Kameo Actor运行时"
-        CoordActor["CoordinatorActor<br/>- 管理全局状态Ω<br/>- 执行NodeReady检查<br/>- 调度NodeActor执行"]
+    
+    %% Actor运行时层 (部分完成)
+    subgraph "🎭 Kameo Actor运行时 [🔄 进行中]"
+        CoordActor["🎯 Coordinator [✅ 已完成]<br/>· lookup事件传递机制<br/>· 事件驱动自动调度<br/>· 并发控制 (同名节点防冲突)<br/>· spawn_for_graph() 启动<br/>· ExecutionStatus统计"]
         
-        subgraph "NodeActors"
-            StartActor["StartActor<br/>生成信号+UUID"]
-            MathActor["MathActor<br/>加法运算"]
-            IsEvenActor["IsEvenActor<br/>判断奇偶"]
+        DataBus["🚌 DataBus [❌ 待实现]<br/>· 数据流缓存<br/>· Label自动转换<br/>· 端口数据管理"]
+        
+        subgraph "NodeActors集群 [❌ 待实现]"
+            StartActor["🚀 StartActor<br/>❌ 生成信号+UUID"]
+            MathActor["🔢 MathActor<br/>❌ 数学运算"]
+            IsEvenActor["❓ IsEvenActor<br/>❌ 判断奇偶"]
+            CustomActor["⚡ CustomActor<br/>❌ 用户自定义"]
         end
     end
-
-    subgraph "执行流程"
-        EventFlow["1. 数据事件 → 更新Σ_data<br/>2. 控制事件 → 触发NodeReady检查<br/>3. NodeReady=true → 调度执行<br/>4. 执行完成 → 发送输出事件<br/>5. 自动Label转换"]
+    
+    %% 事件驱动执行流程 (架构已确定)
+    subgraph "📡 事件驱动执行流程 [🔄 架构已确定]"
+        EventFlow1["1️⃣ spawn_for_graph()<br/>✅ 启动Coordinator"]
+        EventFlow2["2️⃣ 收到ControlEvent/DataEvent<br/>🔄 触发依赖检查"]
+        EventFlow3["3️⃣ is_node_ready() 检查<br/>🔄 DataReady ∧ ControlActive"]
+        EventFlow4["4️⃣ execute_node_if_ready()<br/>🔄 发送NodeExecuteEvent"]
+        EventFlow5["5️⃣ NodeActor执行完成<br/>🔄 发送三种输出事件"]
+        EventFlow6["6️⃣ 自动循环检查<br/>🔄 持续至图执行完成"]
     end
-
-    WeaveFile --> WeaveParser
-    AnimaFile --> AnimaLoader
-    WeaveParser --> GraphDef
-    AnimaLoader --> GraphDef
     
+    %% 连接关系 - 构建阶段
+    WeaveFile -.->|"待实现"| WeaveParser
+    AnimaFile -.->|"待实现"| AnimaLoader
+    WeaveParser -.->|"待实现"| GraphBuilder
+    AnimaLoader -.->|"待实现"| GraphBuilder
+    GraphBuilder -.->|"待实现"| GraphDef
+    
+    %% 已完成的连接
     GraphDef --> CoordActor
-    CoordActor --> Omega
-    CoordActor --> NodeReady
+    SemanticLabels --> CoordActor
+    EventSystem --> CoordActor
+    StateSystem --> CoordActor
     
-    SemanticLabels --> StringLabel
-    SemanticLabels --> NumberLabel
-    SemanticLabels --> PromptLabel
-    SemanticLabels --> SignalLabel
+    SemanticLabels --> StringLabelImpl
+    SemanticLabels --> NumberLabelImpl  
+    SemanticLabels --> PromptLabelImpl
+    SemanticLabels --> SignalLabelImpl
     
-    CoordActor --> StartActor
-    CoordActor --> MathActor  
-    CoordActor --> IsEvenActor
+    %% 待实现的连接
+    GraphDef -.->|"待DataBus实现"| DataBus
+    SemanticLabels -.->|"待DataBus实现"| DataBus
     
-    StartActor --> EventFlow
-    MathActor --> EventFlow
-    IsEvenActor --> EventFlow
-    EventFlow --> CoordActor
+    %% 事件流程
+    CoordActor --> EventFlow1
+    EventFlow1 --> EventFlow2
+    EventFlow2 --> EventFlow3  
+    EventFlow3 --> EventFlow4
+    EventFlow4 -.->|"待NodeActor实现"| StartActor
+    EventFlow4 -.->|"待NodeActor实现"| MathActor
+    EventFlow4 -.->|"待NodeActor实现"| IsEvenActor
+    EventFlow4 -.->|"待NodeActor实现"| CustomActor
+    
+    %% 反馈循环 (待实现)
+    StartActor -.->|"待实现"| EventFlow5
+    MathActor -.->|"待实现"| EventFlow5
+    IsEvenActor -.->|"待实现"| EventFlow5
+    CustomActor -.->|"待实现"| EventFlow5
+    EventFlow5 -.->|"待实现"| EventFlow6
+    EventFlow6 -.->|"循环"| EventFlow2
+    
+    %% 样式定义
+    classDef completed fill:#c8e6c9,stroke:#4caf50,stroke-width:2px,color:#1b5e20
+    classDef inProgress fill:#fff3e0,stroke:#ff9800,stroke-width:2px,color:#e65100
+    classDef todo fill:#ffebee,stroke:#f44336,stroke-width:2px,color:#c62828
+    classDef system fill:#e3f2fd,stroke:#2196f3,stroke-width:2px,color:#0d47a1
+    
+    %% 应用样式
+    class GraphDef,SemanticLabels,EventSystem,StateSystem,StringLabelImpl,NumberLabelImpl,PromptLabelImpl,SignalLabelImpl,CoordActor,EventFlow1 completed
+    class EventFlow2,EventFlow3,EventFlow4,EventFlow5,EventFlow6 inProgress
+    class WeaveParser,AnimaLoader,GraphBuilder,DataBus,StartActor,MathActor,IsEvenActor,CustomActor todo
+    class WeaveFile,AnimaFile system
 ```
 
 ## 实现进度
@@ -78,7 +122,7 @@ graph TB
 - [x] 全局状态trait (`state.rs`) 
 - [x] 执行器trait (`executor.rs`)
 
-### ✅ Vessels实现层 - 🆕 新增
+### ✅ Vessels实现层 - 完成
 - [x] **StringLabel** - 基础字符串类型，作为转换目标
 - [x] **NumberLabel** - 数值类型，可转换为StringLabel
 - [x] **PromptLabel** - 提示内容类型，可转换为StringLabel  
@@ -86,29 +130,41 @@ graph TB
 - [x] **完整测试覆盖** - 21个测试用例全部通过
 - [x] **自动转换系统** - 支持`try_convert_to()`机制
 
-### 🔄 Event系统重构 - 🆕 进行中
+### ✅ Event系统重构 - 🆕 已完成，职责分离设计
 - [x] 识别重构需求：旧`SemanticValue` → 新`SemanticLabel`
-- [ ] DataEvent支持SemanticLabel自动转换
-- [ ] ControlEvent集成SignalLabel  
-- [ ] Actor间Label兼容性检查
-- [ ] Event路由时的自动转换机制
+- [x] **NodeExecuteEvent**: Coordinator → NodeActor 执行指令
+- [x] **NodeExecutionEvent**: NodeActor → Coordinator 状态通知
+- [x] **NodeOutputEvent**: NodeActor → DataBus 数据输出
+- [x] **DataReadyEvent**: DataBus → Coordinator 依赖满足通知
+- [x] EventMeta统一元数据系统，完整的职责分离架构
+
+### ✅ Coordinator Actor - 🆕 已完成
+- [x] **Kameo Actor框架集成** - 基于Actor模型的协调器
+- [x] **lookup机制** - 完全解耦的事件传递，无循环依赖
+- [x] **事件驱动调度** - 自动响应ControlEvent/DataEvent/NodeExecutionEvent
+- [x] **并发控制** - 同名节点防冲突，running_nodes管理
+- [x] **spawn_for_graph()** - 一次性启动模式，自动注册监听
+- [x] **ExecutionStatus** - 完整的执行统计和状态管理
+- [x] **GetStatusQuery** - 调试用状态查询接口
 
 ### ❌ DSL解析层
 - [ ] WeaveParser - 解析.weave文件
 - [ ] AnimaLoader - 加载.anima文件
 - [ ] Graph构建器
 
-### ❌ Actor运行时
-- [ ] CoordinatorActor实现
-- [ ] NodeActor基础框架
-- [ ] StartActor实现
-- [ ] MathActor实现
-- [ ] IsEvenActor实现
+### 🔄 Actor运行时 - 部分完成
+- [x] **Coordinator** - 核心协调器已完成
+- [ ] **DataBus** - 数据流缓存和转换系统
+- [ ] **NodeActor基础框架** - 通用节点执行器
+- [ ] **StartActor** - 信号生成节点
+- [ ] **MathActor** - 数学运算节点
+- [ ] **IsEvenActor** - 判断节点
 
 ### ❌ 集成测试
-- [ ] 端到端执行流程
-- [ ] 数学定义验证
-- [ ] 性能测试
+- [ ] 端到端执行流程测试
+- [ ] 数学定义验证测试
+- [ ] 并发控制测试
+- [ ] 性能基准测试
 
 ## 🎯 关键成就 - 语义标签系统
 
@@ -127,15 +183,19 @@ graph TB
 1. **静态分析**: 通过代码扫描、正则匹配等方式提供标签转换关系，用于验证图连接合法性
 2. **运行时转换**: Event传递时需要转换为目标标签给下一个节点使用
 
-## 当前状态
-- **包结构**: ✅ 编译通过，21个测试用例通过
-- **语义标签系统**: ✅ 完整实现并测试验证
-- **下一步**: 重构Event系统支持SemanticLabel，然后实现CoordinatorActor
+## 当前状态 (2024-12-19更新)
+- **Core基础架构**: ✅ 完全实现，包结构编译通过，21个测试用例通过
+- **语义标签系统**: ✅ 完整实现并测试验证，支持自动转换
+- **事件系统**: ✅ 四大事件类型完整实现，支持SemanticLabel和统一元数据
+- **Coordinator**: ✅ 核心协调器完成，事件驱动架构建立，并发控制实现
+- **下一步**: 实现DataBus和NodeActor基础框架
 
-## 🚀 下一阶段重点
-1. **Event系统重构** - 替换`SemanticValue`为`SemanticLabel`，支持自动转换
-2. **Actor通信机制** - 实现Actor间的Label兼容性检查和转换
-3. **简单执行图验证** - 构建最小可行的双流执行示例 
+## 🚀 下一阶段重点 (基于职责分离架构)
+1. **DataBus智能实现** - 数据存储系统 + 依赖检查引擎 + AND/XOR/OR逻辑计算
+2. **Graph连接定义** - 手工定义最小图结构（数据连线 + 控制连线）用于测试  
+3. **NodeActor基础框架** - 双事件输出（NodeExecutionEvent + NodeOutputEvent）
+4. **DataReadyEvent机制** - DataBus → Coordinator 的智能依赖通知
+5. **简单双节点验证** - StartActor → MathActor 完整闭环测试 
 
 
 
@@ -391,3 +451,78 @@ graph TB
     class DataEvent,StateEvent,ControlEvent event
     class Coordinator,Coordinator2,Coordinator3 actor
     class DataBus,DataBus2 bus
+
+## 职责分离架构图 (2024-12-19)
+
+```mermaid
+graph TD
+    subgraph "完整的事件驱动闭环 - 职责分离设计"
+        NodeExec["🔄 NodeActor执行<br/>inputs → process → outputs"]
+        
+        subgraph "双事件输出"
+            ExecutionEvent["📊 NodeExecutionEvent<br/>→ Coordinator<br/>- node_name<br/>- execution_id<br/>- status: Completed/Failed"]
+            NodeOutputEvent["📦 NodeOutputEvent<br/>→ DataBus<br/>- node_name<br/>- execution_id<br/>- outputs: Map<port,value>"]
+        end
+        
+        NodeExec --> ExecutionEvent
+        NodeExec --> NodeOutputEvent
+        
+        subgraph "Coordinator职责 - 控制层"
+            CoordReceiveExec["🎯 Coordinator收到NodeExecutionEvent<br/>- 更新全局状态<br/>- 并发控制 (移除running_nodes)<br/>- 执行统计<br/>- Debug信息"]
+            
+            CoordReceiveReady["🎯 Coordinator收到DataReadyEvent<br/>- 并发验证 (同名节点防冲突)<br/>- 权限检查<br/>- 执行调度"]
+            
+            SendExecute["📤 发送NodeExecuteEvent<br/>→ 具体NodeActor<br/>包含所有准备好的输入"]
+        end
+        
+        ExecutionEvent --> CoordReceiveExec
+        
+        subgraph "DataBus职责 - 数据层"
+            DataBusReceive["🚌 DataBus收到NodeOutputEvent<br/>- 保存节点输出数据<br/>- port → value 映射"]
+            
+            DependencyCheck["🔍 依赖检查<br/>基于Graph定义:<br/>- 数据连线: 所有required输入有值?<br/>- 控制连线: AND/XOR/OR逻辑满足?"]
+            
+            SendReady["📤 发送DataReadyEvent<br/>→ Coordinator<br/>- target_node_name<br/>- prepared_inputs<br/>- trigger_reason"]
+        end
+        
+        NodeOutputEvent --> DataBusReceive
+        DataBusReceive --> DependencyCheck
+        DependencyCheck -->|"节点Ready"| SendReady
+        SendReady --> CoordReceiveReady
+        CoordReceiveReady --> SendExecute
+        SendExecute -.->|"循环"| NodeExec
+    end
+    
+    subgraph "控制逻辑类型"
+        AndLogic["🔀 AND逻辑<br/>所有控制输入都为true"]
+        XorLogic["⚡ XOR逻辑<br/>恰好一个控制输入为true"]
+        OrLogic["🌊 OR逻辑<br/>至少一个控制输入为true"]
+        
+        DependencyCheck -.-> AndLogic
+        DependencyCheck -.-> XorLogic
+        DependencyCheck -.-> OrLogic
+    end
+    
+    subgraph "数据存储"
+        DataStore["🗄️ DataBus内部存储<br/>node_a.port_1 → value_1<br/>node_a.port_2 → value_2<br/>node_b.signal → true<br/>..."]
+        GraphDef["📊 Graph定义<br/>连接关系:<br/>node_a.out → node_b.in<br/>control_logic: AND/XOR/OR"]
+        
+        DataBusReceive --> DataStore
+        DependencyCheck --> DataStore
+        DependencyCheck --> GraphDef
+    end
+    
+    classDef nodeStyle fill:#e8f5e8,stroke:#4caf50,stroke-width:2px
+    classDef coordStyle fill:#e3f2fd,stroke:#2196f3,stroke-width:2px
+    classDef busStyle fill:#fff3e0,stroke:#ff9800,stroke-width:2px
+    classDef eventStyle fill:#f3e5f5,stroke:#9c27b0,stroke-width:2px
+    classDef logicStyle fill:#ffebee,stroke:#f44336,stroke-width:2px
+    classDef storeStyle fill:#f1f8e9,stroke:#689f38,stroke-width:2px
+    
+    class NodeExec,SendExecute nodeStyle
+    class CoordReceiveExec,CoordReceiveReady coordStyle
+    class DataBusReceive,DependencyCheck,SendReady busStyle
+    class ExecutionEvent,NodeOutputEvent eventStyle
+    class AndLogic,XorLogic,OrLogic logicStyle
+    class DataStore,GraphDef storeStyle
+```

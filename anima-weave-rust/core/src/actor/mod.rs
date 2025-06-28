@@ -15,7 +15,6 @@ pub mod types;
 
 // 导出核心抽象trait
 pub use coordinator::Coordinator;
-pub use datastore::DataStore;
 pub use node::NodeExecutor;
 
 // 导出类型定义

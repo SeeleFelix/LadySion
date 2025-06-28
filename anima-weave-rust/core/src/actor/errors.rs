@@ -3,7 +3,7 @@
 //! 定义了AnimaWeave Actor系统中外部需要处理的错误类型。
 //! 遵循"少即是多"的原则，只暴露用户真正需要处理的错误。
 
-use crate::{ExecutionId, NodeName, PortName};
+use crate::{NodeName, PortName};
 use std::fmt;
 
 /// Coordinator执行错误

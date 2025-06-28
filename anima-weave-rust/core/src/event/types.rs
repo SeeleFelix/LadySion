@@ -58,9 +58,9 @@ impl Default for EventMeta {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct PortRef {
     /// 节点名称（图中唯一标识）
-    pub node_name: NodeName,
+    pub node_name: String,
     /// 端口名称
-    pub port_name: PortName,
+    pub port_name: String,
 }
 
 impl PortRef {
