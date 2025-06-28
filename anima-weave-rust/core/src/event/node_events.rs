@@ -242,7 +242,7 @@ mod tests {
 
         let input_data = event.get_input("signal_port");
         assert!(input_data.is_some());
-        assert_eq!(input_data.unwrap().type_name(), "SignalLabel");
+        assert_eq!(input_data.unwrap().get_semantic_label_type(), "SignalLabel");
 
         let missing_input = event.get_input("missing_port");
         assert!(missing_input.is_none());

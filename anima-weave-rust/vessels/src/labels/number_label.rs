@@ -45,7 +45,7 @@ mod tests {
         let number = NumberLabel { value: 42.5 };
 
         assert_eq!(number.value, 42.5);
-        assert_eq!(number.type_name(), "NumberLabel");
+        assert_eq!(number.get_semantic_label_type(), "NumberLabel");
     }
 
     #[test]
@@ -61,7 +61,7 @@ mod tests {
         assert!(result.is_ok());
 
         let converted = result.unwrap();
-        assert_eq!(converted.type_name(), "StringLabel");
+        assert_eq!(converted.get_semantic_label_type(), "StringLabel");
 
         // 验证转换后的值
         if let Some(string_label) = converted.as_any().downcast_ref::<StringLabel>() {

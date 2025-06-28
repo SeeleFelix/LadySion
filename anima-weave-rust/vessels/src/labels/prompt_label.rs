@@ -49,7 +49,7 @@ mod tests {
         };
 
         assert_eq!(prompt.content, "Hello World");
-        assert_eq!(prompt.type_name(), "PromptLabel");
+        assert_eq!(prompt.get_semantic_label_type(), "PromptLabel");
     }
 
     #[test]

@@ -74,6 +74,6 @@ mod tests {
     #[test]
     fn test_signal_type_name() {
         let signal = SignalLabel::active();
-        assert_eq!(signal.type_name(), "SignalLabel");
+        assert_eq!(signal.get_semantic_label_type(), "SignalLabel");
     }
 }

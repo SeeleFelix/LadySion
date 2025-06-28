@@ -8,6 +8,7 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 kameo = { workspace = true }
+async-trait = "0.1"
 
 # Core类型和数据结构
 # - SemanticLabel: 语义标签系统

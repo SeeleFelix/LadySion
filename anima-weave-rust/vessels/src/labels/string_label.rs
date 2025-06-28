@@ -42,7 +42,7 @@ mod tests {
         };
 
         assert_eq!(string.value, "test");
-        assert_eq!(string.type_name(), "StringLabel");
+        assert_eq!(string.get_semantic_label_type(), "StringLabel");
     }
 
     #[test]

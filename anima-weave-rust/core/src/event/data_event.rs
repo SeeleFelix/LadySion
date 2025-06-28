@@ -42,7 +42,7 @@ impl DataEvent {
 
     /// 获取数据类型名称
     pub fn data_type(&self) -> &'static str {
-        self.data.type_name()
+        self.data.get_semantic_label_type()
     }
 
     /// 获取事件ID

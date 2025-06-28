@@ -22,12 +22,30 @@ mod integration_tests {
         let signal = SignalLabel::active();
 
         // 所有标签都应该有不同的type_name
-        assert_ne!(number.type_name(), string.type_name());
-        assert_ne!(number.type_name(), prompt.type_name());
-        assert_ne!(number.type_name(), signal.type_name());
-        assert_ne!(string.type_name(), prompt.type_name());
-        assert_ne!(string.type_name(), signal.type_name());
-        assert_ne!(prompt.type_name(), signal.type_name());
+        assert_ne!(
+            number.get_semantic_label_type(),
+            string.get_semantic_label_type()
+        );
+        assert_ne!(
+            number.get_semantic_label_type(),
+            prompt.get_semantic_label_type()
+        );
+        assert_ne!(
+            number.get_semantic_label_type(),
+            signal.get_semantic_label_type()
+        );
+        assert_ne!(
+            string.get_semantic_label_type(),
+            prompt.get_semantic_label_type()
+        );
+        assert_ne!(
+            string.get_semantic_label_type(),
+            signal.get_semantic_label_type()
+        );
+        assert_ne!(
+            prompt.get_semantic_label_type(),
+            signal.get_semantic_label_type()
+        );
 
         // 但都应该实现SemanticLabel trait
         let number_as_trait: &dyn SemanticLabel = &number;
@@ -35,10 +53,10 @@ mod integration_tests {
         let prompt_as_trait: &dyn SemanticLabel = &prompt;
         let signal_as_trait: &dyn SemanticLabel = &signal;
 
-        assert_eq!(number_as_trait.type_name(), "NumberLabel");
-        assert_eq!(string_as_trait.type_name(), "StringLabel");
-        assert_eq!(prompt_as_trait.type_name(), "PromptLabel");
-        assert_eq!(signal_as_trait.type_name(), "SignalLabel");
+        assert_eq!(number_as_trait.get_semantic_label_type(), "NumberLabel");
+        assert_eq!(string_as_trait.get_semantic_label_type(), "StringLabel");
+        assert_eq!(prompt_as_trait.get_semantic_label_type(), "PromptLabel");
+        assert_eq!(signal_as_trait.get_semantic_label_type(), "SignalLabel");
     }
 
     #[test]
@@ -60,8 +78,14 @@ mod integration_tests {
         assert!(prompt_to_string.is_ok());
 
         // 验证转换结果都是StringLabel类型
-        assert_eq!(number_to_string.unwrap().type_name(), "StringLabel");
-        assert_eq!(prompt_to_string.unwrap().type_name(), "StringLabel");
+        assert_eq!(
+            number_to_string.unwrap().get_semantic_label_type(),
+            "StringLabel"
+        );
+        assert_eq!(
+            prompt_to_string.unwrap().get_semantic_label_type(),
+            "StringLabel"
+        );
     }
 
     #[test]
@@ -81,7 +105,7 @@ mod integration_tests {
         // 每个标签都应该有唯一的类型名
         let mut type_names = std::collections::HashSet::new();
         for label in &labels {
-            assert!(type_names.insert(label.type_name()));
+            assert!(type_names.insert(label.get_semantic_label_type()));
         }
 
         // 应该有4种不同的类型

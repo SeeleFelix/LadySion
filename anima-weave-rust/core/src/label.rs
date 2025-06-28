@@ -45,8 +45,13 @@ pub type ConversionFn =
 /// 1. 静态分析：通过conversion_map()获取转换关系，用于验证图连接合法性
 /// 2. 运行时转换：通过try_convert_to()执行实际的类型转换
 pub trait SemanticLabel: Send + Sync + Debug + 'static {
-    /// 返回语义标签的类型名称
-    fn type_name(&self) -> &'static str;
+    /// 获取语义标签类型名称（关联函数）
+    fn semantic_label_type() -> &'static str
+    where
+        Self: Sized;
+
+    /// 获取语义标签类型名称（实例方法，用于trait object）
+    fn get_semantic_label_type(&self) -> &'static str;
 
     /// 类型擦除访问（只读）
     ///
@@ -87,7 +92,7 @@ pub trait SemanticLabel: Send + Sync + Debug + 'static {
         match conversion_map.get(target_type) {
             Some(conversion_fn) => conversion_fn(self.as_any()),
             None => Err(TransformError::IncompatibleTypes {
-                from: self.type_name(),
+                from: self.get_semantic_label_type(),
                 to: target_type,
             }),
         }
@@ -145,8 +150,12 @@ macro_rules! semantic_label {
         }
 
         impl $crate::SemanticLabel for $name {
-            fn type_name(&self) -> &'static str {
-                stringify!($name) // 自动使用类型名
+            fn semantic_label_type() -> &'static str where Self: Sized {
+                stringify!($name)
+            }
+
+            fn get_semantic_label_type(&self) -> &'static str {
+                Self::semantic_label_type()
             }
 
             fn as_any(&self) -> &dyn std::any::Any {
@@ -221,7 +230,7 @@ mod tests {
         };
 
         // 测试 type_name
-        assert_eq!(label.type_name(), "TestStringLabel");
+        assert_eq!(label.get_semantic_label_type(), "TestStringLabel");
 
         // 测试 as_any
         let any_ref = label.as_any();
@@ -247,7 +256,7 @@ mod tests {
         };
 
         // 测试 type_name
-        assert_eq!(label.type_name(), "TestComplexLabel");
+        assert_eq!(label.get_semantic_label_type(), "TestComplexLabel");
 
         // 测试转换映射
         let conversions = label.conversion_map();
@@ -261,7 +270,7 @@ mod tests {
         let label = TestNumberLabel { value: 42.0 };
 
         // 测试 type_name
-        assert_eq!(label.type_name(), "TestNumberLabel");
+        assert_eq!(label.get_semantic_label_type(), "TestNumberLabel");
 
         // 测试无转换
         let conversions = label.conversion_map();
@@ -282,7 +291,7 @@ mod tests {
         assert!(result.is_ok());
 
         let converted: Box<dyn SemanticLabel + 'static> = result.unwrap();
-        assert_eq!(converted.type_name(), "TestNumberLabel");
+        assert_eq!(converted.get_semantic_label_type(), "TestNumberLabel");
 
         // 验证转换后的值
         let number_label = converted
