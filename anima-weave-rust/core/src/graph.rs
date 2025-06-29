@@ -16,8 +16,8 @@ pub enum ConcurrentMode {
 /// 端口定义
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Port {
-    pub node_id: String,
-    pub port_name: String,
+    pub node_name: NodeName,
+    pub port_name: PortName,
     pub activation_mode: ActivationMode,
 }
 
@@ -31,7 +31,7 @@ pub struct Connection {
 /// 节点定义
 #[derive(Debug, Clone)]
 pub struct Node {
-    pub node_id: String,
+    pub node_name: NodeName,
     pub node_type: String,
     pub concurrent_mode: ConcurrentMode,
 }
@@ -58,10 +58,13 @@ pub trait GraphQuery: Send + Sync {
     /// 节点查询
     /// =========================
 
-    /// 获取节点的所有输入端口
-    ///
-    /// 用于Coordinator的DataReady检查
-    fn get_node_input_ports(&self, node_name: &NodeName) -> Vec<PortName>;
+    /// 获取指定节点所有数据输入连接
+    /// 返回所有从上游节点到当前节点的数据流连接
+    fn get_data_input_connections(&self, node_name: &NodeName) -> Vec<Connection>;
+
+    /// 获取指定节点所有控制输入连接
+    /// 返回所有从上游节点到当前节点的控制流连接
+    fn get_control_input_connections(&self, node_name: &NodeName) -> Vec<Connection>;
 
     /// 获取节点的所有输出端口
     fn get_node_output_ports(&self, node_name: &NodeName) -> Vec<PortName>;

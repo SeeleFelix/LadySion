@@ -7,11 +7,11 @@ pub mod state;
 pub mod types;
 
 // 导出系统级别类型别名
-pub use types::{ExecutionId, NodeInputs, NodeName, NodeOutputs, PortName};
+pub use types::{ExecutionId, NodeControlInputs, NodeDataInputs, NodeName, NodeOutputs, PortName};
 
 // 明确导出，避免namespace冲突
 pub use event::{
-    DataReadyEvent, EventMeta, NodeExecuteEvent, NodeExecutionEvent, NodeOutputEvent, NodeStatus,
+    EventMeta, NodeExecuteEvent, NodeExecutionEvent, NodeOutputEvent, NodeReadyEvent, NodeStatus,
     PortRef,
 };
 pub use graph::{ActivationMode, ConcurrentMode, Connection, Graph, GraphQuery, Node, Port};

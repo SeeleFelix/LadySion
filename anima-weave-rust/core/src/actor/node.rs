@@ -9,7 +9,7 @@
 //! - 职责单一：只管业务逻辑执行，不管验证、监控、配置等
 //! - 接口简单：只有2个核心方法，外部容易使用和测试
 
-use crate::{actor::NodeExecutionError, NodeInputs, NodeOutputs};
+use crate::{actor::NodeExecutionError, NodeControlInputs, NodeDataInputs, NodeOutputs};
 use async_trait::async_trait;
 
 /// NodeExecutor 核心接口
@@ -46,18 +46,18 @@ use async_trait::async_trait;
 /// ```rust
 /// use anima_weave_core::actor::{NodeExecutor, NodeExecutionError};
 /// use anima_weave_core::actor::node::{NodeInfo, PortDef};
-/// use anima_weave_core::{NodeInputs, NodeOutputs, PortRef, SignalLabel};
+/// use anima_weave_core::{NodeDataInputs, NodeControlInputs, NodeOutputs, PortRef, SignalLabel};
 /// use async_trait::async_trait;
 ///
 /// struct EchoNode;
 ///
 /// #[async_trait]
 /// impl NodeExecutor for EchoNode {
-///     async fn execute(&self, inputs: NodeInputs) -> Result<NodeOutputs, NodeExecutionError> {
+///     async fn execute(&self, data_inputs: NodeDataInputs, control_inputs: NodeControlInputs) -> Result<NodeOutputs, NodeExecutionError> {
 ///         let input_port = PortRef::new("echo_node", "input");
 ///         let output_port = PortRef::new("echo_node", "output");
 ///         
-///         let input_data = inputs.get(&input_port)
+///         let input_data = data_inputs.get(&input_port)
 ///             .ok_or_else(|| NodeExecutionError::input_error("input", "missing required input"))?;
 ///         
 ///         // 纯业务逻辑：简单的回显（创建新的SignalLabel）
@@ -91,7 +91,8 @@ pub trait NodeExecutor: Send + Sync {
     /// 该方法应该是无副作用的纯函数风格，给定相同输入总是产生相同输出。
     ///
     /// # 参数
-    /// - `inputs`: 输入数据集合，端口名到数据的映射
+    /// - `data_inputs`: 数据输入集合，端口名到数据的映射
+    /// - `control_inputs`: 控制输入集合，端口名到信号的映射
     ///
     /// # 返回
     /// - `Ok(outputs)`: 执行成功，返回输出数据集合
@@ -112,7 +113,11 @@ pub trait NodeExecutor: Send + Sync {
     /// - 业务规则违反
     ///
     /// 不要处理系统级错误（网络、IO等），这些应该在构造时处理。
-    async fn execute(&self, inputs: NodeInputs) -> Result<NodeOutputs, NodeExecutionError>;
+    async fn execute(
+        &self,
+        data_inputs: NodeDataInputs,
+        control_inputs: NodeControlInputs,
+    ) -> Result<NodeOutputs, NodeExecutionError>;
 
     /// 获取节点元信息
     ///

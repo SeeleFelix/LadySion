@@ -3,7 +3,7 @@
 //! 最简单的协调器实现，专注于处理控制事件
 
 use crate::actor::errors::CoordinatorError;
-use crate::event::{DataReadyEvent, NodeExecutionEvent};
+use crate::event::{NodeExecutionEvent, NodeReadyEvent};
 use crate::types::NodeName;
 use kameo::message::Context;
 use kameo::{actor::ActorRef, message::Message, Actor};
@@ -142,8 +142,8 @@ impl Coordinator {
         }
     }
 
-    /// 处理DataReadyEvent：依赖满足通知
-    fn handle_data_ready(&mut self, event: &DataReadyEvent) {
+    /// 处理NodeReadyEvent：依赖满足通知
+    fn handle_node_ready(&mut self, event: &NodeReadyEvent) {
         let node_name = &event.target_node_name;
 
         // 🚫 同名节点不能并发执行
@@ -272,20 +272,20 @@ impl Message<NodeExecutionEvent> for Coordinator {
     }
 }
 
-// 🔔 DataReadyEvent: DataBus -> Coordinator
-impl Message<DataReadyEvent> for Coordinator {
+// 🔔 NodeReadyEvent: DataBus -> Coordinator
+impl Message<NodeReadyEvent> for Coordinator {
     type Reply = ();
 
     async fn handle(
         &mut self,
-        event: DataReadyEvent,
+        event: NodeReadyEvent,
         _ctx: &mut Context<Self, Self::Reply>,
     ) -> Self::Reply {
         println!(
-            "🔔 Coordinator received DataReadyEvent for {}",
+            "🔔 Coordinator received NodeReadyEvent for {}",
             event.target_node_name
         );
-        self.handle_data_ready(&event);
+        self.handle_node_ready(&event);
     }
 }
 

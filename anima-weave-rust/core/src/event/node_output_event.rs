@@ -1,5 +1,7 @@
 use super::types::{EventMeta, PortRef};
-use crate::types::{ExecutionId, NodeName, NodeOutputs};
+use crate::types::{ExecutionId, NodeName};
+use crate::{SemanticLabel, SignalLabel};
+use std::collections::HashMap;
 
 /// 节点输出事件 - 数据传递
 ///
@@ -15,8 +17,10 @@ pub struct NodeOutputEvent {
     pub node_name: NodeName,
     /// 执行ID
     pub node_execute_id: ExecutionId,
-    /// 所有端口输出 (端口名 -> 输出值)
-    pub outputs: NodeOutputs,
+    /// 数据端口的输出 (端口 -> 输出值)
+    pub data_outputs: HashMap<PortRef, Box<dyn SemanticLabel>>,
+    /// 控制端口的输出 (端口 -> 信号值)
+    pub control_outputs: HashMap<PortRef, SignalLabel>,
 }
 
 impl NodeOutputEvent {
@@ -24,13 +28,15 @@ impl NodeOutputEvent {
     pub fn new(
         node_name: impl Into<NodeName>,
         node_execute_id: impl Into<ExecutionId>,
-        outputs: NodeOutputs,
+        data_outputs: HashMap<PortRef, Box<dyn SemanticLabel>>,
+        control_outputs: HashMap<PortRef, SignalLabel>,
     ) -> Self {
         Self {
             meta: EventMeta::new(),
             node_name: node_name.into(),
             node_execute_id: node_execute_id.into(),
-            outputs,
+            data_outputs,
+            control_outputs,
         }
     }
 
@@ -39,36 +45,38 @@ impl NodeOutputEvent {
         source: impl Into<String>,
         node_name: impl Into<NodeName>,
         node_execute_id: impl Into<ExecutionId>,
-        outputs: NodeOutputs,
+        data_outputs: HashMap<PortRef, Box<dyn SemanticLabel>>,
+        control_outputs: HashMap<PortRef, SignalLabel>,
     ) -> Self {
         Self {
             meta: EventMeta::with_source(source),
             node_name: node_name.into(),
             node_execute_id: node_execute_id.into(),
-            outputs,
+            data_outputs,
+            control_outputs,
         }
     }
 
     /// 创建空输出事件（用于测试或无输出节点）
     pub fn empty(node_name: impl Into<NodeName>, node_execute_id: impl Into<ExecutionId>) -> Self {
-        Self::new(node_name, node_execute_id, NodeOutputs::new())
+        Self::new(node_name, node_execute_id, HashMap::new(), HashMap::new())
     }
 
     /// 获取指定端口的输出数据
-    pub fn get_output(&self, port_name: &str) -> Option<&Box<dyn crate::SemanticLabel>> {
+    pub fn get_output(&self, port_name: &str) -> Option<&Box<dyn SemanticLabel>> {
         let port_ref = PortRef::new(&self.node_name, port_name);
-        self.outputs.get(&port_ref)
+        self.data_outputs.get(&port_ref)
     }
 
     /// 检查是否有指定端口的输出
     pub fn has_output(&self, port_name: &str) -> bool {
         let port_ref = PortRef::new(&self.node_name, port_name);
-        self.outputs.contains_key(&port_ref)
+        self.data_outputs.contains_key(&port_ref)
     }
 
     /// 获取所有输出端口名称
     pub fn output_port_names(&self) -> Vec<&str> {
-        self.outputs
+        self.data_outputs
             .keys()
             .map(|port_ref| port_ref.port_name.as_str())
             .collect()
@@ -86,11 +94,13 @@ mod tests {
 
     #[test]
     fn test_create_event() {
-        let outputs = NodeOutputs::new();
-        let event = NodeOutputEvent::new("test_node", "exec_1", outputs);
+        let data_outputs = HashMap::new();
+        let control_outputs = HashMap::new();
+        let event = NodeOutputEvent::new("test_node", "exec_1", data_outputs, control_outputs);
         assert_eq!(event.node_name, "test_node");
         assert_eq!(event.node_execute_id, "exec_1");
-        assert!(event.outputs.is_empty());
+        assert!(event.data_outputs.is_empty());
+        assert!(event.control_outputs.is_empty());
         assert!(!event.meta.event_id.is_empty());
     }
 }

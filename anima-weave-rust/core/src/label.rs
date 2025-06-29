@@ -45,6 +45,11 @@ pub type ConversionFn =
 /// 1. 静态分析：通过conversion_map()获取转换关系，用于验证图连接合法性
 /// 2. 运行时转换：通过try_convert_to()执行实际的类型转换
 pub trait SemanticLabel: Send + Sync + Debug + 'static {
+    /// 克隆trait object
+    ///
+    /// 这是在Rust中克隆trait object的标准方法
+    fn clone_box(&self) -> Box<dyn SemanticLabel>;
+
     /// 获取语义标签类型名称（关联函数）
     fn semantic_label_type() -> &'static str
     where
@@ -150,6 +155,10 @@ macro_rules! semantic_label {
         }
 
         impl $crate::SemanticLabel for $name {
+            fn clone_box(&self) -> Box<dyn $crate::SemanticLabel> {
+                Box::new(self.clone())
+            }
+
             fn semantic_label_type() -> &'static str where Self: Sized {
                 stringify!($name)
             }

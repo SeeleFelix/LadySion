@@ -25,8 +25,13 @@ pub type ExecutionId = String;
 
 /// 节点输入数据集合 - 目标节点输入端口到数据的映射
 ///
-/// 用于NodeExecuteEvent中传递给目标节点的输入数据
-pub type NodeInputs = HashMap<PortRef, Box<dyn SemanticLabel>>;
+/// 用于NodeExecuteEvent中传递给目标节点的数据输入
+pub type NodeDataInputs = HashMap<PortRef, Box<dyn SemanticLabel>>;
+
+/// 节点控制输入集合 - 目标节点控制端口到信号的映射
+///
+/// 用于NodeExecuteEvent中传递给目标节点的控制信号
+pub type NodeControlInputs = HashMap<PortRef, crate::SignalLabel>;
 
 /// 节点输出数据集合 - 目标节点输出端口到数据的映射
 ///
@@ -51,16 +56,29 @@ mod tests {
     }
 
     #[test]
-    fn test_node_inputs() {
-        let mut inputs: NodeInputs = HashMap::new();
-        // 目标节点的输入端口
-        let input_port1 = PortRef::new("target_node", "input1");
-        let input_port2 = PortRef::new("target_node", "input2");
+    fn test_node_data_inputs() {
+        let mut data_inputs: NodeDataInputs = HashMap::new();
+        // 目标节点的数据输入端口
+        let input_port1 = PortRef::new("target_node", "data_input1");
+        let input_port2 = PortRef::new("target_node", "data_input2");
 
-        inputs.insert(input_port1, Box::new(SignalLabel::active()));
-        inputs.insert(input_port2, Box::new(SignalLabel::inactive()));
+        data_inputs.insert(input_port1, Box::new(SignalLabel::active()));
+        data_inputs.insert(input_port2, Box::new(SignalLabel::inactive()));
 
-        assert_eq!(inputs.len(), 2);
+        assert_eq!(data_inputs.len(), 2);
+    }
+
+    #[test]
+    fn test_node_control_inputs() {
+        let mut control_inputs: NodeControlInputs = HashMap::new();
+        // 目标节点的控制输入端口
+        let control_port1 = PortRef::new("target_node", "control_input1");
+        let control_port2 = PortRef::new("target_node", "control_input2");
+
+        control_inputs.insert(control_port1, SignalLabel::active());
+        control_inputs.insert(control_port2, SignalLabel::inactive());
+
+        assert_eq!(control_inputs.len(), 2);
     }
 
     #[test]

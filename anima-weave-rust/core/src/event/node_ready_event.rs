@@ -1,5 +1,5 @@
 use super::types::{EventMeta, PortRef};
-use crate::types::{NodeDataInputs, NodeControlInputs, NodeName};
+use crate::types::{NodeControlInputs, NodeDataInputs, NodeName};
 
 /// 节点就绪事件 - 依赖满足通知
 ///
@@ -22,7 +22,7 @@ pub struct NodeReadyEvent {
 impl NodeReadyEvent {
     /// 创建新的节点就绪事件
     pub fn new(
-        target_node_name: impl Into<NodeName>, 
+        target_node_name: impl Into<NodeName>,
         data_inputs: NodeDataInputs,
         control_inputs: NodeControlInputs,
     ) -> Self {
@@ -95,4 +95,3 @@ mod tests {
         assert!(!event.meta.event_id.is_empty());
     }
 }
-
