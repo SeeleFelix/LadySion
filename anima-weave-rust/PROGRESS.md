@@ -9,7 +9,7 @@ graph TB
         WeaveFile["📝 .weave 文件<br/>用户手写图结构定义"]
         AnimaFile["🏭 .anima 文件<br/>Java生成节点类型定义"]
     end
-    
+
     %% DSL解析层 (未实现)
     subgraph "🔤 DSL解析层 [TODO]"
         WeaveParser["WeaveParser<br/>解析.weave → AST<br/>❌ 待实现"]
@@ -32,7 +32,7 @@ graph TB
         PromptLabelImpl["PromptLabel<br/>✅ 提示 → String转换"]
         SignalLabelImpl["SignalLabel<br/>✅ 信号控制类型"]
     end
-    
+
     %% Actor运行时层 (部分完成)
     subgraph "🎭 Kameo Actor运行时 [🔄 进行中]"
         CoordActor["🎯 Coordinator [✅ 已完成]<br/>· lookup事件传递机制<br/>· 事件驱动自动调度<br/>· 并发控制 (同名节点防冲突)<br/>· spawn_for_graph() 启动<br/>· ExecutionStatus统计"]
@@ -46,7 +46,7 @@ graph TB
             CustomActor["⚡ CustomActor<br/>❌ 用户自定义"]
         end
     end
-    
+
     %% 事件驱动执行流程 (架构已确定)
     subgraph "📡 事件驱动执行流程 [🔄 架构已确定]"
         EventFlow1["1️⃣ spawn_for_graph()<br/>✅ 启动Coordinator"]
@@ -56,7 +56,7 @@ graph TB
         EventFlow5["5️⃣ NodeActor执行完成<br/>🔄 发送三种输出事件"]
         EventFlow6["6️⃣ 自动循环检查<br/>🔄 持续至图执行完成"]
     end
-    
+
     %% 连接关系 - 构建阶段
     WeaveFile -.->|"待实现"| WeaveParser
     AnimaFile -.->|"待实现"| AnimaLoader

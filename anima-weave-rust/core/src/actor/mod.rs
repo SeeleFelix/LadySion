@@ -8,7 +8,7 @@
 //! 这些trait定义了清晰的职责边界和接口契约
 
 pub mod coordinator;
-pub mod datastore;
+pub mod databus;
 pub mod errors;
 pub mod node;
 pub mod types;
