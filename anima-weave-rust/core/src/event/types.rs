@@ -1,6 +1,7 @@
 use crate::types::{NodeName, PortName};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::SystemTime;
+use serde::{Deserialize, Serialize};
 
 /// 全局事件计数器，用于生成唯一的事件ID
 static EVENT_COUNTER: AtomicU64 = AtomicU64::new(1);
@@ -73,7 +74,7 @@ impl PortRef {
 }
 
 /// 节点执行状态
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum NodeStatus {
     /// 等待执行
     Pending,
@@ -83,6 +84,12 @@ pub enum NodeStatus {
     Completed,
     /// 执行失败
     Failed(String),
+}
+
+impl NodeStatus {
+    pub fn is_success(&self) -> bool {
+        matches!(self, NodeStatus::Completed)
+    }
 }
 
 #[cfg(test)]

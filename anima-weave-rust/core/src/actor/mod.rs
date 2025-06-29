@@ -10,12 +10,16 @@
 pub mod coordinator;
 pub mod databus;
 pub mod errors;
+pub mod execution_tracker;
 pub mod node;
+pub mod registry;
 pub mod types;
 
 // 导出核心抽象trait
 pub use coordinator::Coordinator;
+pub use execution_tracker::ExecutionTracker;
 pub use node::NodeExecutor;
+pub use registry::NodeRegistry;
 
 // 导出类型定义
 pub use errors::{CoordinatorError, DataStoreError, NodeExecutionError};

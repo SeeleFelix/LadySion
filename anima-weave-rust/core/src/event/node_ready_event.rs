@@ -80,6 +80,22 @@ impl NodeReadyEvent {
     }
 }
 
+impl Clone for NodeReadyEvent {
+    fn clone(&self) -> Self {
+        let mut new_data_inputs = NodeDataInputs::new();
+        for (key, val) in &self.data_inputs {
+            new_data_inputs.insert(key.clone(), val.clone_box());
+        }
+
+        Self {
+            meta: self.meta.clone(),
+            target_node_name: self.target_node_name.clone(),
+            data_inputs: new_data_inputs,
+            control_inputs: self.control_inputs.clone(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

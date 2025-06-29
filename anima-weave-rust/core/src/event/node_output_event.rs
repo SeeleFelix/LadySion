@@ -2,7 +2,6 @@ use super::types::{EventMeta, PortRef};
 use crate::types::{ExecutionId, NodeName};
 use crate::{NodeDataOutputs, NodeControlOutputs};
 use crate::SemanticLabel;
-use std::collections::HashMap;
 
 /// 节点输出事件 - 数据传递
 ///
