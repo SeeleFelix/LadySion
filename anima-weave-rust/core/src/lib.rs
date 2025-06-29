@@ -7,7 +7,7 @@ pub mod state;
 pub mod types;
 
 // 导出系统级别类型别名
-pub use types::{ExecutionId, NodeControlInputs, NodeDataInputs, NodeName, NodeOutputs, PortName};
+pub use types::{ExecutionId, NodeControlInputs, NodeDataInputs, NodeDataOutputs, NodeControlOutputs, NodeName, PortName};
 
 // 明确导出，避免namespace冲突
 pub use event::{

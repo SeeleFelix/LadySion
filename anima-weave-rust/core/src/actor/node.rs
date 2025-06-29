@@ -9,7 +9,7 @@
 //! - 职责单一：只管业务逻辑执行，不管验证、监控、配置等
 //! - 接口简单：只有2个核心方法，外部容易使用和测试
 
-use crate::{actor::NodeExecutionError, NodeControlInputs, NodeDataInputs, NodeOutputs};
+use crate::{actor::NodeExecutionError, NodeControlInputs, NodeDataInputs, NodeDataOutputs, NodeControlOutputs};
 use async_trait::async_trait;
 
 /// NodeExecutor 核心接口
@@ -46,14 +46,15 @@ use async_trait::async_trait;
 /// ```rust
 /// use anima_weave_core::actor::{NodeExecutor, NodeExecutionError};
 /// use anima_weave_core::actor::node::{NodeInfo, PortDef};
-/// use anima_weave_core::{NodeDataInputs, NodeControlInputs, NodeOutputs, PortRef, SignalLabel};
+/// use anima_weave_core::{NodeDataInputs, NodeControlInputs, NodeDataOutputs, NodeControlOutputs, PortRef, SignalLabel};
+/// use std::collections::HashMap;
 /// use async_trait::async_trait;
 ///
 /// struct EchoNode;
 ///
 /// #[async_trait]
 /// impl NodeExecutor for EchoNode {
-///     async fn execute(&self, data_inputs: NodeDataInputs, control_inputs: NodeControlInputs) -> Result<NodeOutputs, NodeExecutionError> {
+///     async fn execute(&self, data_inputs: NodeDataInputs, control_inputs: NodeControlInputs) -> Result<(NodeDataOutputs, NodeControlOutputs), NodeExecutionError> {
 ///         let input_port = PortRef::new("echo_node", "input");
 ///         let output_port = PortRef::new("echo_node", "output");
 ///         
@@ -61,9 +62,10 @@ use async_trait::async_trait;
 ///             .ok_or_else(|| NodeExecutionError::input_error("input", "missing required input"))?;
 ///         
 ///         // 纯业务逻辑：简单的回显（创建新的SignalLabel）
-///         let mut outputs = NodeOutputs::new();
-///         outputs.insert(output_port, Box::new(SignalLabel::active()));
-///         Ok(outputs)
+///         let mut data_outputs: NodeDataOutputs = HashMap::new();
+///         let control_outputs: NodeControlOutputs = HashMap::new();
+///         data_outputs.insert(output_port, Box::new(SignalLabel::active()));
+///         Ok((data_outputs, control_outputs))
 ///     }
 ///
 ///     fn get_node_info(&self) -> &NodeInfo {
@@ -117,7 +119,7 @@ pub trait NodeExecutor: Send + Sync {
         &self,
         data_inputs: NodeDataInputs,
         control_inputs: NodeControlInputs,
-    ) -> Result<NodeOutputs, NodeExecutionError>;
+    ) -> Result<(NodeDataOutputs, NodeControlOutputs), NodeExecutionError>;
 
     /// 获取节点元信息
     ///

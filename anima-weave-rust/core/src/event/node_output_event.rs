@@ -1,6 +1,7 @@
 use super::types::{EventMeta, PortRef};
 use crate::types::{ExecutionId, NodeName};
-use crate::{SemanticLabel, SignalLabel};
+use crate::{NodeDataOutputs, NodeControlOutputs};
+use crate::SemanticLabel;
 use std::collections::HashMap;
 
 /// 节点输出事件 - 数据传递
@@ -18,9 +19,9 @@ pub struct NodeOutputEvent {
     /// 执行ID
     pub node_execute_id: ExecutionId,
     /// 数据端口的输出 (端口 -> 输出值)
-    pub data_outputs: HashMap<PortRef, Box<dyn SemanticLabel>>,
+    pub data_outputs: NodeDataOutputs,
     /// 控制端口的输出 (端口 -> 信号值)
-    pub control_outputs: HashMap<PortRef, SignalLabel>,
+    pub control_outputs: NodeControlOutputs,
 }
 
 impl NodeOutputEvent {
@@ -28,8 +29,8 @@ impl NodeOutputEvent {
     pub fn new(
         node_name: impl Into<NodeName>,
         node_execute_id: impl Into<ExecutionId>,
-        data_outputs: HashMap<PortRef, Box<dyn SemanticLabel>>,
-        control_outputs: HashMap<PortRef, SignalLabel>,
+        data_outputs: NodeDataOutputs,
+        control_outputs: NodeControlOutputs,
     ) -> Self {
         Self {
             meta: EventMeta::new(),
@@ -45,8 +46,8 @@ impl NodeOutputEvent {
         source: impl Into<String>,
         node_name: impl Into<NodeName>,
         node_execute_id: impl Into<ExecutionId>,
-        data_outputs: HashMap<PortRef, Box<dyn SemanticLabel>>,
-        control_outputs: HashMap<PortRef, SignalLabel>,
+        data_outputs: NodeDataOutputs,
+        control_outputs: NodeControlOutputs,
     ) -> Self {
         Self {
             meta: EventMeta::with_source(source),
@@ -59,7 +60,7 @@ impl NodeOutputEvent {
 
     /// 创建空输出事件（用于测试或无输出节点）
     pub fn empty(node_name: impl Into<NodeName>, node_execute_id: impl Into<ExecutionId>) -> Self {
-        Self::new(node_name, node_execute_id, HashMap::new(), HashMap::new())
+        Self::new(node_name, node_execute_id, NodeDataOutputs::new(), NodeControlOutputs::new())
     }
 
     /// 获取指定端口的输出数据
@@ -94,8 +95,8 @@ mod tests {
 
     #[test]
     fn test_create_event() {
-        let data_outputs = HashMap::new();
-        let control_outputs = HashMap::new();
+        let data_outputs = NodeDataOutputs::new();
+        let control_outputs = NodeControlOutputs::new();
         let event = NodeOutputEvent::new("test_node", "exec_1", data_outputs, control_outputs);
         assert_eq!(event.node_name, "test_node");
         assert_eq!(event.node_execute_id, "exec_1");

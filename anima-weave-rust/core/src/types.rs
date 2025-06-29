@@ -34,9 +34,11 @@ pub type NodeDataInputs = HashMap<PortRef, Box<dyn SemanticLabel>>;
 pub type NodeControlInputs = HashMap<PortRef, crate::SignalLabel>;
 
 /// 节点输出数据集合 - 目标节点输出端口到数据的映射
-///
-/// 用于NodeOutputEvent中从目标节点返回的输出数据
-pub type NodeOutputs = HashMap<PortRef, Box<dyn SemanticLabel>>;
+/// 数据输出集合 - 数据端口到数据的映射
+pub type NodeDataOutputs = HashMap<PortRef, Box<dyn SemanticLabel>>;
+
+/// 控制输出集合 - 控制端口到信号的映射
+pub type NodeControlOutputs = HashMap<PortRef, crate::SignalLabel>;
 
 #[cfg(test)]
 mod tests {
@@ -83,7 +85,7 @@ mod tests {
 
     #[test]
     fn test_node_outputs() {
-        let mut outputs: NodeOutputs = HashMap::new();
+        let mut outputs: NodeDataOutputs = HashMap::new();
         // 目标节点的输出端口
         let output_port = PortRef::new("target_node", "output");
         outputs.insert(output_port, Box::new(SignalLabel::active()));
