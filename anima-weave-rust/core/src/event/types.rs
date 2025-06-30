@@ -56,7 +56,7 @@ impl Default for EventMeta {
 }
 
 /// 端口引用 - 标识图中的特定端口
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct PortRef {
     /// 节点名称（图中唯一标识）
     pub node_name: String,

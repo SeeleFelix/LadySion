@@ -31,12 +31,11 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
- "erased-serde",
  "kameo",
  "serde",
- "serde_json",
  "thiserror 1.0.69",
  "tokio",
+ "uuid",
 ]
 
 [[package]]
@@ -55,6 +54,11 @@ name = "anima-weave-runtime"
 version = "0.1.0"
 dependencies = [
  "anima-weave-core",
+ "anima-weave-vessels",
+ "anyhow",
+ "kameo",
+ "tokio",
+ "uuid",
 ]
 
 [[package]]
@@ -62,9 +66,10 @@ name = "anima-weave-vessels"
 version = "0.1.0"
 dependencies = [
  "anima-weave-core",
+ "async-trait",
+ "kameo",
  "serde",
  "serde_json",
- "tokio",
 ]
 
 [[package]]
@@ -178,16 +183,6 @@ name = "dyn-clone"
 version = "1.0.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1c7a8fb8a9fbf66c1f703fe16184d10ca0ee9d23be5b4436400408ba54a95005"
-
-[[package]]
-name = "erased-serde"
-version = "0.4.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e004d887f51fcb9fef17317a2f3525c887d8aa3f4f50fed920816a688284a5b7"
-dependencies = [
- "serde",
- "typeid",
-]
 
 [[package]]
 name = "futures"
@@ -743,12 +738,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "typeid"
-version = "1.0.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc7d623258602320d5c55d1bc22793b57daff0ec7efc270ea7d55ce1d5f5471c"
-
-[[package]]
 name = "typenum"
 version = "1.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -774,6 +763,7 @@ checksum = "3cf4199d1e5d15ddd86a694e4d0dffa9c323ce759fea589f00fef9d81cc1931d"
 dependencies = [
  "getrandom",
  "js-sys",
+ "serde",
  "wasm-bindgen",
 ]
 

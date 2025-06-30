@@ -5,3 +5,12 @@ edition = "2021"
 
 [dependencies]
 anima-weave-core = { path = "../core" }
+anima-weave-vessels = { path = "../vessels" }
+kameo = { version = "0.17", features = ["macros"] }
+tokio = { version = "1.0", features = ["full"] }
+anyhow = "1.0"
+uuid = { version = "1.0", features = ["v4"] }
+
+[[bin]]
+name = "anima-weave-runtime"
+path = "src/lib.rs"

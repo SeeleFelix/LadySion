@@ -12,6 +12,7 @@ pub mod databus;
 pub mod errors;
 pub mod execution_tracker;
 pub mod node;
+pub mod node_actor;
 pub mod registry;
 pub mod types;
 
@@ -19,6 +20,7 @@ pub mod types;
 pub use coordinator::Coordinator;
 pub use execution_tracker::ExecutionTracker;
 pub use node::NodeExecutor;
+pub use node_actor::NodeActor;
 pub use registry::NodeRegistry;
 
 // 导出类型定义

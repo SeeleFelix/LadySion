@@ -1,8 +1,17 @@
 pub mod labels;
 pub mod nodes;
+pub mod start_node;
+pub mod math_node;
 
-pub use labels::{NumberLabel, PromptLabel, StringLabel};
+pub use labels::{
+    number_label::NumberLabel,
+    string_label::StringLabel,
+    prompt_label::PromptLabel,
+};
+
 pub use nodes::*;
+pub use start_node::StartNode;
+pub use math_node::MathNode;
 
 #[cfg(test)]
 mod integration_tests {
