@@ -7,6 +7,7 @@ use kameo::prelude::*;
 use std::collections::HashMap;
 use std::fmt;
 use std::sync::Arc;
+use log;
 
 pub struct DataBus {
     store: DataStore,
@@ -48,6 +49,7 @@ impl DataBus {
         &self,
         node_name: &NodeName,
     ) -> Option<(NodeDataInputs, NodeControlInputs)> {
+        log::debug!("(DataBus) Checking readiness for node: {}", node_name);
         // 获取所有上游数据连接和控制连接
         let data_conns = self.graph.get_data_input_connections(node_name);
         let control_conns = self.graph.get_control_input_connections(node_name);
@@ -65,6 +67,7 @@ impl DataBus {
         // 2. 控制依赖检查：计算控制信号聚合结果
         let control_inputs = self.compute_control_signals(node_name, &control_conns)?;
 
+        log::info!("(DataBus) Node '{}' is ready.", node_name);
         Some((data_inputs, control_inputs))
     }
 
@@ -200,22 +203,19 @@ impl DataBus {
     async fn process_ready(&mut self, source_node: &NodeName) {
         // 流式处理所有依赖节点
         for node_name in self.graph.get_node_dependents(source_node) {
+            log::debug!("(DataBus) Processing dependent: {}", &node_name);
             if let Some((data_inputs, control_inputs)) = self.prepare_if_ready(&node_name) {
-                println!(
-                    "✅ Node {} is ready, sending NodeReadyEvent to coordinator.",
-                    &node_name
-                );
-
                 // 消费控制状态 - 获取控制连接的源端口
                 let control_conns = self.graph.get_control_input_connections(&node_name);
                 let controls_to_consume: Vec<PortRef> = control_conns
                     .iter()
-                    .map(|conn| PortRef::new(&conn.from_port.node_name, &conn.from_port.port_name))
+                    .map(|conn| conn.from_port.to_port_ref())
                     .collect();
                 self.store.consume_control_states(&controls_to_consume);
 
                 let ready_event =
                     NodeReadyEvent::new(node_name.clone(), data_inputs, control_inputs);
+                log::info!("(DataBus) Sending NodeReadyEvent for '{}' to Coordinator.", &node_name);
                 self.coordinator
                     .tell(ready_event)
                     .await
@@ -252,9 +252,11 @@ impl Message<NodeOutputEvent> for DataBus {
         event: NodeOutputEvent,
         _ctx: &mut Context<Self, Self::Reply>,
     ) -> Self::Reply {
+        log::info!("(DataBus) Received NodeOutputEvent from '{}'", &event.node_name);
         let source_node_name = event.node_name.clone();
+        // 1. 记录事件数据
         self.record_event(event);
-        println!("📦 DataBus recorded outputs for node: {}", source_node_name);
+        // 2. 检查并处理所有依赖该节点的下游节点
         self.process_ready(&source_node_name).await;
     }
 }

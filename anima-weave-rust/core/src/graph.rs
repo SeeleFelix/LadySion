@@ -21,6 +21,16 @@ pub struct Port {
     pub activation_mode: ActivationMode,
 }
 
+impl Port {
+    /// Converts this Port into a PortRef.
+    pub fn to_port_ref(&self) -> PortRef {
+        PortRef {
+            node_name: self.node_name.clone(),
+            port_name: self.port_name.clone(),
+        }
+    }
+}
+
 /// 连接关系
 #[derive(Debug, Clone)]
 pub struct Connection {
@@ -47,16 +57,21 @@ pub struct Graph {
 /// =========================
 /// Graph查询接口
 /// =========================
-use crate::{NodeName, PortName, PortRef};
+use crate::types::{NodeName, PortName, PortRef};
+use async_trait::async_trait;
 
 /// Graph查询接口
 ///
 /// 提供图结构的查询能力，让Coordinator等组件可以获取图信息
 /// 而不需要直接访问Graph的内部数据结构
+#[async_trait]
 pub trait GraphQuery: Send + Sync {
     /// =========================
     /// 节点查询
     /// =========================
+
+    /// 获取图中所有节点
+    fn get_nodes(&self) -> Vec<Node>;
 
     /// 获取指定节点所有数据输入连接
     /// 返回所有从上游节点到当前节点的数据流连接

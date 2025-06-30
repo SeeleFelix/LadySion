@@ -2,7 +2,7 @@
 //!
 //! 这里集中管理所有跨模块使用的类型别名，让代码更清晰易懂
 
-use crate::event::types::PortRef;
+pub use crate::event::types::PortRef;
 use crate::SemanticLabel;
 use std::collections::HashMap;
 

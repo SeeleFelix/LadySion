@@ -2,20 +2,25 @@
 //!
 //! 验证 StartNode ➜ MathNode 的完整事件流。
 
+use crate::launcher::{GraphLauncher, NodeFactory};
 use anima_weave_core::{
     actor::{
         coordinator::Coordinator,
         databus::actor::DataBus,
         node::NodeExecutor,
         node_actor::NodeActor,
+        registry::NodeRegistry,
     },
     event::{NodeExecuteEvent, NodeExecutionEvent, NodeOutputEvent, NodeReadyEvent},
     graph::{ActivationMode, Connection, ConcurrentMode, Graph, Node, Port},
     in_memory_graph::InMemoryGraph,
+    types::{NodeName, PortName},
 };
-use anima_weave_vessels::{math_node::MathNode, start_node::StartNode};
+use anima_weave_vessels::{
+    create_node_factory, math_node::MathNode, start_node::StartNode,
+};
 use kameo::prelude::*;
-use std::{sync::Arc, time::Duration};
+use std::{collections::HashMap, sync::Arc, time::Duration};
 use uuid::Uuid;
 
 /// 创建简单图：`start` (输出 value) ➜ `math` (输入 number)
@@ -53,49 +58,69 @@ fn create_graph() -> Arc<InMemoryGraph> {
     }];
 
     // 构造图
-    let graph = Graph {
+    let graph_def = Graph {
         nodes,
         data_connections,
         control_connections: vec![],
     };
-    Arc::new(InMemoryGraph::new(graph))
+    Arc::new(InMemoryGraph::new(graph_def))
 }
 
+/// Test the full flow from a start node to a math node.
+/// The graph is defined as:
+///
+/// [StartNode] --data--> [MathNode]
+///
 #[tokio::test]
-async fn start_to_math_integration() {
-    let graph = create_graph();
+async fn test_start_to_math_flow() {
+    // Setup logging
+    let _ = env_logger::try_init();
 
-    // Coordinator
-    let coordinator_ref = Coordinator::spawn(Coordinator::new());
-    let exec_recipient = coordinator_ref.clone().recipient::<NodeExecutionEvent>();
-    let ready_recipient = coordinator_ref.recipient::<NodeReadyEvent>();
+    // 1. Define the graph
+    let graph_def = Graph {
+        nodes: vec![
+            Node {
+                node_name: "start".to_string(),
+                node_type: "StartNode".to_string(),
+                concurrent_mode: ConcurrentMode::Sequential,
+            },
+            Node {
+                node_name: "math".to_string(),
+                node_type: "MathNode".to_string(),
+                concurrent_mode: ConcurrentMode::Sequential,
+            },
+        ],
+        data_connections: vec![Connection {
+            from_port: Port {
+                node_name: "start".to_string(),
+                port_name: "output".to_string(),
+                activation_mode: ActivationMode::And,
+            },
+            to_port: Port {
+                node_name: "math".to_string(),
+                port_name: "a".to_string(),
+                activation_mode: ActivationMode::And,
+            },
+        }],
+        control_connections: vec![],
+    };
 
-    // DataBus
-    let databus_ref = DataBus::spawn((graph.clone(), ready_recipient));
-    let databus_recipient = databus_ref.recipient::<NodeOutputEvent>();
+    let graph = Arc::new(InMemoryGraph::new(graph_def));
 
-    // NodeActors
-    let start_node: Arc<dyn NodeExecutor> = Arc::new(StartNode::new(5.0));
-    let start_ref = NodeActor::spawn((
-        "start".into(),
-        start_node,
-        databus_recipient.clone(),
-        exec_recipient.clone(),
-    ));
+    // 2. Create the launcher
+    let mut launcher = GraphLauncher::new(graph, create_node_factory());
 
-    let math_node: Arc<dyn NodeExecutor> = Arc::new(MathNode::new(3.0));
-    let math_ref = NodeActor::spawn((
-        "math".into(),
-        math_node,
-        databus_recipient,
-        exec_recipient,
-    ));
+    // 3. Setup the actor system
+    if let Err(e) = launcher.setup().await {
+        panic!("Failed to setup launcher: {}", e);
+    }
 
-    // 触发 start
-    let exec_id = Uuid::new_v4().to_string();
-    let execute_event = NodeExecuteEvent::empty("start", exec_id);
-    start_ref.tell(execute_event).await.unwrap();
+    // 4. Start the graph execution
+    launcher.launch_and_wait("start").await;
 
-    // 简单等待数据流完成（后续可用更可靠方式替换）
-    tokio::time::sleep(Duration::from_millis(200)).await;
+    // 5. Wait for events to propagate
+    tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+
+    // Manually check the logs for now.
+    // We expect to see the StartNode outputting, and the MathNode executing and outputting.
 } 

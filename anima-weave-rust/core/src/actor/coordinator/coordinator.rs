@@ -11,6 +11,8 @@ use std::collections::HashSet;
 use std::time::SystemTime;
 use crate::actor::registry::NodeRegistry;
 use crate::actor::execution_tracker::ExecutionTracker;
+use log;
+use std::sync::Arc;
 
 /// 执行状态信息
 ///
@@ -87,8 +89,8 @@ pub struct Coordinator {
     last_activity: Option<SystemTime>,
     /// 当前错误
     current_error: Option<String>,
-    /// NodeActor 注册表
-    node_registry: NodeRegistry,
+    /// NodeActor 注册表（共享）
+    node_registry: Arc<NodeRegistry>,
     /// 执行追踪器
     tracker: ExecutionTracker,
 }
@@ -107,7 +109,20 @@ impl Coordinator {
             failed_executions: 0,
             last_activity: None,
             current_error: None,
-            node_registry: NodeRegistry::new(),
+            node_registry: Arc::new(NodeRegistry::new()),
+            tracker: ExecutionTracker::new(),
+        }
+    }
+
+    /// 创建一个使用外部共享 `NodeRegistry` 的 Coordinator
+    pub fn with_registry(registry: Arc<NodeRegistry>) -> Self {
+        Self {
+            total_executions: 0,
+            successful_executions: 0,
+            failed_executions: 0,
+            last_activity: None,
+            current_error: None,
+            node_registry: registry,
             tracker: ExecutionTracker::new(),
         }
     }
@@ -161,8 +176,8 @@ impl Coordinator {
         self.total_executions += 1;
         self.last_activity = Some(SystemTime::now());
 
-        println!(
-            "▶️ Executing node {} (execution {})",
+        log::info!(
+            "(Coordinator) Executing node {} (execution {})",
             node_name, event.node_execute_id
         );
 
@@ -233,6 +248,7 @@ impl Message<NodeExecutionEvent> for Coordinator {
         event: NodeExecutionEvent,
         _ctx: &mut Context<Self, Self::Reply>,
     ) -> Self::Reply {
+        log::debug!("(Coordinator) Received NodeExecutionEvent: {:?}", event);
         match event.status {
             crate::event::types::NodeStatus::Completed => {
                 self.handle_node_completion(&event);
@@ -260,8 +276,8 @@ impl Message<NodeReadyEvent> for Coordinator {
         event: NodeReadyEvent,
         _ctx: &mut Context<Self, Self::Reply>,
     ) -> Self::Reply {
-        println!(
-            "🔔 Coordinator received NodeReadyEvent for {}",
+        log::info!(
+            "(Coordinator) Received NodeReadyEvent for {}",
             event.target_node_name
         );
         self.on_node_ready(event);

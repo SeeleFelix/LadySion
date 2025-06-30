@@ -4,16 +4,20 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-kameo = { version = "0.17", features = ["macros"] }
-anyhow = "1.0"
+kameo = "0.17.2"
+tokio = { version = "1.38.0", features = ["full"] }
+uuid = { version = "1.8.0", features = ["v4"] }
 serde = { version = "1.0", features = ["derive"] }
-uuid = { version = "1.0", features = ["serde", "v4"] }
-async-trait = "0.1"
+async-trait = "0.1.80"
+log = "0.4"
+anyhow = "1.0.86"
 thiserror = "1.0"
-tokio = { version = "1.0", features = ["full"] }
 
 # Core类型和数据结构
 # - SemanticLabel: 语义标签系统
 # - AnimaEvent: 数据事件vs控制事件 (实现kameo::Message)
 # - Graph: 图定义和验证
 # - Omega: 全局执行状态 
+
+[dev-dependencies]
+env_logger = "0.11.3" 

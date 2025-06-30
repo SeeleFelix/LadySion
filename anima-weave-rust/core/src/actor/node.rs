@@ -86,7 +86,7 @@ use async_trait::async_trait;
 /// }
 /// ```
 #[async_trait]
-pub trait NodeExecutor: Send + Sync {
+pub trait NodeExecutor: Send + Sync + 'static {
     /// 执行节点业务逻辑
     ///
     /// 这是NodeExecutor的唯一核心方法，实现 inputs → process → outputs 的转换。

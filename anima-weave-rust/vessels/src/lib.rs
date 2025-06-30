@@ -13,10 +13,30 @@ pub use nodes::*;
 pub use start_node::StartNode;
 pub use math_node::MathNode;
 
+use anima_weave_core::{SemanticLabel, SignalLabel};
+use std::collections::HashMap;
+use std::sync::Arc;
+use anima_weave_core::actor::node::NodeExecutor;
+
+pub type NodeFactory =
+    HashMap<&'static str, Box<dyn Fn() -> Arc<dyn NodeExecutor> + Send + Sync>>;
+
+pub fn create_node_factory() -> NodeFactory {
+    let mut factory: NodeFactory = HashMap::new();
+    factory.insert(
+        "StartNode",
+        Box::new(|| Arc::new(StartNode::new(5.0))),
+    );
+    factory.insert(
+        "MathNode",
+        Box::new(|| Arc::new(MathNode::new(3.0))),
+    );
+    factory
+}
+
 #[cfg(test)]
 mod integration_tests {
     use super::*;
-    use anima_weave_core::{SemanticLabel, SignalLabel};
 
     #[test]
     fn test_cross_package_type_consistency() {

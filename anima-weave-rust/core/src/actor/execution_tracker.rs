@@ -35,7 +35,7 @@ pub struct NodeExecutionRecord {
 }
 
 /// 核心的 ExecutionTracker 结构
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct ExecutionTracker {
     /// 所有执行记录的存储，以 ExecutionId 为主键
     records: HashMap<ExecutionId, NodeExecutionRecord>,

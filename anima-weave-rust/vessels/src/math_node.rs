@@ -11,6 +11,8 @@ use anima_weave_core::{
 use crate::NumberLabel;
 use async_trait::async_trait;
 use std::collections::HashMap;
+use std::sync::Arc;
+use log;
 
 /// MathNode - 执行加法运算的节点
 pub struct MathNode {
@@ -32,32 +34,24 @@ impl NodeExecutor for MathNode {
         data_inputs: NodeDataInputs,
         _control_inputs: NodeControlInputs,
     ) -> Result<(NodeDataOutputs, NodeControlOutputs), NodeExecutionError> {
-        // 获取输入值
-        let input_port = PortRef::new("math", "input");
-        let input_data = data_inputs.get(&input_port)
-            .ok_or_else(|| NodeExecutionError::input_error("input", "missing required input"))?;
+        log::info!("(MathNode) Executing...");
+        let a = data_inputs
+            .get(&PortRef::new("math", "a"))
+            .and_then(|label| label.as_any().downcast_ref::<NumberLabel>())
+            .map(|n| n.value)
+            .ok_or_else(|| NodeExecutionError::InputError {
+                port_name: "a".to_string(),
+                reason: "Input 'a' is missing or not a NumberLabel".to_string(),
+            })?;
 
-        // 尝试转换为NumberLabel
-        let input_number = input_data.as_any()
-            .downcast_ref::<NumberLabel>()
-            .ok_or_else(|| NodeExecutionError::input_error("input", "expected NumberLabel"))?;
+        let result = a + self.add_value;
+        log::info!("(MathNode) Calculation result: {}", result);
 
-        // 执行加法运算
-        let result = input_number.value + self.add_value;
-
-        // 生成输出
         let mut data_outputs = NodeDataOutputs::new();
+        data_outputs.insert(PortRef::new("math", "result"), Box::new(NumberLabel { value: result }));
+
         let mut control_outputs = NodeControlOutputs::new();
-
-        let output_port = PortRef::new("math", "result");
-        let result_value = NumberLabel { value: result };
-        data_outputs.insert(output_port, Box::new(result_value));
-
-        // 生成完成信号
-        let signal_port = PortRef::new("math", "done");
-        control_outputs.insert(signal_port, SignalLabel::active());
-
-        println!("🔢 MathNode: {} + {} = {}", input_number.value, self.add_value, result);
+        control_outputs.insert(PortRef::new("math", "done"), SignalLabel::active());
 
         Ok((data_outputs, control_outputs))
     }
@@ -69,7 +63,7 @@ impl NodeExecutor for MathNode {
             NodeInfo::new(
                 "MathNode",
                 vec![
-                    PortDef::required("input", "NumberLabel"),
+                    PortDef::required("a", "NumberLabel"),
                 ],
                 vec![
                     PortDef::output("result", "NumberLabel"),

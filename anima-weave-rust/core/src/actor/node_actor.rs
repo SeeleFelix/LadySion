@@ -8,6 +8,7 @@ use crate::error_handling::{AnimaWeaveError, BusinessError, CommunicationError, 
 use kameo::prelude::*;
 use kameo::error::Infallible;
 use std::sync::Arc;
+use crate::actor::registry::NodeRegistry;
 
 /// NodeActor - 将NodeExecutor包装为Kameo Actor
 pub struct NodeActor {
@@ -130,5 +131,25 @@ impl NodeActor {
             }),
             context.clone(),
         )
+    }
+
+    /// 启动NodeActor并注册到Registry，若重名panic
+    pub fn spawn_and_register(
+        node_name: String,
+        executor: Arc<dyn NodeExecutor>,
+        databus: Recipient<NodeOutputEvent>,
+        coordinator: Recipient<NodeExecutionEvent>,
+        registry: Arc<NodeRegistry>,
+    ) -> ActorRef<Self> {
+        let actor_ref = Self::spawn((
+            node_name.clone(),
+            executor,
+            databus,
+            coordinator,
+        ));
+        // 注册到Registry，若重名panic
+        registry.register(node_name, actor_ref.clone().recipient::<NodeExecuteEvent>())
+            .expect("Node name already registered in registry");
+        actor_ref
     }
 } 
