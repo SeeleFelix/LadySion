@@ -47,6 +47,7 @@ docs/
 | 后端架构         | 服务端架构设计和组件结构       | [backend.md](architecture/backend.md)                                   |
 | 前端架构         | 客户端架构和组件设计           | [frontend.md](architecture/frontend.md)                                 |
 | AnimaWeave全景类图 | AnimaWeave系统完整类图和组件关系 | [animaweave-class-diagram.md](architecture/animaweave-class-diagram.md) |
+| AnimaWeave核心流程 | 事件驱动核心工作流程图 | [system-flow.md](architecture/system-flow.md) |
 
 ## 🎨 设计层文档 (Design)
 

@@ -4,10 +4,8 @@
 
 use crate::actor::errors::CoordinatorError;
 use crate::event::{NodeExecutionEvent, NodeReadyEvent, NodeExecuteEvent};
-use crate::types::NodeName;
 use kameo::message::Context;
 use kameo::{actor::ActorRef, message::Message, Actor};
-use std::collections::HashSet;
 use std::time::SystemTime;
 use crate::actor::registry::NodeRegistry;
 use crate::actor::execution_tracker::ExecutionTracker;

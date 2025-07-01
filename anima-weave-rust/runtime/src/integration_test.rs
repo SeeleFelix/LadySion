@@ -2,26 +2,13 @@
 //!
 //! 验证 StartNode ➜ MathNode 的完整事件流。
 
-use crate::launcher::{GraphLauncher, NodeFactory};
+use crate::launcher::GraphLauncher;
 use anima_weave_core::{
-    actor::{
-        coordinator::Coordinator,
-        databus::actor::DataBus,
-        node::NodeExecutor,
-        node_actor::NodeActor,
-        registry::NodeRegistry,
-    },
-    event::{NodeExecuteEvent, NodeExecutionEvent, NodeOutputEvent, NodeReadyEvent},
     graph::{ActivationMode, Connection, ConcurrentMode, Graph, Node, Port},
     in_memory_graph::InMemoryGraph,
-    types::{NodeName, PortName},
 };
-use anima_weave_vessels::{
-    create_node_factory, math_node::MathNode, start_node::StartNode,
-};
-use kameo::prelude::*;
-use std::{collections::HashMap, sync::Arc, time::Duration};
-use uuid::Uuid;
+use anima_weave_vessels::create_node_factory;
+use std::sync::Arc;
 
 /// 创建简单图：`start` (输出 value) ➜ `math` (输入 number)
 fn create_graph() -> Arc<InMemoryGraph> {
