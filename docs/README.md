@@ -69,6 +69,7 @@ docs/
 | 索引文件指南        | 项目文件索引和导航指南              | [index-files-guide.md](technical/index-files-guide.md)             |
 | Vessel架构重构      | 容器系统架构重构设计                | [vessel-architecture-refactor.md](technical/vessel-architecture-refactor.md) |
 | AnimaWeave Actor模型设计 | Actor模型架构重构和多输入节点处理方案 | [anima-weave-actor-model-design.md](technical/anima-weave-actor-model-design.md) |
+| AnimaWeave简化架构 | DataBus合并重构后的简化架构设计 | [anima-weave-simplified-architecture.md](technical/anima-weave-simplified-architecture.md) |
 
 ## 📖 操作指南 (Guides)
 

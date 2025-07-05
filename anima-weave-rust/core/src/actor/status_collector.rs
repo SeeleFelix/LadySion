@@ -198,24 +198,48 @@ impl StatusCollector {
     }
     
     fn handle_execution_started(&mut self, node_name: NodeName, execution_id: ExecutionId, input_count: usize) {
-        if let Some(record) = self.all_execution_records.get_mut(&execution_id) {
-            record.status = DetailedExecutionStatus::Running;
-            record.started_at = Some(SystemTime::now());
-            record.input_data_count = input_count;
+        let mut record = if let Some(existing_record) = self.all_execution_records.get_mut(&execution_id) {
+            // 使用现有记录
+            existing_record.status = DetailedExecutionStatus::Running;
+            existing_record.started_at = Some(SystemTime::now());
+            existing_record.input_data_count = input_count;
             
             // 计算队列等待时间
-            if let Some(started) = record.started_at {
-                record.queue_wait_duration = started.duration_since(record.ready_at).ok();
+            if let Some(started) = existing_record.started_at {
+                existing_record.queue_wait_duration = started.duration_since(existing_record.ready_at).ok();
             }
             
-            // 移动到活跃执行
-            self.active_executions.insert(execution_id.clone(), record.clone());
+            existing_record.clone()
+        } else {
+            // 如果没有先发送ExecutionQueued，创建一个新记录
+            let now = SystemTime::now();
+            let new_record = DetailedExecutionRecord {
+                execution_id: execution_id.clone(),
+                node_name: node_name.clone(),
+                status: DetailedExecutionStatus::Running,
+                is_sequential: false, // 分布式执行默认为非顺序
+                ready_at: now,
+                dispatched_at: Some(now),
+                started_at: Some(now),
+                completed_at: None,
+                input_data_count: input_count,
+                output_data_count: 0,
+                error_message: None,
+                queue_wait_duration: Some(Duration::ZERO), // 立即执行
+                execution_duration: None,
+            };
             
-            // 更新系统指标
-            self.system_metrics.current_concurrent_executions = self.active_executions.len();
-            if self.active_executions.len() > self.system_metrics.peak_concurrent_executions {
-                self.system_metrics.peak_concurrent_executions = self.active_executions.len();
-            }
+            self.all_execution_records.insert(execution_id.clone(), new_record.clone());
+            new_record
+        };
+        
+        // 移动到活跃执行
+        self.active_executions.insert(execution_id.clone(), record);
+        
+        // 更新系统指标
+        self.system_metrics.current_concurrent_executions = self.active_executions.len();
+        if self.active_executions.len() > self.system_metrics.peak_concurrent_executions {
+            self.system_metrics.peak_concurrent_executions = self.active_executions.len();
         }
     }
     
