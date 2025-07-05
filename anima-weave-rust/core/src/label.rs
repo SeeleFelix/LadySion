@@ -171,7 +171,7 @@ macro_rules! semantic_label {
                 self
             }
 
-            fn conversion_map(&self) -> std::collections::HashMap<&'static str, $crate::ConversionFn> {
+            fn conversion_map(&self) -> std::collections::HashMap<&'static str, $crate::label::ConversionFn> {
                 #[allow(unused_mut)]
                 let mut map = std::collections::HashMap::new();
 
@@ -185,17 +185,17 @@ macro_rules! semantic_label {
                         stringify!($target_type)
                     };
 
-                    map.insert(target_type_name, Box::new(|any: &dyn std::any::Any| -> Result<Box<dyn $crate::SemanticLabel>, $crate::TransformError> {
+                    map.insert(target_type_name, Box::new(|any: &dyn std::any::Any| -> Result<Box<dyn $crate::SemanticLabel>, $crate::label::TransformError> {
                         if let Some($self_param) = any.downcast_ref::<$name>() {
                             // 确保转换结果类型正确
                             let result: $target_type = $conversion;
                             Ok(Box::new(result) as Box<dyn $crate::SemanticLabel>)
                         } else {
-                            Err($crate::TransformError::ConversionFailed {
+                            Err($crate::label::TransformError::ConversionFailed {
                                 reason: format!("Failed to downcast to {}", stringify!($name)),
                             })
                         }
-                    }) as $crate::ConversionFn);
+                    }) as $crate::label::ConversionFn);
                 )*
 
                 map

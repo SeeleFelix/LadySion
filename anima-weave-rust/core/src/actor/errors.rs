@@ -3,7 +3,8 @@
 //! 定义了AnimaWeave Actor系统中外部需要处理的错误类型。
 //! 遵循"少即是多"的原则，只暴露用户真正需要处理的错误。
 
-use crate::{NodeName, PortName};
+// TODO: 这里好像也没有用起来
+use crate::types::{NodeName, PortName};
 use std::fmt;
 
 /// Coordinator执行错误
@@ -11,7 +12,7 @@ use std::fmt;
 /// 这些是用户在使用Coordinator时可能遇到的错误。
 /// 所有内部实现细节的错误（如调度算法、并发控制等）都被封装，
 /// 外部只需要处理这几种基本错误情况。
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum CoordinatorError {
     /// 启动失败
     ///
@@ -42,6 +43,33 @@ pub enum CoordinatorError {
     ///
     /// Coordinator停止时出现问题，可能是资源清理失败
     ShutdownFailed(String),
+
+    /// 节点不存在
+    NodeNotFound(String),
+
+    /// 执行记录不存在
+    ExecutionNotFound(String),
+
+    /// 无效的节点状态
+    InvalidNodeState { node: String, state: String },
+
+    /// 系统未初始化
+    SystemNotInitialized,
+
+    /// 配置错误
+    ConfigurationError(String),
+
+    /// 状态查询失败
+    StatusQueryFailed(String),
+
+    /// 报告生成失败
+    ReportGenerationFailed(String),
+
+    /// Actor通信错误
+    ActorCommunicationError(String),
+
+    /// 分布式系统错误
+    DistributedSystemError(String),
 }
 
 /// 数据存储错误
@@ -126,6 +154,33 @@ impl fmt::Display for CoordinatorError {
             }
             CoordinatorError::ShutdownFailed(reason) => {
                 write!(f, "Coordinator shutdown failed: {}", reason)
+            }
+            CoordinatorError::NodeNotFound(node) => {
+                write!(f, "Node not found: {}", node)
+            }
+            CoordinatorError::ExecutionNotFound(execution_id) => {
+                write!(f, "Execution not found: {}", execution_id)
+            }
+            CoordinatorError::InvalidNodeState { node, state } => {
+                write!(f, "Invalid state '{}' for node '{}'", state, node)
+            }
+            CoordinatorError::SystemNotInitialized => {
+                write!(f, "System not initialized")
+            }
+            CoordinatorError::ConfigurationError(msg) => {
+                write!(f, "Configuration error: {}", msg)
+            }
+            CoordinatorError::StatusQueryFailed(msg) => {
+                write!(f, "Status query failed: {}", msg)
+            }
+            CoordinatorError::ReportGenerationFailed(msg) => {
+                write!(f, "Report generation failed: {}", msg)
+            }
+            CoordinatorError::ActorCommunicationError(msg) => {
+                write!(f, "Actor communication error: {}", msg)
+            }
+            CoordinatorError::DistributedSystemError(msg) => {
+                write!(f, "Distributed system error: {}", msg)
             }
         }
     }
@@ -287,6 +342,84 @@ impl NodeExecutionError {
         Self::ConfigurationError(reason.into())
     }
 }
+
+/// DistributedNodeActor特定的错误类型
+#[derive(Debug, Clone, PartialEq)]
+pub enum NodeActorError {
+    /// 执行错误
+    ExecutionError(String),
+    /// 配置错误
+    ConfigurationError(String),
+    /// 消息处理错误
+    MessageProcessingError(String),
+    /// 连接错误
+    ConnectionError(String),
+    /// 状态错误
+    StateError(String),
+    /// 超时错误
+    TimeoutError(String),
+}
+
+impl std::fmt::Display for NodeActorError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            NodeActorError::ExecutionError(msg) => {
+                write!(f, "Execution error: {}", msg)
+            }
+            NodeActorError::ConfigurationError(msg) => {
+                write!(f, "Configuration error: {}", msg)
+            }
+            NodeActorError::MessageProcessingError(msg) => {
+                write!(f, "Message processing error: {}", msg)
+            }
+            NodeActorError::ConnectionError(msg) => {
+                write!(f, "Connection error: {}", msg)
+            }
+            NodeActorError::StateError(msg) => {
+                write!(f, "State error: {}", msg)
+            }
+            NodeActorError::TimeoutError(msg) => {
+                write!(f, "Timeout error: {}", msg)
+            }
+        }
+    }
+}
+
+impl std::error::Error for NodeActorError {}
+
+/// StatusCollector特定的错误类型
+#[derive(Debug, Clone, PartialEq)]
+pub enum StatusCollectorError {
+    /// 数据不一致
+    DataInconsistency(String),
+    /// 存储错误
+    StorageError(String),
+    /// 查询错误
+    QueryError(String),
+    /// 统计计算错误
+    StatisticsError(String),
+}
+
+impl std::fmt::Display for StatusCollectorError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            StatusCollectorError::DataInconsistency(msg) => {
+                write!(f, "Data inconsistency: {}", msg)
+            }
+            StatusCollectorError::StorageError(msg) => {
+                write!(f, "Storage error: {}", msg)
+            }
+            StatusCollectorError::QueryError(msg) => {
+                write!(f, "Query error: {}", msg)
+            }
+            StatusCollectorError::StatisticsError(msg) => {
+                write!(f, "Statistics error: {}", msg)
+            }
+        }
+    }
+}
+
+impl std::error::Error for StatusCollectorError {}
 
 #[cfg(test)]
 mod tests {

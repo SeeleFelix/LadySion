@@ -1,20 +1,23 @@
-/// 激活模式
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+use crate::types::{NodeName, PortName, PortRef};
+use serde::{Deserialize, Serialize};
+
+/// 激活模式 - 定义控制信号如何聚合
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum ActivationMode {
     And,
     Or,
     Xor,
 }
 
-/// 并发模式
-#[derive(Debug, Clone, PartialEq)]
+/// 并发模式 - 定义节点是否可以并行执行
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ConcurrentMode {
     Concurrent,
     Sequential,
 }
 
 /// 端口定义
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct Port {
     pub node_name: NodeName,
     pub port_name: PortName,
@@ -32,22 +35,22 @@ impl Port {
 }
 
 /// 连接关系
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Connection {
     pub from_port: Port,
     pub to_port: Port,
 }
 
 /// 节点定义
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Node {
     pub node_name: NodeName,
     pub node_type: String,
     pub concurrent_mode: ConcurrentMode,
 }
 
-/// 图定义
-#[derive(Debug, Clone)]
+/// 计算图的完整定义
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Graph {
     pub nodes: Vec<Node>,
     pub data_connections: Vec<Connection>,
@@ -57,14 +60,7 @@ pub struct Graph {
 /// =========================
 /// Graph查询接口
 /// =========================
-use crate::types::{NodeName, PortName, PortRef};
-use async_trait::async_trait;
 
-/// Graph查询接口
-///
-/// 提供图结构的查询能力，让Coordinator等组件可以获取图信息
-/// 而不需要直接访问Graph的内部数据结构
-#[async_trait]
 pub trait GraphQuery: Send + Sync {
     /// =========================
     /// 节点查询
@@ -143,6 +139,8 @@ pub trait GraphQuery: Send + Sync {
 
     /// 获取节点的并发模式
     fn get_node_concurrent_mode(&self, node_name: &NodeName) -> Option<ConcurrentMode>;
+
+    fn get_node(&self, node_name: &NodeName) -> Option<Node>;
 }
 
 // GraphQuery的具体实现应该在具体的Graph实现中提供

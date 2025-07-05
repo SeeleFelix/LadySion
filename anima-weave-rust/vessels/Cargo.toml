@@ -5,12 +5,10 @@ edition = "2021"
 
 [dependencies]
 anima-weave-core = { path = "../core" }
-kameo = { version = "0.17", features = ["macros"] }
-async-trait = "0.1.80"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-log = "0.4"
-anyhow = "1.0.86"
+anima-weave-node = { path = "../node" }
+once_cell = { workspace = true }
+log = { workspace = true }
+inventory = { workspace = true }
 
 [lib]
 name = "anima_weave_vessels"

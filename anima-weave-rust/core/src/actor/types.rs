@@ -3,120 +3,64 @@
 //! 定义了AnimaWeave Actor系统中外部需要的核心类型。
 //! 所有内部实现细节都被封装，不暴露给外部使用者。
 
-use crate::ExecutionId;
-use std::time::SystemTime;
+use crate::types::{ExecutionId, NodeName, PortRef};
+use crate::label::SemanticLabel;
+use crate::signal::SignalLabel;
 
-/// 全局状态
-///
-/// 这是一个占位符类型，实际的全局状态管理由具体实现决定。
-/// 外部代码不需要直接操作全局状态，而是通过Coordinator接口进行交互。
-///
-/// # 设计原则
-///
-/// 全局状态的具体结构是实现细节，不应该暴露给外部：
-/// - 节点状态管理 → Coordinator内部处理
-/// - 端口数据缓存 → DataStore内部处理  
-/// - 执行统计收集 → 监控系统处理
-///
-/// 外部只需要通过`ExecutionStatus`获取必要的状态信息。
-#[derive(Debug)]
-pub struct GlobalState {
-    // 这是一个内部类型，具体字段由实现决定
-    // 外部代码不应该直接访问这些字段
-    _internal: (),
-}
-
-impl GlobalState {
-    /// 创建新的全局状态
-    ///
-    /// 这个方法主要供内部实现使用，外部代码一般不需要直接创建GlobalState
-    pub fn new() -> Self {
-        Self { _internal: () }
-    }
-}
-
-impl Default for GlobalState {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-/// 执行计划
-///
-/// 这是Coordinator内部使用的调度数据结构。
-/// 外部代码不需要知道调度的具体实现细节。
-///
-/// # 为什么不暴露具体字段？
-///
-/// 调度算法是实现细节，可能包括：
-/// - 优先级队列
-/// - 依赖关系图
-/// - 资源分配策略
-/// - 负载均衡算法
-///
-/// 这些都应该封装在Coordinator实现中，外部只需要调用
-/// `handle_event()` 方法触发调度即可。
-#[derive(Debug)]
-pub struct ExecutionPlan {
-    // 具体字段由实现决定
-    // 可能包含节点名称、执行ID、输入数据、调度策略等
-    _internal: (),
-}
-
-impl ExecutionPlan {
-    /// 创建执行计划
-    ///
-    /// 这个方法供Coordinator实现使用
-    pub fn new() -> Self {
-        Self { _internal: () }
-    }
-}
+use kameo::Reply;
+use std::collections::HashMap;
+use std::time::{Duration, SystemTime};
+use std::sync::Arc;
 
 /// 节点状态
 ///
 /// 简化的节点状态枚举，只包含外部关心的基本状态
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Reply)]
 pub enum NodeState {
-    /// 空闲状态：节点等待输入或控制信号
+    /// 尚未启动
     Idle,
-    /// 运行状态：节点正在执行
-    Running { execution_id: ExecutionId },
-    /// 完成状态：节点执行完成
+    /// 正在初始化
+    Initializing,
+    /// 已启动，等待输入
+    Ready,
+    /// 正在执行
+    Running,
+    /// 已完成
     Completed,
-    /// 错误状态：节点执行失败
-    Error { message: String },
+    /// 已停止
+    Stopped,
 }
 
-impl NodeState {
-    /// 是否正在运行
-    pub fn is_running(&self) -> bool {
-        matches!(self, NodeState::Running { .. })
+impl Default for NodeState {
+    fn default() -> Self {
+        NodeState::Idle
     }
+}
 
-    /// 是否已完成
-    pub fn is_completed(&self) -> bool {
-        matches!(self, NodeState::Completed)
-    }
+/// 节点执行事件
+#[derive(Debug, Clone)]
+pub struct NodeExecutionEvent {
+    pub node_name: NodeName,
+    pub execution_id: ExecutionId,
+    pub status: NodeState,
+    pub timestamp: SystemTime,
+    pub error: Option<String>,
+}
 
-    /// 是否出错
-    pub fn is_error(&self) -> bool {
-        matches!(self, NodeState::Error { .. })
-    }
-
-    /// 获取执行ID（如果正在运行）
-    pub fn execution_id(&self) -> Option<&ExecutionId> {
-        match self {
-            NodeState::Running { execution_id } => Some(execution_id),
-            _ => None,
+impl NodeExecutionEvent {
+    pub fn new(node_name: NodeName, execution_id: ExecutionId, status: NodeState) -> Self {
+        Self {
+            node_name,
+            execution_id,
+            status,
+            timestamp: SystemTime::now(),
+            error: None,
         }
     }
 
-    /// 获取错误信息（如果出错）
-    pub fn error_message(&self) -> Option<&str> {
-        match self {
-            NodeState::Error { message } => Some(message),
-            _ => None,
-        }
+    pub fn with_error(mut self, error: String) -> Self {
+        self.error = Some(error);
+        self
     }
 }
 
@@ -161,46 +105,293 @@ impl ExecutionStats {
     }
 }
 
+/// 节点Actor间的数据消息
+#[derive(Debug)]
+pub struct DataMessage {
+    pub from_node: NodeName,
+    pub from_port: PortRef,
+    pub to_node: NodeName,
+    pub to_port: PortRef,
+    pub data: Arc<dyn SemanticLabel>,
+    pub execution_id: ExecutionId,
+}
+
+/// 节点Actor间的控制消息
+#[derive(Debug)]
+pub struct ControlMessage {
+    pub from_node: NodeName,
+    pub from_port: PortRef,
+    pub to_node: NodeName,
+    pub to_port: PortRef,
+    pub signal: SignalLabel,
+    pub execution_id: ExecutionId,
+}
+
+/// 节点状态事件 (发送给StatusCollector)
+#[derive(Debug, Clone)]
+pub enum NodeStatusEvent {
+    /// 节点执行排队
+    ExecutionQueued {
+        node_name: NodeName,
+        execution_id: ExecutionId,
+        is_sequential: bool,
+    },
+    /// 节点开始执行
+    ExecutionStarted {
+        node_name: NodeName,
+        execution_id: ExecutionId,
+        input_count: usize,
+    },
+    /// 节点执行完成
+    ExecutionCompleted {
+        node_name: NodeName,
+        execution_id: ExecutionId,
+        output_count: usize,
+        duration: Duration,
+    },
+    /// 节点执行失败
+    ExecutionFailed {
+        node_name: NodeName,
+        execution_id: ExecutionId,
+        error: String,
+        duration: Duration,
+    },
+    /// 节点健康状态更新
+    HealthUpdate {
+        node_name: NodeName,
+        status: ActorHealthStatus,
+    },
+    /// 消息处理统计
+    MessageProcessed {
+        node_name: NodeName,
+        message_type: MessageType,
+        processing_time: Duration,
+    },
+}
+
+/// 消息类型枚举
+#[derive(Debug, Clone, PartialEq)]
+pub enum MessageType {
+    Data,
+    Control,
+    Status,
+}
+
+/// Actor健康状态
+#[derive(Debug, Clone, PartialEq)]
+pub enum ActorHealthStatus {
+    Healthy,
+    Slow { average_response_time: Duration },
+    Unresponsive { last_seen: SystemTime },
+    Failed { error: String },
+}
+
+/// 节点激活模式
+#[derive(Debug, Clone, PartialEq)]
+pub enum ActivationMode {
+    XOR,  // 任意一个输入激活
+    OR,   // 至少一个输入激活
+    AND,  // 所有输入都激活
+}
+
+/// 详细执行状态
+#[derive(Debug, Clone, PartialEq)]
+pub enum DetailedExecutionStatus {
+    Queued,
+    Dispatched,
+    Running,
+    Completed { success: bool },
+    Failed { error: String },
+}
+
+/// 详细执行记录
+#[derive(Debug, Clone)]
+pub struct DetailedExecutionRecord {
+    pub execution_id: ExecutionId,
+    pub node_name: NodeName,
+    pub status: DetailedExecutionStatus,
+    pub is_sequential: bool,
+    
+    // 完整时间线
+    pub ready_at: SystemTime,
+    pub dispatched_at: Option<SystemTime>,
+    pub started_at: Option<SystemTime>,
+    pub completed_at: Option<SystemTime>,
+    
+    // 执行详情
+    pub input_data_count: usize,
+    pub output_data_count: usize,
+    pub error_message: Option<String>,
+    
+    // 性能信息
+    pub queue_wait_duration: Option<Duration>,
+    pub execution_duration: Option<Duration>,
+}
+
+/// 节点统计信息
+#[derive(Debug, Clone)]
+pub struct NodeStats {
+    pub total_executions: u64,
+    pub successful_executions: u64,
+    pub failed_executions: u64,
+    pub average_execution_time: Duration,
+    pub min_execution_time: Duration,
+    pub max_execution_time: Duration,
+    pub last_execution_time: Option<SystemTime>,
+    pub total_processing_time: Duration,
+}
+
+impl Default for NodeStats {
+    fn default() -> Self {
+        Self {
+            total_executions: 0,
+            successful_executions: 0,
+            failed_executions: 0,
+            average_execution_time: Duration::from_secs(0),
+            min_execution_time: Duration::from_secs(u64::MAX),
+            max_execution_time: Duration::from_secs(0),
+            last_execution_time: None,
+            total_processing_time: Duration::from_secs(0),
+        }
+    }
+}
+
+/// 系统性能指标
+#[derive(Debug, Clone)]
+pub struct SystemMetrics {
+    pub peak_concurrent_executions: usize,
+    pub current_concurrent_executions: usize,
+    pub total_message_count: u64,
+    pub average_message_latency: Duration,
+    pub system_throughput: f64,
+    pub uptime: Duration,
+    pub start_time: SystemTime,
+}
+
+impl Default for SystemMetrics {
+    fn default() -> Self {
+        Self {
+            peak_concurrent_executions: 0,
+            current_concurrent_executions: 0,
+            total_message_count: 0,
+            average_message_latency: Duration::from_secs(0),
+            system_throughput: 0.0,
+            uptime: Duration::from_secs(0),
+            start_time: SystemTime::now(),
+        }
+    }
+}
+
+/// 消息传递统计
+#[derive(Debug, Clone, Default)]
+pub struct MessageStats {
+    pub total_data_messages: u64,
+    pub total_control_messages: u64,
+    pub total_status_messages: u64,
+    pub message_queue_sizes: HashMap<NodeName, usize>,
+    pub average_message_processing_time: Duration,
+}
+
+/// 性能报告
+#[derive(Debug, Clone, Reply)]
+pub struct PerformanceReport {
+    pub overall_stats: ExecutionStatus,
+    pub node_performance: HashMap<NodeName, NodeStats>,
+    pub system_metrics: SystemMetrics,
+    pub top_performers: Vec<(NodeName, NodeStats)>,
+    pub bottlenecks: Vec<(NodeName, String)>,
+}
+
+/// 执行状态 (兼容现有API)
+#[derive(Debug, Clone, Reply)]
+pub struct ExecutionStatus {
+    pub is_running: bool,
+    pub active_nodes_count: usize,
+    pub total_executions: u64,
+    pub successful_executions: u64,
+    pub failed_executions: u64,
+    pub last_activity: Option<SystemTime>,
+    pub current_error: Option<String>,
+}
+
+impl ExecutionStatus {
+    pub fn empty() -> Self {
+        Self {
+            is_running: false,
+            active_nodes_count: 0,
+            total_executions: 0,
+            successful_executions: 0,
+            failed_executions: 0,
+            last_activity: None,
+            current_error: None,
+        }
+    }
+
+    pub fn success_rate(&self) -> f64 {
+        if self.total_executions == 0 {
+            0.0
+        } else {
+            self.successful_executions as f64 / self.total_executions as f64
+        }
+    }
+
+    pub fn is_healthy(&self) -> bool {
+        self.current_error.is_none() && (self.total_executions == 0 || self.success_rate() >= 0.8)
+    }
+}
+
+/// 节点信息 (用于查询)
+#[derive(Debug, Clone, Reply)]
+pub struct NodeInfo {
+    pub name: NodeName,
+    pub state: NodeState,
+    pub stats: NodeStats,
+    pub last_activity: Option<SystemTime>,
+}
+
+// Message trait implementations will be added when the corresponding actors are created
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn test_node_state() {
-        let idle = NodeState::Idle;
-        assert!(!idle.is_running());
-        assert!(!idle.is_completed());
-        assert!(!idle.is_error());
-
-        let running = NodeState::Running {
-            execution_id: "exec_123".to_string(),
-        };
-        assert!(running.is_running());
-        assert_eq!(running.execution_id(), Some(&"exec_123".to_string()));
-
-        let completed = NodeState::Completed;
-        assert!(completed.is_completed());
-
-        let error = NodeState::Error {
-            message: "test error".to_string(),
-        };
-        assert!(error.is_error());
-        assert_eq!(error.error_message(), Some("test error"));
+    fn test_node_state_transitions() {
+        assert_eq!(NodeState::default(), NodeState::Idle);
+        
+        let state = NodeState::Ready;
+        assert_eq!(state, NodeState::Ready);
     }
 
     #[test]
-    fn test_execution_stats() {
-        let mut stats = ExecutionStats::new();
-        assert_eq!(stats.success_rate(), 0.0);
-        assert!(!stats.has_executions());
+    fn test_execution_status_empty() {
+        let status = ExecutionStatus::empty();
+        assert!(!status.is_running);
+        assert_eq!(status.active_nodes_count, 0);
+        assert_eq!(status.total_executions, 0);
+    }
 
-        stats.total_executions = 10;
-        stats.successful_executions = 8;
-        stats.failed_executions = 2;
+    #[test]
+    fn test_execution_status_success_rate() {
+        let status = ExecutionStatus {
+            is_running: false,
+            active_nodes_count: 0,
+            total_executions: 10,
+            successful_executions: 8,
+            failed_executions: 2,
+            last_activity: None,
+            current_error: None,
+        };
+        
+        assert_eq!(status.success_rate(), 0.8);
+        assert!(status.is_healthy());
+    }
 
-        assert_eq!(stats.success_rate(), 0.8);
-        // 使用近似比较来避免浮点数精度问题
-        assert!((stats.failure_rate() - 0.2).abs() < f64::EPSILON);
-        assert!(stats.has_executions());
+    #[test]
+    fn test_node_stats_default() {
+        let stats = NodeStats::default();
+        assert_eq!(stats.total_executions, 0);
+        assert_eq!(stats.successful_executions, 0);
+        assert_eq!(stats.failed_executions, 0);
     }
 }

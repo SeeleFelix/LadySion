@@ -9,4 +9,4 @@ pub mod coordinator;
 
 // 导出核心实现和类型
 pub use crate::actor::CoordinatorError;
-pub use coordinator::{Coordinator, ExecutionStatus, GetStatusQuery};
+pub use coordinator::{Coordinator, SystemOverview, PerformanceSummary, SystemHealth};

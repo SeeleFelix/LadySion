@@ -3,8 +3,7 @@
 //! 提供GraphQuery trait的具体实现，用于测试和简单场景
 
 use crate::graph::{ActivationMode, Connection, Graph, GraphQuery, Node, Port};
-use crate::types::{NodeName, PortRef};
-use async_trait::async_trait;
+use crate::types::{NodeName, PortName, PortRef};
 use std::collections::HashMap;
 
 #[derive(Debug, Default)]
@@ -34,25 +33,44 @@ impl InMemoryGraph {
             let to_ref = conn.to_port.to_port_ref();
             graph.ports.insert(from_ref.clone(), conn.from_port);
             graph.ports.insert(to_ref.clone(), conn.to_port);
-            graph.data_forward_edges.entry(from_ref.clone()).or_default().push(to_ref.clone());
-            graph.data_backward_edges.entry(to_ref).or_default().push(from_ref);
+            graph
+                .data_forward_edges
+                .entry(from_ref.clone())
+                .or_default()
+                .push(to_ref.clone());
+            graph
+                .data_backward_edges
+                .entry(to_ref)
+                .or_default()
+                .push(from_ref);
         }
-        
+
         for conn in graph_def.control_connections {
             let from_ref = conn.from_port.to_port_ref();
             let to_ref = conn.to_port.to_port_ref();
             graph.ports.insert(from_ref.clone(), conn.from_port);
             graph.ports.insert(to_ref.clone(), conn.to_port);
-            graph.control_forward_edges.entry(from_ref.clone()).or_default().push(to_ref.clone());
-            graph.control_backward_edges.entry(to_ref).or_default().push(from_ref);
+            graph
+                .control_forward_edges
+                .entry(from_ref.clone())
+                .or_default()
+                .push(to_ref.clone());
+            graph
+                .control_backward_edges
+                .entry(to_ref)
+                .or_default()
+                .push(from_ref);
         }
 
         graph
     }
 }
 
-#[async_trait]
 impl GraphQuery for InMemoryGraph {
+    fn get_node(&self, node_name: &NodeName) -> Option<Node> {
+        self.nodes.get(node_name).cloned()
+    }
+
     fn get_nodes(&self) -> Vec<Node> {
         self.nodes.values().cloned().collect()
     }
@@ -111,8 +129,8 @@ impl GraphQuery for InMemoryGraph {
     // NOTE: other GraphQuery methods are not implemented yet for brevity
     // and because they are not immediately needed for the current event flow.
     // They should be implemented for a complete GraphQuery implementation.
-    
-    fn get_node_output_ports(&self, _node_name: &NodeName) -> Vec<crate::PortName> {
+
+    fn get_node_output_ports(&self, _node_name: &NodeName) -> Vec<PortName> {
         unimplemented!()
     }
     fn node_exists(&self, _node_name: &NodeName) -> bool {
@@ -148,4 +166,4 @@ impl GraphQuery for InMemoryGraph {
     ) -> Option<crate::graph::ConcurrentMode> {
         unimplemented!()
     }
-} 
+}

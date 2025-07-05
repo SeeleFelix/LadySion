@@ -6,7 +6,8 @@
 //! 3. 配置错误 - 启动时检查，快速失败
 //! 4. 致命错误 - 优雅停止，保存状态
 
-use crate::types::{NodeName, ExecutionId};
+// TODO: 看起来设计的不错，但是好像没有用起来
+use crate::types::{ExecutionId, NodeName};
 use std::fmt;
 use thiserror::Error;
 
@@ -47,13 +48,17 @@ pub enum RecoveryStrategy {
 pub enum BusinessError {
     #[error("输入验证失败: {port} - {reason}")]
     InputValidation { port: String, reason: String },
-    
+
     #[error("类型转换失败: {from_type} -> {to_type}, 原因: {reason}")]
-    TypeConversion { from_type: String, to_type: String, reason: String },
-    
+    TypeConversion {
+        from_type: String,
+        to_type: String,
+        reason: String,
+    },
+
     #[error("节点执行逻辑错误: {node_name} - {reason}")]
     ExecutionLogic { node_name: NodeName, reason: String },
-    
+
     #[error("资源不足: {resource} - {details}")]
     ResourceExhausted { resource: String, details: String },
 }
@@ -62,14 +67,17 @@ pub enum BusinessError {
 #[derive(Error, Debug)]
 pub enum CommunicationError {
     #[error("Actor消息发送失败: {target_actor} - {reason}")]
-    MessageSendFailure { target_actor: String, reason: String },
-    
+    MessageSendFailure {
+        target_actor: String,
+        reason: String,
+    },
+
     #[error("Actor不可达: {actor_name}")]
     ActorUnreachable { actor_name: String },
-    
+
     #[error("消息超时: {timeout_ms}ms")]
     MessageTimeout { timeout_ms: u64 },
-    
+
     #[error("Actor已停止: {actor_name}")]
     ActorStopped { actor_name: String },
 }
@@ -79,15 +87,19 @@ pub enum CommunicationError {
 pub enum ConfigurationError {
     #[error("图定义无效: {reason}")]
     InvalidGraph { reason: String },
-    
+
     #[error("节点类型未注册: {node_type}")]
     UnregisteredNodeType { node_type: String },
-    
+
     #[error("循环依赖: {cycle:?}")]
     CircularDependency { cycle: Vec<NodeName> },
-    
+
     #[error("端口连接无效: {from_port} -> {to_port}, 原因: {reason}")]
-    InvalidConnection { from_port: String, to_port: String, reason: String },
+    InvalidConnection {
+        from_port: String,
+        to_port: String,
+        reason: String,
+    },
 }
 
 /// 系统级错误 - 运行时系统问题
@@ -95,13 +107,13 @@ pub enum ConfigurationError {
 pub enum SystemError {
     #[error("内存不足")]
     OutOfMemory,
-    
+
     #[error("线程池饱和")]
     ThreadPoolSaturated,
-    
+
     #[error("数据存储错误: {reason}")]
     DataStoreFailure { reason: String },
-    
+
     #[error("系统资源错误: {resource} - {reason}")]
     ResourceFailure { resource: String, reason: String },
 }
@@ -111,13 +123,13 @@ pub enum SystemError {
 pub enum AnimaWeaveError {
     #[error("业务错误: {0}")]
     Business(#[from] BusinessError),
-    
+
     #[error("通信错误: {0}")]
     Communication(#[from] CommunicationError),
-    
+
     #[error("配置错误: {0}")]
     Configuration(#[from] ConfigurationError),
-    
+
     #[error("系统错误: {0}")]
     System(#[from] SystemError),
 }
@@ -126,21 +138,35 @@ impl AnimaWeaveError {
     /// 获取错误的严重程度
     pub fn severity(&self) -> ErrorSeverity {
         match self {
-            AnimaWeaveError::Business(BusinessError::InputValidation { .. }) => ErrorSeverity::Warning,
+            AnimaWeaveError::Business(BusinessError::InputValidation { .. }) => {
+                ErrorSeverity::Warning
+            }
             AnimaWeaveError::Business(BusinessError::TypeConversion { .. }) => ErrorSeverity::Error,
             AnimaWeaveError::Business(BusinessError::ExecutionLogic { .. }) => ErrorSeverity::Error,
-            AnimaWeaveError::Business(BusinessError::ResourceExhausted { .. }) => ErrorSeverity::Critical,
-            
-            AnimaWeaveError::Communication(CommunicationError::MessageTimeout { .. }) => ErrorSeverity::Warning,
-            AnimaWeaveError::Communication(CommunicationError::MessageSendFailure { .. }) => ErrorSeverity::Error,
-            AnimaWeaveError::Communication(CommunicationError::ActorUnreachable { .. }) => ErrorSeverity::Critical,
-            AnimaWeaveError::Communication(CommunicationError::ActorStopped { .. }) => ErrorSeverity::Critical,
-            
+            AnimaWeaveError::Business(BusinessError::ResourceExhausted { .. }) => {
+                ErrorSeverity::Critical
+            }
+
+            AnimaWeaveError::Communication(CommunicationError::MessageTimeout { .. }) => {
+                ErrorSeverity::Warning
+            }
+            AnimaWeaveError::Communication(CommunicationError::MessageSendFailure { .. }) => {
+                ErrorSeverity::Error
+            }
+            AnimaWeaveError::Communication(CommunicationError::ActorUnreachable { .. }) => {
+                ErrorSeverity::Critical
+            }
+            AnimaWeaveError::Communication(CommunicationError::ActorStopped { .. }) => {
+                ErrorSeverity::Critical
+            }
+
             AnimaWeaveError::Configuration(_) => ErrorSeverity::Fatal,
-            
+
             AnimaWeaveError::System(SystemError::OutOfMemory) => ErrorSeverity::Fatal,
             AnimaWeaveError::System(SystemError::ThreadPoolSaturated) => ErrorSeverity::Critical,
-            AnimaWeaveError::System(SystemError::DataStoreFailure { .. }) => ErrorSeverity::Critical,
+            AnimaWeaveError::System(SystemError::DataStoreFailure { .. }) => {
+                ErrorSeverity::Critical
+            }
             AnimaWeaveError::System(SystemError::ResourceFailure { .. }) => ErrorSeverity::Critical,
         }
     }
@@ -150,30 +176,44 @@ impl AnimaWeaveError {
         match self {
             AnimaWeaveError::Business(BusinessError::InputValidation { .. }) => {
                 RecoveryStrategy::Skip
-            },
+            }
             AnimaWeaveError::Business(BusinessError::TypeConversion { .. }) => {
                 RecoveryStrategy::StopNode
-            },
+            }
             AnimaWeaveError::Business(BusinessError::ExecutionLogic { .. }) => {
-                RecoveryStrategy::Retry { max_attempts: 3, delay_ms: 1000 }
-            },
+                RecoveryStrategy::Retry {
+                    max_attempts: 3,
+                    delay_ms: 1000,
+                }
+            }
             AnimaWeaveError::Business(BusinessError::ResourceExhausted { .. }) => {
-                RecoveryStrategy::Retry { max_attempts: 5, delay_ms: 5000 }
-            },
-            
+                RecoveryStrategy::Retry {
+                    max_attempts: 5,
+                    delay_ms: 5000,
+                }
+            }
+
             AnimaWeaveError::Communication(CommunicationError::MessageTimeout { .. }) => {
-                RecoveryStrategy::Retry { max_attempts: 3, delay_ms: 500 }
-            },
+                RecoveryStrategy::Retry {
+                    max_attempts: 3,
+                    delay_ms: 500,
+                }
+            }
             AnimaWeaveError::Communication(CommunicationError::MessageSendFailure { .. }) => {
-                RecoveryStrategy::Retry { max_attempts: 2, delay_ms: 1000 }
-            },
+                RecoveryStrategy::Retry {
+                    max_attempts: 2,
+                    delay_ms: 1000,
+                }
+            }
             AnimaWeaveError::Communication(CommunicationError::ActorUnreachable { .. }) => {
-                RecoveryStrategy::Fallback { alternative: "重启Actor".to_string() }
-            },
+                RecoveryStrategy::Fallback {
+                    alternative: "重启Actor".to_string(),
+                }
+            }
             AnimaWeaveError::Communication(CommunicationError::ActorStopped { .. }) => {
                 RecoveryStrategy::StopNode
-            },
-            
+            }
+
             AnimaWeaveError::Configuration(_) => RecoveryStrategy::Shutdown,
             AnimaWeaveError::System(_) => RecoveryStrategy::Shutdown,
         }
@@ -181,12 +221,21 @@ impl AnimaWeaveError {
 
     /// 是否应该记录错误
     pub fn should_log(&self) -> bool {
-        matches!(self.severity(), ErrorSeverity::Warning | ErrorSeverity::Error | ErrorSeverity::Critical | ErrorSeverity::Fatal)
+        matches!(
+            self.severity(),
+            ErrorSeverity::Warning
+                | ErrorSeverity::Error
+                | ErrorSeverity::Critical
+                | ErrorSeverity::Fatal
+        )
     }
 
     /// 是否应该发送告警
     pub fn should_alert(&self) -> bool {
-        matches!(self.severity(), ErrorSeverity::Critical | ErrorSeverity::Fatal)
+        matches!(
+            self.severity(),
+            ErrorSeverity::Critical | ErrorSeverity::Fatal
+        )
     }
 }
 
@@ -287,4 +336,4 @@ macro_rules! communication_error {
             actor_name: $actor.to_string(),
         })
     };
-} 
+}

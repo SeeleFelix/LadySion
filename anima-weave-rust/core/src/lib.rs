@@ -1,3 +1,9 @@
+//! AnimaWeave Core Library
+//!
+//! This crate defines the foundational data structures, traits, and events
+//! that form the core of the AnimaWeave execution engine.
+
+// Top-level modules
 pub mod actor;
 pub mod error_handling;
 pub mod event;
@@ -5,30 +11,30 @@ pub mod graph;
 pub mod in_memory_graph;
 pub mod label;
 pub mod signal;
-pub mod state;
 pub mod types;
 
-// 导出系统级别类型别名
-pub use types::{ExecutionId, NodeControlInputs, NodeDataInputs, NodeDataOutputs, NodeControlOutputs, NodeName, PortName};
+// Re-export key types for convenient access by other crates.
 
-// 明确导出，避免namespace冲突
-pub use event::{
-    EventMeta, NodeExecuteEvent, NodeExecutionEvent, NodeOutputEvent, NodeReadyEvent, NodeStatus,
-    PortRef,
-};
-pub use graph::{ActivationMode, ConcurrentMode, Connection, Graph, GraphQuery, Node, Port};
-pub use in_memory_graph::InMemoryGraph;
-pub use label::{ConversionFn, SemanticLabel, TransformError};
+pub use error_handling::AnimaWeaveError;
+
+pub use graph::{Graph, GraphQuery};
+pub use label::SemanticLabel;
 pub use signal::SignalLabel;
+pub use types::{NodeControlInputs, NodeDataInputs, NodeDataOutputs};
 
-// 导出Actor抽象层
-pub use actor::{
-    Coordinator, CoordinatorError, DataStoreError, ExecutionPlan, GlobalState, NodeExecutionError,
-    NodeExecutor, NodeState, NodeActor,
-};
+/// 分布式Actor系统的Node trait
+/// 与anima_weave_node::node::Node兼容的接口
+pub trait Node: Send + Sync + std::fmt::Debug {
+    /// 执行节点逻辑
+    fn execute(&self, inputs: &NodeDataInputs) -> Result<NodeDataOutputs, AnimaWeaveError>;
+    
+    /// 获取节点类型名称
+    fn node_type(&self) -> &'static str;
+    
+    /// 检查节点是否准备就绪
+    fn is_ready(&self) -> bool {
+        true
+    }
+}
 
-// 导出错误处理系统
-pub use error_handling::{
-    AnimaWeaveError, BusinessError, CommunicationError, ConfigurationError, SystemError,
-    ErrorSeverity, RecoveryStrategy, ErrorContext, ContextualError, AnimaResult,
-};
+

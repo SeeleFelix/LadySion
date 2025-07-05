@@ -1,333 +1,295 @@
-//! Coordinator实现
+//! Coordinator实现 - 纯监控器
 //!
-//! 最简单的协调器实现，专注于处理控制事件
+//! 分布式架构下的监控器，只负责：
+//! - 监控节点执行状态
+//! - 收集执行统计信息
+//! - 提供系统状态查询
 
+use crate::actor::status_collector::{StatusCollector, GetStatusQuery, GetPerformanceReportQuery};
+use crate::actor::types::*;
 use crate::actor::errors::CoordinatorError;
-use crate::event::{NodeExecutionEvent, NodeReadyEvent, NodeExecuteEvent};
 use crate::types::NodeName;
-use kameo::message::Context;
-use kameo::{actor::ActorRef, message::Message, Actor};
-use std::collections::HashSet;
-use std::time::SystemTime;
-use crate::actor::registry::NodeRegistry;
-use crate::actor::execution_tracker::ExecutionTracker;
+use kameo::actor::{ActorRef, WeakActorRef};
+use kameo::error::ActorStopReason;
+use kameo::message::{Context, Message};
+use kameo::Actor;
 use log;
-use std::sync::Arc;
+use std::collections::HashMap;
+use std::time::SystemTime;
 
-/// 执行状态信息
+
+
+// ExecutionStatus 现在使用 types 模块中的定义
+
+/// 简化的Coordinator - 专注于高级监控和报告
 ///
-/// 提供给外部的状态查询结果
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub struct ExecutionStatus {
-    /// 引擎是否正在运行
-    pub is_running: bool,
-    /// 当前正在执行的节点数量
-    pub active_nodes_count: usize,
-    /// 等待执行的节点数量
-    pub pending_nodes_count: usize,
-    /// 总执行次数
-    pub total_executions: u64,
-    /// 成功执行次数
-    pub successful_executions: u64,
-    /// 失败执行次数
-    pub failed_executions: u64,
-    /// 最后活动时间
-    pub last_activity: Option<SystemTime>,
-    /// 当前错误（如果有）
-    pub current_error: Option<String>,
-}
-
-impl ExecutionStatus {
-    /// 创建空的状态
-    pub fn empty() -> Self {
-        Self {
-            is_running: false,
-            active_nodes_count: 0,
-            pending_nodes_count: 0,
-            total_executions: 0,
-            successful_executions: 0,
-            failed_executions: 0,
-            last_activity: None,
-            current_error: None,
-        }
-    }
-
-    /// 计算成功率
-    pub fn success_rate(&self) -> f64 {
-        if self.total_executions == 0 {
-            0.0
-        } else {
-            self.successful_executions as f64 / self.total_executions as f64
-        }
-    }
-
-    /// 检查是否健康运行
-    pub fn is_healthy(&self) -> bool {
-        self.is_running && self.current_error.is_none()
-    }
-}
-
-impl Default for ExecutionStatus {
-    fn default() -> Self {
-        Self::empty()
-    }
-}
-
-/// AnimaWeave系统的图执行引擎
-///
-/// 纯事件驱动模式：
-/// - 基于图依赖自动执行节点
-/// - 保证同名节点不并发执行
-/// - 有序处理所有事件
-#[derive(Debug)]
+/// 分布式架构下的监控器：
+/// - 提供系统级别的状态查询接口
+/// - 生成执行报告和性能分析
+/// - 不参与实际的执行调度和数据管理
+/// - 作为StatusCollector的高级封装
 pub struct Coordinator {
-    /// 执行统计
-    total_executions: u64,
-    successful_executions: u64,
-    failed_executions: u64,
-    /// 最后活动时间
-    last_activity: Option<SystemTime>,
-    /// 当前错误
-    current_error: Option<String>,
-    /// NodeActor 注册表（共享）
-    node_registry: Arc<NodeRegistry>,
-    /// 执行追踪器
-    tracker: ExecutionTracker,
+    /// StatusCollector引用
+    status_collector: ActorRef<StatusCollector>,
+    
+    /// 系统启动时间
+    start_time: SystemTime,
+    
+    /// 监控配置
+    monitoring_enabled: bool,
+    report_interval_seconds: u64,
+}
+
+impl Coordinator {
+    /// 创建新的监控型Coordinator
+    pub fn new(status_collector: ActorRef<StatusCollector>) -> Self {
+        Self {
+            status_collector,
+            start_time: SystemTime::now(),
+            monitoring_enabled: true,
+            report_interval_seconds: 60,
+        }
+    }
+
+    /// 创建带自定义配置的Coordinator
+    pub fn with_config(
+        status_collector: ActorRef<StatusCollector>,
+        monitoring_enabled: bool,
+        report_interval_seconds: u64,
+    ) -> Self {
+        Self {
+            status_collector,
+            start_time: SystemTime::now(),
+            monitoring_enabled,
+            report_interval_seconds,
+        }
+    }
+
+    /// 获取系统整体状态 (代理到StatusCollector)
+    pub async fn get_status(&self) -> Result<ExecutionStatus, CoordinatorError> {
+        self.status_collector
+            .ask(GetStatusQuery)
+            .await
+            .map_err(|e| CoordinatorError::StatusQueryFailed(e.to_string()))
+    }
+
+    /// 获取系统性能报告 (代理到StatusCollector)
+    pub async fn get_performance_report(&self) -> Result<PerformanceReport, CoordinatorError> {
+        self.status_collector
+            .ask(GetPerformanceReportQuery)
+            .await
+            .map_err(|e| CoordinatorError::ReportGenerationFailed(e.to_string()))
+    }
+
+    /// 获取系统运行时长
+    pub fn get_uptime(&self) -> std::time::Duration {
+        self.start_time.elapsed().unwrap_or_default()
+    }
+
+    /// 启用/禁用监控
+    pub fn set_monitoring_enabled(&mut self, enabled: bool) {
+        self.monitoring_enabled = enabled;
+        log::info!("(Coordinator) Monitoring {}", if enabled { "enabled" } else { "disabled" });
+    }
+
+    /// 检查监控是否启用
+    pub fn is_monitoring_enabled(&self) -> bool {
+        self.monitoring_enabled
+    }
+
+    /// 设置报告间隔
+    pub fn set_report_interval(&mut self, seconds: u64) {
+        self.report_interval_seconds = seconds;
+        log::info!("(Coordinator) Report interval set to {} seconds", seconds);
+    }
+
+    /// 生成系统概览
+    pub async fn generate_system_overview(&self) -> Result<SystemOverview, CoordinatorError> {
+        let status = self.get_status().await?;
+        let performance_report = self.get_performance_report().await?;
+        
+        Ok(SystemOverview {
+            uptime: self.get_uptime(),
+            monitoring_enabled: self.monitoring_enabled,
+            execution_status: status,
+            performance_summary: PerformanceSummary {
+                total_nodes: performance_report.node_performance.len(),
+                active_nodes: performance_report.overall_stats.active_nodes_count,
+                throughput: performance_report.system_metrics.system_throughput,
+                peak_concurrency: performance_report.system_metrics.peak_concurrent_executions,
+            },
+            health_status: self.assess_system_health(&performance_report),
+        })
+    }
+
+    /// 评估系统健康状态
+    fn assess_system_health(&self, report: &PerformanceReport) -> SystemHealth {
+        let overall_success_rate = report.overall_stats.success_rate();
+        
+        if overall_success_rate >= 0.95 {
+            SystemHealth::Excellent
+        } else if overall_success_rate >= 0.85 {
+            SystemHealth::Good
+        } else if overall_success_rate >= 0.70 {
+            SystemHealth::Fair
+        } else if overall_success_rate >= 0.50 {
+            SystemHealth::Poor
+        } else {
+            SystemHealth::Critical
+        }
+    }
+}
+
+/// 系统概览
+#[derive(Debug, Clone)]
+pub struct SystemOverview {
+    pub uptime: std::time::Duration,
+    pub monitoring_enabled: bool,
+    pub execution_status: ExecutionStatus,
+    pub performance_summary: PerformanceSummary,
+    pub health_status: SystemHealth,
+}
+
+/// 性能摘要
+#[derive(Debug, Clone)]
+pub struct PerformanceSummary {
+    pub total_nodes: usize,
+    pub active_nodes: usize,
+    pub throughput: f64,
+    pub peak_concurrency: usize,
+}
+
+/// 系统健康状态
+#[derive(Debug, Clone, PartialEq)]
+pub enum SystemHealth {
+    Excellent,
+    Good,
+    Fair,
+    Poor,
+    Critical,
 }
 
 impl Default for Coordinator {
     fn default() -> Self {
-        Self::new()
+        // 注意：这里需要一个StatusCollector引用，但在default中无法提供
+        // 实际使用时应该用new()方法
+        panic!("Coordinator requires a StatusCollector reference. Use Coordinator::new() instead.");
     }
 }
 
-impl Coordinator {
-    pub fn new() -> Self {
-        Self {
-            total_executions: 0,
-            successful_executions: 0,
-            failed_executions: 0,
-            last_activity: None,
-            current_error: None,
-            node_registry: Arc::new(NodeRegistry::new()),
-            tracker: ExecutionTracker::new(),
-        }
-    }
-
-    /// 创建一个使用外部共享 `NodeRegistry` 的 Coordinator
-    pub fn with_registry(registry: Arc<NodeRegistry>) -> Self {
-        Self {
-            total_executions: 0,
-            successful_executions: 0,
-            failed_executions: 0,
-            last_activity: None,
-            current_error: None,
-            node_registry: registry,
-            tracker: ExecutionTracker::new(),
-        }
-    }
-
-    /// 为图启动coordinator并注册到全局registry
-    ///
-    /// 图启动一次，自动注册所有需要的node监听
-    pub async fn spawn_for_graph(/* TODO: 添加图参数 */) -> Result<ActorRef<Self>, CoordinatorError>
-    {
-        let coordinator = Self::new();
-        let actor_ref = Actor::spawn(coordinator);
-
-        // 注册为系统coordinator
-        actor_ref.register("system_coordinator").map_err(|e| {
-            CoordinatorError::startup_failed(format!("Failed to register coordinator: {}", e))
-        })?;
-
-        println!("🚀 Coordinator started for graph execution");
-
-        // TODO: 根据图结构注册所有需要的node actors
-        // TODO: 分析图依赖，准备执行策略
-
-        Ok(actor_ref)
-    }
-
-    /// 获取当前执行状态（用于调试）
-    pub fn get_status(&self) -> ExecutionStatus {
-        ExecutionStatus {
-            is_running: true, // 图模式下coordinator总是运行的
-            active_nodes_count: self.tracker.running_nodes_count(),
-            pending_nodes_count: 0, // TODO: 从图分析中计算
-            total_executions: self.total_executions,
-            successful_executions: self.successful_executions,
-            failed_executions: self.failed_executions,
-            last_activity: self.last_activity,
-            current_error: self.current_error.clone(),
-        }
-    }
-
-    /// 尝试立即调度或队列等待
-    fn on_node_ready(&mut self, event: NodeReadyEvent) {
-        // TODO: 从图的元数据中获取 is_sequential 标志
-        self.tracker.register_ready(event, false);
-        self.try_dispatch_from_queue();
-    }
-
-    /// 真正派发执行
-    fn dispatch_execute_event(&mut self, event: NodeExecuteEvent) {
-        let node_name = event.node_name.clone();
-
-        self.total_executions += 1;
-        self.last_activity = Some(SystemTime::now());
-
-        log::info!(
-            "(Coordinator) Executing node {} (execution {})",
-            node_name, event.node_execute_id
-        );
-
-        if let Some(recipient) = self.node_registry.lookup(&node_name) {
-            tokio::spawn(async move {
-                if recipient.tell(event).await.is_err() {
-                    // 如果发送失败，这是一个严重的系统错误，因为 Actor 应该总是可达的
-                    panic!("FATAL: Failed to send NodeExecuteEvent to actor '{}'. The actor might have crashed.", node_name);
-                }
-            });
-        } else {
-            // 如果在注册表中找不到 Actor，这是一个更严重的系统设计或状态同步错误
-            panic!("FATAL: NodeActor for '{}' not found in registry, but was scheduled for execution.", node_name);
-        }
-    }
-
-    /// 尝试调度队列
-    fn try_dispatch_from_queue(&mut self) {
-        while let Some(execute_event) = self.tracker.try_dispatch_next() {
-            self.dispatch_execute_event(execute_event);
-        }
-    }
-
-    /// 处理NodeExecutionEvent：节点执行状态通知
-    fn handle_node_execution(&mut self, event: &NodeExecutionEvent) {
-        
-    }
-
-    /// 处理节点执行完成
-    fn handle_node_completion(&mut self, event: &NodeExecutionEvent) {
-        self.last_activity = Some(SystemTime::now());
-        self.tracker.mark_as_completed(&event.node_execute_id, event.status.is_success());
-
-        // 节点完成后尝试调度队列
-        self.try_dispatch_from_queue();
-    }
-}
-
-// 实现Kameo Actor trait
 impl Actor for Coordinator {
     type Args = Self;
     type Error = CoordinatorError;
 
-    async fn on_start(
-        coordinator: Self::Args,
-        _actor_ref: ActorRef<Self>,
-    ) -> Result<Self, Self::Error> {
-        println!("🚀 Graph execution coordinator started");
+    async fn on_start(coordinator: Self::Args, _actor_ref: ActorRef<Self>) -> Result<Self, Self::Error> {
+        log::info!("Starting monitoring Coordinator");
         Ok(coordinator)
     }
 
-    async fn on_stop(
-        &mut self,
-        _actor_ref: kameo::actor::WeakActorRef<Self>,
-        _reason: kameo::error::ActorStopReason,
-    ) -> Result<(), Self::Error> {
-        println!("🛑 Graph execution coordinator stopped");
+    async fn on_stop(&mut self, _actor_ref: WeakActorRef<Self>, _reason: ActorStopReason) -> Result<(), Self::Error> {
+        log::info!("Stopping monitoring Coordinator");
         Ok(())
     }
 }
 
-// 🔄 NodeExecutionEvent: Node -> Coordinator
-impl Message<NodeExecutionEvent> for Coordinator {
-    type Reply = ();
-
-    async fn handle(
-        &mut self,
-        event: NodeExecutionEvent,
-        _ctx: &mut Context<Self, Self::Reply>,
-    ) -> Self::Reply {
-        log::debug!("(Coordinator) Received NodeExecutionEvent: {:?}", event);
-        match event.status {
-            crate::event::types::NodeStatus::Completed => {
-                self.handle_node_completion(&event);
-            }
-            crate::event::types::NodeStatus::Failed(ref error) => {
-                self.handle_node_completion(&event);
-                self.current_error = Some(error.clone());
-            }
-            crate::event::types::NodeStatus::Running => {
-                self.handle_node_execution(&event);
-            }
-            crate::event::types::NodeStatus::Pending => {
-                self.handle_node_execution(&event);
-            }
-        }
-    }
-}
-
-// 🔔 NodeReadyEvent: DataBus -> Coordinator
-impl Message<NodeReadyEvent> for Coordinator {
-    type Reply = ();
-
-    async fn handle(
-        &mut self,
-        event: NodeReadyEvent,
-        _ctx: &mut Context<Self, Self::Reply>,
-    ) -> Self::Reply {
-        log::info!(
-            "(Coordinator) Received NodeReadyEvent for {}",
-            event.target_node_name
-        );
-        self.on_node_ready(event);
-    }
-}
-
-// 📊 状态查询消息（仅用于调试）
+/// 查询消息类型
 #[derive(Debug)]
-pub struct GetStatusQuery;
+pub struct GetSystemStatusQuery;
 
-impl Message<GetStatusQuery> for Coordinator {
+#[derive(Debug)]
+pub struct GetSystemOverviewQuery;
+
+#[derive(Debug)]
+pub struct SetMonitoringCommand(pub bool);
+
+#[derive(Debug)]
+pub struct SetReportIntervalCommand(pub u64);
+
+impl Message<GetSystemStatusQuery> for Coordinator {
+    type Reply = Result<ExecutionStatus, CoordinatorError>;
+
+    async fn handle(&mut self, _query: GetSystemStatusQuery, _ctx: &mut Context<Self, Self::Reply>) -> Self::Reply {
+        self.get_status().await
+    }
+}
+
+impl Message<GetSystemOverviewQuery> for Coordinator {
+    type Reply = Result<SystemOverview, CoordinatorError>;
+
+    async fn handle(&mut self, _query: GetSystemOverviewQuery, _ctx: &mut Context<Self, Self::Reply>) -> Self::Reply {
+        self.generate_system_overview().await
+    }
+}
+
+impl Message<SetMonitoringCommand> for Coordinator {
     type Reply = ();
 
-    async fn handle(
-        &mut self,
-        _query: GetStatusQuery,
-        _ctx: &mut Context<Self, Self::Reply>,
-    ) -> Self::Reply {
-        let status = self.get_status();
-        // 通过 ctx 发送回复
-        println!("📊 Current status: {:?}", status);
+    async fn handle(&mut self, command: SetMonitoringCommand, _ctx: &mut Context<Self, Self::Reply>) -> Self::Reply {
+        self.set_monitoring_enabled(command.0);
+    }
+}
+
+impl Message<SetReportIntervalCommand> for Coordinator {
+    type Reply = ();
+
+    async fn handle(&mut self, command: SetReportIntervalCommand, _ctx: &mut Context<Self, Self::Reply>) -> Self::Reply {
+        self.set_report_interval(command.0);
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::actor::status_collector::StatusCollector;
+    use kameo::Actor;
 
-    #[test]
-    fn test_coordinator_creation() {
-        let coordinator = Coordinator::new();
-        assert_eq!(coordinator.total_executions, 0);
+    #[tokio::test]
+    async fn test_coordinator_creation() {
+        let status_collector = Actor::spawn(StatusCollector::new());
+        
+        let coordinator = Coordinator::new(status_collector);
+        assert!(coordinator.is_monitoring_enabled());
+        assert_eq!(coordinator.report_interval_seconds, 60);
     }
 
-    #[test]
-    fn test_coordinator_status() {
-        let coordinator = Coordinator::new();
-        let status = coordinator.get_status();
-
-        assert!(status.is_running); // 图模式下总是运行
-        assert_eq!(status.active_nodes_count, 0);
-        assert_eq!(status.total_executions, 0);
-        assert_eq!(status.success_rate(), 0.0);
+    #[tokio::test]
+    async fn test_coordinator_configuration() {
+        let status_collector = Actor::spawn(StatusCollector::new());
+        
+        let mut coordinator = Coordinator::with_config(status_collector, false, 30);
+        assert!(!coordinator.is_monitoring_enabled());
+        assert_eq!(coordinator.report_interval_seconds, 30);
+        
+        coordinator.set_monitoring_enabled(true);
+        assert!(coordinator.is_monitoring_enabled());
+        
+        coordinator.set_report_interval(120);
+        assert_eq!(coordinator.report_interval_seconds, 120);
     }
 
-    #[test]
-    fn test_node_concurrency_control() {
-        let mut coordinator = Coordinator::new();
+    #[tokio::test]
+    async fn test_system_health_assessment() {
+        let status_collector = Actor::spawn(StatusCollector::new());
+        let coordinator = Coordinator::new(status_collector);
 
-        // 这个测试的逻辑应该在 ExecutionTracker 的测试中完成
-        // Coordinator 不再直接管理运行状态
+        // 创建模拟的性能报告
+        let report = PerformanceReport {
+            overall_stats: ExecutionStatus {
+                is_running: false,
+                active_nodes_count: 0,
+                total_executions: 100,
+                successful_executions: 95,
+                failed_executions: 5,
+                last_activity: None,
+                current_error: None,
+            },
+            node_performance: HashMap::new(),
+            system_metrics: SystemMetrics::default(),
+            top_performers: Vec::new(),
+            bottlenecks: Vec::new(),
+        };
+
+        let health = coordinator.assess_system_health(&report);
+        assert_eq!(health, SystemHealth::Excellent);
     }
 }

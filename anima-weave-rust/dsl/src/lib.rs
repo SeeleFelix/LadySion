@@ -17,6 +17,8 @@ pub struct DslParser;
 
 impl Parse for DslParser {
     fn parse(&self, _content: &str) -> Result<Graph, ParseError> {
-        todo!("解析DSL内容并返回Graph")
+        Err(ParseError::ParseError(
+            "DSL解析器尚未实现，请使用程序化方式构建Graph".to_string(),
+        ))
     }
 }

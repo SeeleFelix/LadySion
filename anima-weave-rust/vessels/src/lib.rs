@@ -1,42 +1,21 @@
+pub mod add_node;
+pub mod demo_inventory;
 pub mod labels;
-pub mod nodes;
 pub mod start_node;
-pub mod math_node;
 
-pub use labels::{
-    number_label::NumberLabel,
-    string_label::StringLabel,
-    prompt_label::PromptLabel,
-};
+pub use labels::{number_label::NumberLabel, prompt_label::PromptLabel, string_label::StringLabel};
 
-pub use nodes::*;
+pub use add_node::AddNode;
 pub use start_node::StartNode;
-pub use math_node::MathNode;
 
-use anima_weave_core::{SemanticLabel, SignalLabel};
-use std::collections::HashMap;
-use std::sync::Arc;
-use anima_weave_core::actor::node::NodeExecutor;
-
-pub type NodeFactory =
-    HashMap<&'static str, Box<dyn Fn() -> Arc<dyn NodeExecutor> + Send + Sync>>;
-
-pub fn create_node_factory() -> NodeFactory {
-    let mut factory: NodeFactory = HashMap::new();
-    factory.insert(
-        "StartNode",
-        Box::new(|| Arc::new(StartNode::new(5.0))),
-    );
-    factory.insert(
-        "MathNode",
-        Box::new(|| Arc::new(MathNode::new(3.0))),
-    );
-    factory
-}
+pub use anima_weave_node::{
+    create_node_by_type, create_node_factory, get_registered_node_types, Node,
+};
 
 #[cfg(test)]
 mod integration_tests {
     use super::*;
+    use anima_weave_core::{SemanticLabel, SignalLabel};
 
     #[test]
     fn test_cross_package_type_consistency() {
@@ -146,6 +125,32 @@ mod integration_tests {
                     || any_ref.is::<PromptLabel>()
                     || any_ref.is::<SignalLabel>()
             );
+        }
+    }
+
+    #[test]
+    fn test_node_registration_system() {
+        // 测试节点注册系统
+        let factory = create_node_factory();
+
+        // 应该至少有StartNode和AddNode
+        assert!(factory.len() >= 2);
+
+        // 测试根据类型创建节点
+        let start_node = create_node_by_type("StartNode");
+        let add_node = create_node_by_type("AddNode");
+
+        assert!(start_node.is_some());
+        assert!(add_node.is_some());
+
+        if let Some(node) = start_node {
+            let info = node.info();
+            assert_eq!(info.name, "StartNode");
+        }
+
+        if let Some(node) = add_node {
+            let info = node.info();
+            assert_eq!(info.name, "AddNode");
         }
     }
 }

@@ -1,28 +1,22 @@
-//! AnimaWeave Actor抽象层
+//! AnimaWeave 分布式Actor系统
 //!
-//! 定义了AnimaWeave系统中三个核心Actor的抽象能力：
-//! - CoordinatorActor: 全局调度大脑，管理状态和调度执行
-//! - DataBus: 数据流路由引擎，处理数据传递和转换
-//! - NodeActor: 计算执行单元，执行具体的业务逻辑
+//! 定义了AnimaWeave系统中的分布式Actor架构：
+//! - StatusCollector: 被动状态收集器，监控整个图的执行状态
+//! - DistributedNodeActor: 自主执行单元，维护自己的状态和数据
 //!
-//! 这些trait定义了清晰的职责边界和接口契约
+//! 这些Actor通过直接消息传递实现完全分布式的图计算
 
 pub mod coordinator;
-pub mod databus;
 pub mod errors;
-pub mod execution_tracker;
-pub mod node;
 pub mod node_actor;
-pub mod registry;
+pub mod status_collector;
 pub mod types;
 
-// 导出核心抽象trait
+// 导出核心Actor
 pub use coordinator::Coordinator;
-pub use execution_tracker::ExecutionTracker;
-pub use node::NodeExecutor;
-pub use node_actor::NodeActor;
-pub use registry::NodeRegistry;
+pub use node_actor::{DistributedNodeActor, GetNodeInfoQuery, GetNodeStateQuery, NodeInfo};
+pub use status_collector::StatusCollector;
 
 // 导出类型定义
-pub use errors::{CoordinatorError, DataStoreError, NodeExecutionError};
-pub use types::{ExecutionPlan, GlobalState, NodeState};
+pub use errors::{CoordinatorError, DataStoreError};
+pub use types::*;

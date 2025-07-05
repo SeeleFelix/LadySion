@@ -2,26 +2,13 @@
 //!
 //! 验证 StartNode ➜ MathNode 的完整事件流。
 
-use crate::launcher::{GraphLauncher, NodeFactory};
+use crate::launcher::DistributedGraphLauncher;
 use anima_weave_core::{
-    actor::{
-        coordinator::Coordinator,
-        databus::actor::DataBus,
-        node::NodeExecutor,
-        node_actor::NodeActor,
-        registry::NodeRegistry,
-    },
-    event::{NodeExecuteEvent, NodeExecutionEvent, NodeOutputEvent, NodeReadyEvent},
-    graph::{ActivationMode, Connection, ConcurrentMode, Graph, Node, Port},
+    graph::{ActivationMode, ConcurrentMode, Connection, Graph, Node, Port},
     in_memory_graph::InMemoryGraph,
-    types::{NodeName, PortName},
 };
-use anima_weave_vessels::{
-    create_node_factory, math_node::MathNode, start_node::StartNode,
-};
-use kameo::prelude::*;
-use std::{collections::HashMap, sync::Arc, time::Duration};
-use uuid::Uuid;
+use anima_weave_vessels::create_node_factory;
+use std::sync::Arc;
 
 /// 创建简单图：`start` (输出 value) ➜ `math` (输入 number)
 fn create_graph() -> Arc<InMemoryGraph> {
@@ -108,7 +95,7 @@ async fn test_start_to_math_flow() {
     let graph = Arc::new(InMemoryGraph::new(graph_def));
 
     // 2. Create the launcher
-    let mut launcher = GraphLauncher::new(graph, create_node_factory());
+    let mut launcher = DistributedGraphLauncher::new(graph, create_node_factory());
 
     // 3. Setup the actor system
     if let Err(e) = launcher.setup().await {
@@ -123,4 +110,4 @@ async fn test_start_to_math_flow() {
 
     // Manually check the logs for now.
     // We expect to see the StartNode outputting, and the MathNode executing and outputting.
-} 
+}

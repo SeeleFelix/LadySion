@@ -100,13 +100,13 @@ graph TB
     %% 样式定义
     classDef completed fill:#c8e6c9,stroke:#4caf50,stroke-width:2px,color:#1b5e20
     classDef inProgress fill:#fff3e0,stroke:#ff9800,stroke-width:2px,color:#e65100
-    classDef todo fill:#ffebee,stroke:#f44336,stroke-width:2px,color:#c62828
+    classDef TODO fill:#ffebee,stroke:#f44336,stroke-width:2px,color:#c62828
     classDef system fill:#e3f2fd,stroke:#2196f3,stroke-width:2px,color:#0d47a1
     
     %% 应用样式
     class GraphDef,SemanticLabels,EventSystem,StateSystem,StringLabelImpl,NumberLabelImpl,PromptLabelImpl,SignalLabelImpl,CoordActor,EventFlow1 completed
     class EventFlow2,EventFlow3,EventFlow4,EventFlow5,EventFlow6 inProgress
-    class WeaveParser,AnimaLoader,GraphBuilder,DataBus,StartActor,MathActor,IsEvenActor,CustomActor todo
+    class WeaveParser,AnimaLoader,GraphBuilder,DataBus,StartActor,MathActor,IsEvenActor,CustomActor TODO
     class WeaveFile,AnimaFile system
 ```
 

@@ -5,6 +5,7 @@
 pub use crate::event::types::PortRef;
 use crate::SemanticLabel;
 use std::collections::HashMap;
+use std::sync::Arc;
 
 /// =========================
 /// 基础标识类型别名
@@ -25,17 +26,19 @@ pub type ExecutionId = String;
 
 /// 节点输入数据集合 - 目标节点输入端口到数据的映射
 ///
-/// 用于NodeExecuteEvent中传递给目标节点的数据输入
-pub type NodeDataInputs = HashMap<PortRef, Box<dyn SemanticLabel>>;
+/// 用于NodeActor存储待处理的数据输入
+/// 使用Arc实现零拷贝数据共享
+pub type NodeDataInputs = HashMap<PortRef, Arc<dyn SemanticLabel>>;
 
 /// 节点控制输入集合 - 目标节点控制端口到信号的映射
 ///
-/// 用于NodeExecuteEvent中传递给目标节点的控制信号
+/// 用于NodeActor存储待处理的控制信号输入
 pub type NodeControlInputs = HashMap<PortRef, crate::SignalLabel>;
 
 /// 节点输出数据集合 - 目标节点输出端口到数据的映射
 /// 数据输出集合 - 数据端口到数据的映射
-pub type NodeDataOutputs = HashMap<PortRef, Box<dyn SemanticLabel>>;
+/// 使用Arc实现零拷贝数据共享
+pub type NodeDataOutputs = HashMap<PortRef, Arc<dyn SemanticLabel>>;
 
 /// 控制输出集合 - 控制端口到信号的映射
 pub type NodeControlOutputs = HashMap<PortRef, crate::SignalLabel>;
@@ -64,8 +67,8 @@ mod tests {
         let input_port1 = PortRef::new("target_node", "data_input1");
         let input_port2 = PortRef::new("target_node", "data_input2");
 
-        data_inputs.insert(input_port1, Box::new(SignalLabel::active()));
-        data_inputs.insert(input_port2, Box::new(SignalLabel::inactive()));
+        data_inputs.insert(input_port1, Arc::new(SignalLabel::active()));
+        data_inputs.insert(input_port2, Arc::new(SignalLabel::inactive()));
 
         assert_eq!(data_inputs.len(), 2);
     }
@@ -88,7 +91,7 @@ mod tests {
         let mut outputs: NodeDataOutputs = HashMap::new();
         // 目标节点的输出端口
         let output_port = PortRef::new("target_node", "output");
-        outputs.insert(output_port, Box::new(SignalLabel::active()));
+        outputs.insert(output_port, Arc::new(SignalLabel::active()));
 
         assert_eq!(outputs.len(), 1);
     }
