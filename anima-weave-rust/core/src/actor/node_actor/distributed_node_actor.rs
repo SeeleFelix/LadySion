@@ -1,5 +1,5 @@
 use crate::actor::status_collector::StatusCollector;
-use crate::event::{ActorHealthStatus, ControlMessage, DataMessage, MessageType, NodeStatusEvent};
+use crate::event::{ControlMessage, DataMessage, MessageType, NodeStatusEvent};
 use crate::graph::ActivationMode;
 use crate::label::SemanticLabel;
 use crate::signal::SignalLabel;

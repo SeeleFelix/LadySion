@@ -5,7 +5,6 @@
 use crate::label::SemanticLabel;
 use crate::signal::SignalLabel;
 use crate::types::{ExecutionId, NodeName, PortRef};
-use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 
