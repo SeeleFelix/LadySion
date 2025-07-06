@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use anima_weave_core::actor::types::DataMessage;
+use anima_weave_core::event::DataMessage;
 use anima_weave_core::actor::{
     coordinator::Coordinator, status_collector::StatusCollector, DistributedNodeActor,
 };

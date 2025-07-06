@@ -10,7 +10,6 @@ pub mod coordinator;
 pub mod errors;
 pub mod node_actor;
 pub mod status_collector;
-pub mod types;
 
 // 导出核心Actor
 pub use coordinator::Coordinator;
@@ -19,4 +18,12 @@ pub use status_collector::StatusCollector;
 
 // 导出类型定义
 pub use errors::{CoordinatorError, DataStoreError};
-pub use types::*;
+
+// 从 distributed_node_actor.rs 重新导出 NodeActor 相关类型
+pub use node_actor::distributed_node_actor::{NodeState, NodeExecutionEvent, ExecutionStats};
+
+// 从 status_collector.rs 重新导出 StatusCollector 相关类型
+pub use status_collector::{
+    DetailedExecutionRecord, DetailedExecutionStatus, ExecutionStatus, 
+    MessageStats, NodeStats, PerformanceReport, SystemMetrics
+};

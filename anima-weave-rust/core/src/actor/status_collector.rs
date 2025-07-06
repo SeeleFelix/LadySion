@@ -1,10 +1,10 @@
 use crate::actor::errors::CoordinatorError;
-use crate::actor::types::*;
+use crate::event::{ActorHealthStatus, MessageType, NodeStatusEvent};
 use crate::types::{ExecutionId, NodeName};
 use kameo::actor::{ActorRef, WeakActorRef};
 use kameo::error::ActorStopReason;
 use kameo::message::{Context, Message};
-use kameo::Actor;
+use kameo::{Actor, Reply};
 use std::collections::{HashMap, VecDeque};
 use std::time::{Duration, SystemTime};
 
@@ -609,5 +609,153 @@ mod tests {
         let collector = StatusCollector::new();
         let stats = collector.get_all_node_statistics();
         assert!(stats.is_empty());
+    }
+}
+
+// ===== 从 actor/types.rs 移动过来的 StatusCollector 相关类型 =====
+
+/// 详细执行状态
+#[derive(Debug, Clone, PartialEq)]
+pub enum DetailedExecutionStatus {
+    Queued,
+    Dispatched,
+    Running,
+    Completed { success: bool },
+    Failed { error: String },
+}
+
+/// 详细执行记录
+#[derive(Debug, Clone)]
+pub struct DetailedExecutionRecord {
+    pub execution_id: ExecutionId,
+    pub node_name: NodeName,
+    pub status: DetailedExecutionStatus,
+    pub is_sequential: bool,
+
+    // 完整时间线
+    pub ready_at: SystemTime,
+    pub dispatched_at: Option<SystemTime>,
+    pub started_at: Option<SystemTime>,
+    pub completed_at: Option<SystemTime>,
+
+    // 执行详情
+    pub input_data_count: usize,
+    pub output_data_count: usize,
+    pub error_message: Option<String>,
+
+    // 性能信息
+    pub queue_wait_duration: Option<Duration>,
+    pub execution_duration: Option<Duration>,
+}
+
+/// 节点统计信息
+#[derive(Debug, Clone)]
+pub struct NodeStats {
+    pub total_executions: u64,
+    pub successful_executions: u64,
+    pub failed_executions: u64,
+    pub average_execution_time: Duration,
+    pub min_execution_time: Duration,
+    pub max_execution_time: Duration,
+    pub last_execution_time: Option<SystemTime>,
+    pub total_processing_time: Duration,
+}
+
+impl Default for NodeStats {
+    fn default() -> Self {
+        Self {
+            total_executions: 0,
+            successful_executions: 0,
+            failed_executions: 0,
+            average_execution_time: Duration::from_secs(0),
+            min_execution_time: Duration::from_secs(u64::MAX),
+            max_execution_time: Duration::from_secs(0),
+            last_execution_time: None,
+            total_processing_time: Duration::from_secs(0),
+        }
+    }
+}
+
+/// 系统性能指标
+#[derive(Debug, Clone)]
+pub struct SystemMetrics {
+    pub peak_concurrent_executions: usize,
+    pub current_concurrent_executions: usize,
+    pub total_message_count: u64,
+    pub average_message_latency: Duration,
+    pub system_throughput: f64,
+    pub uptime: Duration,
+    pub start_time: SystemTime,
+}
+
+impl Default for SystemMetrics {
+    fn default() -> Self {
+        Self {
+            peak_concurrent_executions: 0,
+            current_concurrent_executions: 0,
+            total_message_count: 0,
+            average_message_latency: Duration::from_secs(0),
+            system_throughput: 0.0,
+            uptime: Duration::from_secs(0),
+            start_time: SystemTime::now(),
+        }
+    }
+}
+
+/// 消息传递统计
+#[derive(Debug, Clone, Default)]
+pub struct MessageStats {
+    pub total_data_messages: u64,
+    pub total_control_messages: u64,
+    pub total_status_messages: u64,
+    pub message_queue_sizes: HashMap<NodeName, usize>,
+    pub average_message_processing_time: Duration,
+}
+
+/// 性能报告
+#[derive(Debug, Clone, Reply)]
+pub struct PerformanceReport {
+    pub overall_stats: ExecutionStatus,
+    pub node_performance: HashMap<NodeName, NodeStats>,
+    pub system_metrics: SystemMetrics,
+    pub top_performers: Vec<(NodeName, NodeStats)>,
+    pub bottlenecks: Vec<(NodeName, String)>,
+}
+
+/// 执行状态 (兼容现有API)
+#[derive(Debug, Clone, Reply)]
+pub struct ExecutionStatus {
+    pub is_running: bool,
+    pub active_nodes_count: usize,
+    pub total_executions: u64,
+    pub successful_executions: u64,
+    pub failed_executions: u64,
+    pub last_activity: Option<SystemTime>,
+    pub current_error: Option<String>,
+}
+
+impl ExecutionStatus {
+    pub fn empty() -> Self {
+        Self {
+            is_running: false,
+            active_nodes_count: 0,
+            total_executions: 0,
+            successful_executions: 0,
+            failed_executions: 0,
+            last_activity: None,
+            current_error: None,
+        }
+    }
+
+    pub fn success_rate(&self) -> f64 {
+        if self.total_executions == 0 {
+            0.0
+        } else {
+            self.successful_executions as f64 / self.total_executions as f64
+        }
+    }
+
+    pub fn is_healthy(&self) -> bool {
+        self.current_error.is_none() && (self.total_executions == 0 || self.success_rate() >= 0.8)
     }
 }

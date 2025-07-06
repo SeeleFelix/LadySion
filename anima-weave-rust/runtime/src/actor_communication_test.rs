@@ -1,6 +1,7 @@
 use anima_weave_core::actor::node_actor::distributed_node_actor::DistributedNodeActor;
 use anima_weave_core::actor::status_collector::{GetStatusQuery, StatusCollector};
-use anima_weave_core::actor::types::{ExecutionStatus, NodeStatusEvent};
+use anima_weave_core::actor::ExecutionStatus;
+use anima_weave_core::event::NodeStatusEvent;
 use anima_weave_core::Node;
 use kameo::Actor;
 use std::collections::HashMap;

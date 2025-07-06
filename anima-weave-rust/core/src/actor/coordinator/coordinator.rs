@@ -6,8 +6,7 @@
 //! - 提供系统状态查询
 
 use crate::actor::errors::CoordinatorError;
-use crate::actor::status_collector::{GetPerformanceReportQuery, GetStatusQuery, StatusCollector};
-use crate::actor::types::*;
+use crate::actor::status_collector::{GetPerformanceReportQuery, GetStatusQuery, StatusCollector, ExecutionStatus, PerformanceReport, SystemMetrics};
 use kameo::actor::{ActorRef, WeakActorRef};
 use kameo::error::ActorStopReason;
 use kameo::message::{Context, Message};

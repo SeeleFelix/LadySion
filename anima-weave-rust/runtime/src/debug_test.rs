@@ -1,6 +1,7 @@
 use anima_weave_core::actor::node_actor::distributed_node_actor::DistributedNodeActor;
 use anima_weave_core::actor::status_collector::StatusCollector;
-use anima_weave_core::actor::types::{DataMessage, ExecutionStatus};
+use anima_weave_core::actor::ExecutionStatus;
+use anima_weave_core::event::DataMessage;
 use anima_weave_core::types::PortRef;
 use anima_weave_core::Node;
 use anima_weave_vessels::labels::NumberLabel;
