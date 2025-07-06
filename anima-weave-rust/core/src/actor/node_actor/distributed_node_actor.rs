@@ -143,44 +143,8 @@ impl DistributedNodeActor {
         }
     }
 
-    /// 开始执行节点
-    async fn start_execution(&mut self, ctx: &mut Context<Self, ()>) -> Result<(), String> {
-        if !self.can_execute() {
-            return Err("Node not ready for execution".to_string());
-        }
-
-        let execution_id = Uuid::new_v4().to_string();
-        self.current_execution_id = Some(execution_id.clone());
-        self.current_state = NodeState::Running;
-        self.last_execution_start = Some(SystemTime::now());
-
-        // 发送开始执行事件
-        let _ = self
-            .status_collector
-            .tell(NodeStatusEvent::ExecutionStarted {
-                node_name: self.node_name.clone(),
-                execution_id: execution_id.clone(),
-                input_count: self.pending_data_inputs.len() + self.pending_control_inputs.len(),
-            })
-            .await;
-
-        // 执行节点逻辑
-        match self.execute_node().await {
-            Ok(outputs) => {
-                self.handle_execution_success(execution_id, outputs, ctx)
-                    .await;
-            }
-            Err(error) => {
-                self.handle_execution_failure(execution_id, error, ctx)
-                    .await;
-            }
-        }
-
-        Ok(())
-    }
-
-    /// 直接执行节点（不需要Context）
-    async fn direct_execution(&mut self) {
+    /// 执行节点
+    async fn execute(&mut self) {
         if !self.can_execute() {
             return;
         }
@@ -203,12 +167,10 @@ impl DistributedNodeActor {
         // 执行节点逻辑
         match self.execute_node().await {
             Ok(outputs) => {
-                self.handle_execution_success_direct(execution_id, outputs)
-                    .await;
+                self.handle_execution_success(execution_id, outputs).await;
             }
             Err(error) => {
-                self.handle_execution_failure_direct(execution_id, error)
-                    .await;
+                self.handle_execution_failure(execution_id, error).await;
             }
         }
     }
@@ -255,7 +217,6 @@ impl DistributedNodeActor {
         &mut self,
         execution_id: ExecutionId,
         outputs: HashMap<PortRef, Vec<Arc<dyn SemanticLabel>>>,
-        ctx: &mut Context<Self, ()>,
     ) {
         let duration = self
             .last_execution_start
@@ -266,7 +227,7 @@ impl DistributedNodeActor {
 
         // 发送输出数据到下游
         for (port, data_list) in outputs {
-            self.send_data_to_downstream(port, data_list, execution_id.clone(), ctx)
+            self.send_data_to_downstream(port, data_list, execution_id.clone())
                 .await;
         }
 
@@ -281,81 +242,13 @@ impl DistributedNodeActor {
                 node_name: self.node_name.clone(),
                 execution_id,
                 output_count: total_outputs,
-                duration,
-            })
-            .await;
-
-        // 检查是否可以立即开始下一次执行
-        if self.can_execute() {
-            let _ = Box::pin(self.start_execution(ctx)).await;
-        }
-    }
-
-    /// 处理执行成功（直接版本）
-    async fn handle_execution_success_direct(
-        &mut self,
-        execution_id: ExecutionId,
-        outputs: HashMap<PortRef, Vec<Arc<dyn SemanticLabel>>>,
-    ) {
-        let duration = self
-            .last_execution_start
-            .and_then(|start| SystemTime::now().duration_since(start).ok())
-            .unwrap_or_default();
-
-        let total_outputs = outputs.values().map(|v| v.len()).sum();
-
-        // 发送输出数据到下游
-        for (port, data_list) in outputs {
-            self.send_data_to_downstream_direct(port, data_list, execution_id.clone())
-                .await;
-        }
-
-        // 更新状态
-        self.current_execution_id = None;
-        self.current_state = NodeState::Completed;
-
-        // 发送完成事件
-        let _ = self
-            .status_collector
-            .tell(NodeStatusEvent::ExecutionCompleted {
-                node_name: self.node_name.clone(),
-                execution_id,
-                output_count: total_outputs,
-                duration,
-            })
-            .await;
-    }
-
-    /// 处理执行失败（直接版本）
-    async fn handle_execution_failure_direct(&mut self, execution_id: ExecutionId, error: String) {
-        let duration = self
-            .last_execution_start
-            .and_then(|start| SystemTime::now().duration_since(start).ok())
-            .unwrap_or_default();
-
-        // 更新状态
-        self.current_execution_id = None;
-        self.current_state = NodeState::Idle;
-
-        // 发送失败事件
-        let _ = self
-            .status_collector
-            .tell(NodeStatusEvent::ExecutionFailed {
-                node_name: self.node_name.clone(),
-                execution_id,
-                error,
                 duration,
             })
             .await;
     }
 
     /// 处理执行失败
-    async fn handle_execution_failure(
-        &mut self,
-        execution_id: ExecutionId,
-        error: String,
-        _ctx: &mut Context<Self, ()>,
-    ) {
+    async fn handle_execution_failure(&mut self, execution_id: ExecutionId, error: String) {
         let duration = self
             .last_execution_start
             .and_then(|start| SystemTime::now().duration_since(start).ok())
@@ -379,32 +272,6 @@ impl DistributedNodeActor {
 
     /// 发送数据到下游节点
     async fn send_data_to_downstream(
-        &mut self,
-        from_port: PortRef,
-        data_list: Vec<Arc<dyn SemanticLabel>>,
-        execution_id: ExecutionId,
-        _ctx: &mut Context<Self, ()>,
-    ) {
-        if let Some(connections) = self.port_mappings.get(&from_port) {
-            for (downstream_actor, to_port) in connections {
-                for data in &data_list {
-                    let message = DataMessage {
-                        from_node: self.node_name.clone(),
-                        from_port: from_port.clone(),
-                        to_node: "unknown".to_string(), // 下游节点名称
-                        to_port: to_port.clone(),
-                        data: data.clone(),
-                        execution_id: execution_id.clone(),
-                    };
-
-                    let _ = downstream_actor.tell(message).await;
-                }
-            }
-        }
-    }
-
-    /// 发送数据到下游节点（直接版本，不需要Context）
-    async fn send_data_to_downstream_direct(
         &mut self,
         from_port: PortRef,
         data_list: Vec<Arc<dyn SemanticLabel>>,
@@ -492,8 +359,7 @@ impl Message<DataMessage> for DistributedNodeActor {
 
         // 检查是否可以开始执行
         if self.can_execute() {
-            // 直接在这里处理执行，避免Context类型复杂性
-            self.direct_execution().await;
+            self.execute().await;
         }
 
         Ok(())
@@ -529,8 +395,7 @@ impl Message<ControlMessage> for DistributedNodeActor {
 
         // 检查是否可以开始执行
         if self.can_execute() {
-            // 直接执行，避免Context类型问题
-            self.direct_execution().await;
+            self.execute().await;
         }
 
         Ok(())
@@ -608,13 +473,11 @@ impl Message<TriggerExecutionMessage> for DistributedNodeActor {
     async fn handle(
         &mut self,
         _message: TriggerExecutionMessage,
-        ctx: &mut Context<Self, Self::Reply>,
+        _ctx: &mut Context<Self, Self::Reply>,
     ) -> Self::Reply {
         // 再次检查是否可以执行（可能在消息传递过程中条件已改变）
         if self.can_execute() {
-            if let Err(_error) = self.start_execution(ctx).await {
-                // 执行失败，但我们已经在start_execution中处理了
-            }
+            self.execute().await;
         }
     }
 }
