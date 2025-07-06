@@ -1,15 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use crate::core::types::{NodeName, NodeType, PortName};
+use crate::core::types::{ActivationMode, NodeName, NodeType, PortName};
 
-
-/// 激活模式 - 定义控制信号如何聚合
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
-pub enum ActivationMode {
-    AND,
-    OR,
-    XOR,
-}
 
 /// 端口引用，用于表示图中的一个唯一端口
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
