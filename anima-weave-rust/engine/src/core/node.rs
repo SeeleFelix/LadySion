@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
+use crate::core::types::{NodeName, PortName};
+
 // Re-exporting from graph for convenience
-pub use crate::core::graph::{NodeName, PortName};
 
 // Using a simple alias for now. We can introduce a proper Label system later.
 pub type Label = String; 

@@ -1,8 +1,7 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use crate::core::types::{NodeName, NodeType, PortName};
 
-pub type NodeName = String;
-pub type NodeType = String;
-pub type PortName = String;
 
 /// 激活模式 - 定义控制信号如何聚合
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
@@ -19,7 +18,6 @@ pub struct PortRef {
     pub port_name: PortName,
 }
 
-
 /// 连接关系
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Connection {
@@ -29,16 +27,16 @@ pub struct Connection {
 
 /// 节点定义
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Node {
+pub struct NodeRef {
     pub name: NodeName,
     pub node_type: NodeType,
-    pub control_port_onfigs: HashMap<PortName, ActivationMode>,
+    pub control_port_configs: HashMap<PortName, ActivationMode>,
 }
 
-/// 计算图的完整定义
+/// 计算图完整定义
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Graph {
-    pub nodes: Vec<Node>,
+    pub nodes: Vec<NodeRef>,
     pub data_connections: Vec<Connection>,
     pub control_connections: Vec<Connection>,
-}
+} 
