@@ -3,14 +3,14 @@
 //! 定义了AnimaWeave Actor系统中外部需要的核心类型。
 //! 所有内部实现细节都被封装，不暴露给外部使用者。
 
-use crate::types::{ExecutionId, NodeName, PortRef};
 use crate::label::SemanticLabel;
 use crate::signal::SignalLabel;
+use crate::types::{ExecutionId, NodeName, PortRef};
 
 use kameo::Reply;
 use std::collections::HashMap;
-use std::time::{Duration, SystemTime};
 use std::sync::Arc;
+use std::time::{Duration, SystemTime};
 
 /// 节点状态
 ///
@@ -189,9 +189,9 @@ pub enum ActorHealthStatus {
 /// 节点激活模式
 #[derive(Debug, Clone, PartialEq)]
 pub enum ActivationMode {
-    XOR,  // 任意一个输入激活
-    OR,   // 至少一个输入激活
-    AND,  // 所有输入都激活
+    XOR, // 任意一个输入激活
+    OR,  // 至少一个输入激活
+    AND, // 所有输入都激活
 }
 
 /// 详细执行状态
@@ -211,18 +211,18 @@ pub struct DetailedExecutionRecord {
     pub node_name: NodeName,
     pub status: DetailedExecutionStatus,
     pub is_sequential: bool,
-    
+
     // 完整时间线
     pub ready_at: SystemTime,
     pub dispatched_at: Option<SystemTime>,
     pub started_at: Option<SystemTime>,
     pub completed_at: Option<SystemTime>,
-    
+
     // 执行详情
     pub input_data_count: usize,
     pub output_data_count: usize,
     pub error_message: Option<String>,
-    
+
     // 性能信息
     pub queue_wait_duration: Option<Duration>,
     pub execution_duration: Option<Duration>,
@@ -358,7 +358,7 @@ mod tests {
     #[test]
     fn test_node_state_transitions() {
         assert_eq!(NodeState::default(), NodeState::Idle);
-        
+
         let state = NodeState::Ready;
         assert_eq!(state, NodeState::Ready);
     }
@@ -382,7 +382,7 @@ mod tests {
             last_activity: None,
             current_error: None,
         };
-        
+
         assert_eq!(status.success_rate(), 0.8);
         assert!(status.is_healthy());
     }

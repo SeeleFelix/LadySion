@@ -83,12 +83,12 @@ impl Node for StartNode {
 
         // 如果有初始字符串，输出它
         if let Some(string) = &self.initial_string {
-                          outputs.insert(
-                  PortRef::new("start", "string_value"),
-                  Arc::new(StringLabel {
-                      value: string.clone(),
-                  }),
-              );
+            outputs.insert(
+                PortRef::new("start", "string_value"),
+                Arc::new(StringLabel {
+                    value: string.clone(),
+                }),
+            );
         }
 
         log::debug!("StartNode produced {} outputs", outputs.len());

@@ -1,6 +1,6 @@
 //! `anima-weave-node` Crate: The core execution logic for AnimaWeave nodes.
 //!
-//! This crate defines the `Node` trait and other essential components 
+//! This crate defines the `Node` trait and other essential components
 //! for running and managing individual nodes within the graph.
 
 pub mod factory;

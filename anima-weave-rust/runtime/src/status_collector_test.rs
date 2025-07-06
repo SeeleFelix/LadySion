@@ -1,5 +1,5 @@
-use anima_weave_core::actor::status_collector::{StatusCollector, GetStatusQuery};
-use anima_weave_core::actor::types::{NodeStatusEvent, ExecutionStatus};
+use anima_weave_core::actor::status_collector::{GetStatusQuery, StatusCollector};
+use anima_weave_core::actor::types::{ExecutionStatus, NodeStatusEvent};
 use kameo::Actor;
 use std::time::Duration;
 use uuid::Uuid;
@@ -8,7 +8,7 @@ use uuid::Uuid;
 #[tokio::test]
 async fn test_status_collector_direct() {
     println!("🔍 开始StatusCollector直接测试...");
-    
+
     // 创建StatusCollector
     let status_collector = <StatusCollector as Actor>::spawn(StatusCollector::new());
     println!("✅ StatusCollector已创建");
@@ -16,37 +16,45 @@ async fn test_status_collector_direct() {
     // 直接发送ExecutionStarted事件
     let execution_id = Uuid::new_v4().to_string();
     println!("📤 直接发送ExecutionStarted事件...");
-    
-    status_collector.tell(NodeStatusEvent::ExecutionStarted {
-        node_name: "test_node".to_string(),
-        execution_id: execution_id.clone(),
-        input_count: 1,
-    }).await.expect("Failed to send ExecutionStarted");
-    
+
+    status_collector
+        .tell(NodeStatusEvent::ExecutionStarted {
+            node_name: "test_node".to_string(),
+            execution_id: execution_id.clone(),
+            input_count: 1,
+        })
+        .await
+        .expect("Failed to send ExecutionStarted");
+
     println!("✅ ExecutionStarted事件已发送");
-    
+
     // 等待处理
     tokio::time::sleep(Duration::from_millis(100)).await;
-    
+
     // 发送ExecutionCompleted事件
     println!("📤 直接发送ExecutionCompleted事件...");
-    
-    status_collector.tell(NodeStatusEvent::ExecutionCompleted {
-        node_name: "test_node".to_string(),
-        execution_id: execution_id.clone(),
-        output_count: 1,
-        duration: Duration::from_millis(50),
-    }).await.expect("Failed to send ExecutionCompleted");
-    
+
+    status_collector
+        .tell(NodeStatusEvent::ExecutionCompleted {
+            node_name: "test_node".to_string(),
+            execution_id: execution_id.clone(),
+            output_count: 1,
+            duration: Duration::from_millis(50),
+        })
+        .await
+        .expect("Failed to send ExecutionCompleted");
+
     println!("✅ ExecutionCompleted事件已发送");
-    
+
     // 等待处理
     tokio::time::sleep(Duration::from_millis(100)).await;
-    
+
     // 查询状态
-    let status: ExecutionStatus = status_collector.ask(GetStatusQuery).await
+    let status: ExecutionStatus = status_collector
+        .ask(GetStatusQuery)
+        .await
         .expect("Failed to get status");
-        
+
     println!("📊 StatusCollector统计:");
     println!("  - 总执行次数: {}", status.total_executions);
     println!("  - 成功执行: {}", status.successful_executions);
@@ -58,4 +66,4 @@ async fn test_status_collector_direct() {
     assert_eq!(status.failed_executions, 0, "不应该有失败执行");
 
     println!("✅ StatusCollector直接测试通过!");
-} 
+}

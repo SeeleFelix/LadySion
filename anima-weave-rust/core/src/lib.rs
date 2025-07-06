@@ -27,14 +27,12 @@ pub use types::{NodeControlInputs, NodeDataInputs, NodeDataOutputs};
 pub trait Node: Send + Sync + std::fmt::Debug {
     /// 执行节点逻辑
     fn execute(&self, inputs: &NodeDataInputs) -> Result<NodeDataOutputs, AnimaWeaveError>;
-    
+
     /// 获取节点类型名称
     fn node_type(&self) -> &'static str;
-    
+
     /// 检查节点是否准备就绪
     fn is_ready(&self) -> bool {
         true
     }
 }
-
-

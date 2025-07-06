@@ -2,9 +2,6 @@ use crate::types::{NodeName, PortName};
 use serde::{Deserialize, Serialize};
 use std::sync::atomic::AtomicU64;
 
-
-
-
 /// 端口引用 - 标识图中的特定端口
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct PortRef {
@@ -45,7 +42,6 @@ impl NodeStatus {
 #[cfg(test)]
 mod tests {
     use super::*;
-
 
     #[test]
     fn test_port_ref() {

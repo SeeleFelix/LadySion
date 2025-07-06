@@ -1,12 +1,10 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use anima_weave_core::actor::types::{ActivationMode, DataMessage};
 use anima_weave_core::actor::{
-    coordinator::Coordinator,
-    status_collector::StatusCollector,
-    DistributedNodeActor,
+    coordinator::Coordinator, status_collector::StatusCollector, DistributedNodeActor,
 };
-use anima_weave_core::actor::types::{DataMessage, ActivationMode};
 use anima_weave_core::graph::GraphQuery;
 use anima_weave_core::in_memory_graph::InMemoryGraph;
 use anima_weave_core::types::{NodeName, PortRef};
@@ -27,11 +25,11 @@ pub type NodeFactory = &'static HashMap<&'static str, fn() -> Box<dyn Node>>;
 pub struct DistributedGraphLauncher {
     graph: Arc<InMemoryGraph>,
     node_factory: NodeFactory,
-    
+
     // 系统组件
     status_collector: Option<ActorRef<StatusCollector>>,
     coordinator: Option<ActorRef<Coordinator>>,
-    
+
     // 节点Actor映射
     node_actors: HashMap<NodeName, ActorRef<DistributedNodeActor>>,
 }
@@ -52,13 +50,13 @@ impl DistributedGraphLauncher {
     pub async fn setup(&mut self) -> Result<(), String> {
         // 第一阶段：创建系统组件
         self.create_system_components().await?;
-        
+
         // 第二阶段：创建节点Actor
         self.create_node_actors().await?;
-        
+
         // 第三阶段：配置连接
         self.configure_connections().await?;
-        
+
         log::info!("Distributed graph launcher setup completed successfully");
         Ok(())
     }
@@ -75,13 +73,15 @@ impl DistributedGraphLauncher {
 
         self.status_collector = Some(status_collector);
         self.coordinator = Some(coordinator);
-        
+
         Ok(())
     }
 
     /// 创建所有节点Actor
     async fn create_node_actors(&mut self) -> Result<(), String> {
-        let status_collector = self.status_collector.as_ref()
+        let status_collector = self
+            .status_collector
+            .as_ref()
             .ok_or("StatusCollector not initialized")?;
 
         for node_info in self.graph.get_nodes() {
@@ -89,7 +89,9 @@ impl DistributedGraphLauncher {
             let node_type = &node_info.node_type;
 
             // 从工厂创建节点实现
-            let node_factory = self.node_factory.get(node_type.as_str())
+            let node_factory = self
+                .node_factory
+                .get(node_type.as_str())
                 .ok_or_else(|| format!("No factory found for node type: {}", node_type))?;
             let external_node = node_factory();
 
@@ -104,7 +106,7 @@ impl DistributedGraphLauncher {
             );
 
             let actor_ref = Actor::spawn(node_actor);
-            
+
             self.node_actors.insert(node_name.clone(), actor_ref);
             log::info!("Created DistributedNodeActor for node: {}", node_name);
         }
@@ -126,20 +128,25 @@ impl DistributedGraphLauncher {
 
             // 构建这个节点的连接映射
             let mut port_mappings = HashMap::new();
-            
+
             for connection in connections {
                 let from_port = PortRef::new(node_name, &connection.from_port);
-                let to_node_ref = self.node_actors.get(&connection.to_node)
+                let to_node_ref = self
+                    .node_actors
+                    .get(&connection.to_node)
                     .ok_or_else(|| format!("Target node not found: {}", connection.to_node))?;
                 let to_port = PortRef::new(&connection.to_node, &connection.to_port);
 
-                port_mappings.entry(from_port)
+                port_mappings
+                    .entry(from_port)
                     .or_insert_with(Vec::new)
                     .push((to_node_ref.clone(), to_port));
             }
 
             // 配置节点的连接
-            let node_actor = self.node_actors.get(node_name)
+            let node_actor = self
+                .node_actors
+                .get(node_name)
                 .ok_or_else(|| format!("Node actor not found: {}", node_name))?;
 
             // 发送配置消息到节点Actor
@@ -147,8 +154,11 @@ impl DistributedGraphLauncher {
             // 目前 DistributedNodeActor 的 configure_connections 是同步方法
             // 我们需要重新设计为异步消息
 
-            log::info!("Configured connections for node: {} ({} connections)", 
-                      node_name, port_mappings.len());
+            log::info!(
+                "Configured connections for node: {} ({} connections)",
+                node_name,
+                port_mappings.len()
+            );
         }
 
         Ok(())
@@ -156,11 +166,13 @@ impl DistributedGraphLauncher {
 
     /// 启动图执行
     pub async fn launch_and_wait(&self, start_node_name: &str) -> Result<(), String> {
-        let start_actor = self.node_actors.get(start_node_name)
+        let start_actor = self
+            .node_actors
+            .get(start_node_name)
             .ok_or_else(|| format!("Start node '{}' not found", start_node_name))?;
 
         let execution_id = Uuid::new_v4().to_string();
-        
+
         // 创建初始触发消息
         let trigger_message = DataMessage {
             from_node: "system".to_string(),
@@ -172,14 +184,16 @@ impl DistributedGraphLauncher {
         };
 
         // 发送触发消息
-        start_actor.tell(trigger_message).await
+        start_actor
+            .tell(trigger_message)
+            .await
             .map_err(|e| format!("Failed to send trigger message: {}", e))?;
 
         log::info!("Launched graph execution from node: {}", start_node_name);
 
         // 等待一段时间让图执行
         tokio::time::sleep(std::time::Duration::from_millis(500)).await;
-        
+
         Ok(())
     }
 
@@ -202,7 +216,7 @@ impl DistributedGraphLauncher {
     /// 获取从指定节点出发的所有连接
     fn get_outgoing_connections(&self, node_name: &str) -> Vec<OutgoingConnection> {
         let mut connections = Vec::new();
-        
+
         // 获取所有节点的数据输入连接，找到来自指定节点的连接
         for node_info in self.graph.get_nodes() {
             let data_inputs = self.graph.get_data_input_connections(&node_info.node_name);
@@ -216,7 +230,7 @@ impl DistributedGraphLauncher {
                 }
             }
         }
-        
+
         connections
     }
 }
@@ -249,14 +263,17 @@ impl std::fmt::Debug for NodeWrapper {
 }
 
 impl anima_weave_core::Node for NodeWrapper {
-    fn execute(&self, inputs: &anima_weave_core::types::NodeDataInputs) -> Result<anima_weave_core::types::NodeDataOutputs, anima_weave_core::AnimaWeaveError> {
+    fn execute(
+        &self,
+        inputs: &anima_weave_core::types::NodeDataInputs,
+    ) -> Result<anima_weave_core::types::NodeDataOutputs, anima_weave_core::AnimaWeaveError> {
         self.inner.execute(inputs)
     }
-    
+
     fn node_type(&self) -> &'static str {
         self.inner.node_type()
     }
-    
+
     fn is_ready(&self) -> bool {
         true
     }
