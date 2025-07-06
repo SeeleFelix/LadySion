@@ -1,4 +1,4 @@
-use anima_weave_core::actor::node_actor::distributed_node_actor::DistributedNodeActor;
+use anima_weave_core::actor::node_actor::node_actor::NodeActor;
 use anima_weave_core::actor::status_collector::StatusCollector;
 use anima_weave_core::actor::ExecutionStatus;
 use anima_weave_core::event::DataMessage;
@@ -69,7 +69,7 @@ async fn test_debug_node_behavior() {
     println!("✅ StatusCollector已创建");
 
     // 创建NodeActor
-    let debug_actor = <DistributedNodeActor as Actor>::spawn(DistributedNodeActor::new(
+    let debug_actor = <NodeActor as Actor>::spawn(NodeActor::new_simple(
         "debug".to_string(),
         Box::new(DebugNode),
         status_collector.clone(),
@@ -78,7 +78,7 @@ async fn test_debug_node_behavior() {
 
     // 配置激活端口
     println!("📝 配置激活端口...");
-    debug_actor.tell(anima_weave_core::actor::node_actor::distributed_node_actor::ConfigureActivationMessage {
+    debug_actor.tell(anima_weave_core::actor::node_actor::node_actor::ConfigureActivationMessage {
         required_data_ports: vec![PortRef::new("debug", "input")],
         required_control_ports: vec![],
     }).await.expect("Failed to configure activation");
@@ -89,14 +89,10 @@ async fn test_debug_node_behavior() {
 
     // 查询节点状态
     let info = debug_actor
-        .ask(anima_weave_core::actor::node_actor::distributed_node_actor::GetNodeInfoQuery)
+        .ask(anima_weave_core::actor::node_actor::node_actor::GetNodeInfoQuery)
         .await
         .expect("Failed to query node info");
-    println!("📊 节点状态:");
-    println!("  - 名称: {}", info.name);
-    println!("  - 状态: {:?}", info.state);
-    println!("  - 待处理数据: {}", info.pending_data_count);
-    println!("  - 待处理控制: {}", info.pending_control_count);
+    println!("📊 节点状态: {}", info);
 
     // 发送数据
     println!("📤 发送数据到debug节点...");
@@ -128,14 +124,10 @@ async fn test_debug_node_behavior() {
 
     // 查询执行后的状态
     let final_info = debug_actor
-        .ask(anima_weave_core::actor::node_actor::distributed_node_actor::GetNodeInfoQuery)
+        .ask(anima_weave_core::actor::node_actor::node_actor::GetNodeInfoQuery)
         .await
         .expect("Failed to query final node info");
-    println!("📊 执行后节点状态:");
-    println!("  - 名称: {}", final_info.name);
-    println!("  - 状态: {:?}", final_info.state);
-    println!("  - 待处理数据: {}", final_info.pending_data_count);
-    println!("  - 待处理控制: {}", final_info.pending_control_count);
+    println!("📊 执行后节点状态: {}", final_info);
 
     // 查询StatusCollector
     let status: ExecutionStatus = status_collector

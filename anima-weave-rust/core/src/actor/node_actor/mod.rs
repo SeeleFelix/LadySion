@@ -1,5 +1,15 @@
-pub mod distributed_node_actor;
+pub mod node_actor;
+pub mod input_buffer;
+pub mod state_manager;
+pub mod message_router;
+pub mod types;
 
-pub use distributed_node_actor::{
-    DistributedNodeActor, GetNodeInfoQuery, GetNodeStateQuery, NodeInfo,
+pub use node_actor::{
+    NodeActor,
+    NodeInfo,
+    GetNodeInfoQuery,
+    GetNodeStateQuery,
+    ConfigureActivationMessage,
+    ConfigureConnectionsMessage,
 };
+pub use types::{NodeState, NodeExecutionEvent, ExecutionStats};

@@ -1,11 +1,10 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use anima_weave_core::actor::node_actor::NodeActor;
+use anima_weave_core::actor::{coordinator::Coordinator, status_collector::StatusCollector};
 use anima_weave_core::event::DataMessage;
-use anima_weave_core::actor::{
-    coordinator::Coordinator, status_collector::StatusCollector, DistributedNodeActor,
-};
-use anima_weave_core::graph::GraphQuery;
+use anima_weave_core::graph::{ActivationMode, GraphQuery};
 use anima_weave_core::in_memory_graph::InMemoryGraph;
 use anima_weave_core::types::{NodeName, PortRef};
 use anima_weave_node::node::Node;
@@ -31,7 +30,7 @@ pub struct DistributedGraphLauncher {
     coordinator: Option<ActorRef<Coordinator>>,
 
     // 节点Actor映射
-    node_actors: HashMap<NodeName, ActorRef<DistributedNodeActor>>,
+    node_actors: HashMap<NodeName, ActorRef<NodeActor>>,
 }
 
 impl DistributedGraphLauncher {
@@ -51,11 +50,8 @@ impl DistributedGraphLauncher {
         // 第一阶段：创建系统组件
         self.create_system_components().await?;
 
-        // 第二阶段：创建节点Actor
-        self.create_node_actors().await?;
-
-        // 第三阶段：配置连接
-        self.configure_connections().await?;
+        // 第二阶段：创建完全配置的节点Actor
+        self.create_configured_node_actors().await?;
 
         log::info!("Distributed graph launcher setup completed successfully");
         Ok(())
@@ -77,13 +73,15 @@ impl DistributedGraphLauncher {
         Ok(())
     }
 
-    /// 创建所有节点Actor
-    async fn create_node_actors(&mut self) -> Result<(), String> {
+    /// 创建完全配置的节点Actor
+    async fn create_configured_node_actors(&mut self) -> Result<(), String> {
         let status_collector = self
             .status_collector
             .as_ref()
             .ok_or("StatusCollector not initialized")?;
 
+        // 第一阶段：创建所有节点Actor（使用空配置）
+        let mut temp_actors = HashMap::new();
         for node_info in self.graph.get_nodes() {
             let node_name = node_info.node_name.clone();
             let node_type = &node_info.node_type;
@@ -98,70 +96,123 @@ impl DistributedGraphLauncher {
             // 包装为分布式Actor使用的Node trait
             let wrapped_node = NodeWrapper::new(external_node);
 
-            // 创建 DistributedNodeActor
-            let node_actor = DistributedNodeActor::new(
+            // 创建临时Actor（空配置）
+            let node_actor = NodeActor::new(
                 node_name.clone(),
                 Box::new(wrapped_node),
                 status_collector.clone(),
+                HashMap::new(),
+                HashMap::new(),
+                Vec::new(),
+                Vec::new(),
             );
 
             let actor_ref = Actor::spawn(node_actor);
+            temp_actors.insert(node_name.clone(), actor_ref);
+            log::info!(
+                "Created temporary DistributedNodeActor for node: {}",
+                node_name
+            );
+        }
 
+        // 第二阶段：收集配置信息
+        let node_configurations = self.collect_node_configurations(&temp_actors).await?;
+
+        // 第三阶段：用完整配置重新创建Actor
+        for node_info in self.graph.get_nodes() {
+            let node_name = node_info.node_name.clone();
+            let node_type = &node_info.node_type;
+
+            // 从工厂创建节点实现
+            let node_factory = self
+                .node_factory
+                .get(node_type.as_str())
+                .ok_or_else(|| format!("No factory found for node type: {}", node_type))?;
+            let external_node = node_factory();
+
+            // 包装为分布式Actor使用的Node trait
+            let wrapped_node = NodeWrapper::new(external_node);
+
+            // 获取完整配置
+            let config = node_configurations
+                .get(&node_name)
+                .ok_or_else(|| format!("Configuration not found for node: {}", node_name))?;
+
+            // 创建最终配置的Actor
+            let node_actor = NodeActor::new(
+                node_name.clone(),
+                Box::new(wrapped_node),
+                status_collector.clone(),
+                config.port_mappings.clone(),
+                config.control_modes.clone(),
+                config.required_data_ports.clone(),
+                config.required_control_ports.clone(),
+            );
+
+            let actor_ref = Actor::spawn(node_actor);
             self.node_actors.insert(node_name.clone(), actor_ref);
-            log::info!("Created DistributedNodeActor for node: {}", node_name);
+            log::info!(
+                "Created fully configured DistributedNodeActor for node: {}",
+                node_name
+            );
         }
 
         Ok(())
     }
 
-    /// 配置节点间的连接
-    async fn configure_connections(&mut self) -> Result<(), String> {
-        // 遍历图中的所有连接，配置每个节点的下游连接
+    /// 收集所有节点的配置信息
+    async fn collect_node_configurations(
+        &self,
+        actors: &HashMap<NodeName, ActorRef<NodeActor>>,
+    ) -> Result<HashMap<NodeName, NodeConfiguration>, String> {
+        let mut configurations = HashMap::new();
+
         for node_info in self.graph.get_nodes() {
             let node_name = &node_info.node_name;
-            // 获取从此节点出发的所有连接
-            let connections = self.get_outgoing_connections(node_name);
 
-            if connections.is_empty() {
-                continue;
-            }
-
-            // 构建这个节点的连接映射
+            // 收集出口连接
+            let outgoing_connections = self.get_outgoing_connections(node_name);
             let mut port_mappings = HashMap::new();
 
-            for connection in connections {
+            for connection in outgoing_connections {
                 let from_port = PortRef::new(node_name, &connection.from_port);
-                let to_node_ref = self
-                    .node_actors
-                    .get(&connection.to_node)
-                    .ok_or_else(|| format!("Target node not found: {}", connection.to_node))?;
                 let to_port = PortRef::new(&connection.to_node, &connection.to_port);
+                let to_actor = actors
+                    .get(&connection.to_node)
+                    .ok_or_else(|| format!("Target actor not found: {}", connection.to_node))?;
 
                 port_mappings
                     .entry(from_port)
                     .or_insert_with(Vec::new)
-                    .push((to_node_ref.clone(), to_port));
+                    .push((to_actor.clone(), to_port));
             }
 
-            // 配置节点的连接
-            let node_actor = self
-                .node_actors
-                .get(node_name)
-                .ok_or_else(|| format!("Node actor not found: {}", node_name))?;
+            // 收集输入端口信息
+            let data_inputs = self.graph.get_data_input_connections(node_name);
+            let mut required_data_ports = Vec::new();
 
-            // 发送配置消息到节点Actor
-            // 注意：这里需要一个配置连接的消息类型
-            // 目前 DistributedNodeActor 的 configure_connections 是同步方法
-            // 我们需要重新设计为异步消息
+            for input in data_inputs {
+                let port_ref = PortRef::new(node_name, &input.to_port.port_name);
+                if !required_data_ports.contains(&port_ref) {
+                    required_data_ports.push(port_ref);
+                }
+            }
 
-            log::info!(
-                "Configured connections for node: {} ({} connections)",
-                node_name,
-                port_mappings.len()
-            );
+            // 暂时没有控制端口，使用空配置
+            let control_modes = HashMap::new();
+            let required_control_ports = Vec::new();
+
+            let config = NodeConfiguration {
+                port_mappings,
+                control_modes,
+                required_data_ports,
+                required_control_ports,
+            };
+
+            configurations.insert(node_name.clone(), config);
         }
 
-        Ok(())
+        Ok(configurations)
     }
 
     /// 启动图执行
@@ -241,6 +292,15 @@ struct OutgoingConnection {
     from_port: String,
     to_node: String,
     to_port: String,
+}
+
+/// 节点配置信息
+#[derive(Debug, Clone)]
+struct NodeConfiguration {
+    port_mappings: HashMap<PortRef, Vec<(ActorRef<NodeActor>, PortRef)>>,
+    control_modes: HashMap<PortRef, ActivationMode>,
+    required_data_ports: Vec<PortRef>,
+    required_control_ports: Vec<PortRef>,
 }
 
 /// NodeWrapper - 将anima_weave_node::Node适配为anima_weave_core::Node

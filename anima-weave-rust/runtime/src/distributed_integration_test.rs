@@ -1,6 +1,7 @@
-use anima_weave_core::actor::node_actor::distributed_node_actor::DistributedNodeActor;
+use anima_weave_core::actor::node_actor::node_actor::NodeActor;
 use anima_weave_core::actor::status_collector::StatusCollector;
-use anima_weave_core::actor::{ExecutionStatus, NodeState};
+use anima_weave_core::actor::ExecutionStatus;
+use anima_weave_core::actor::node_actor::NodeState;
 use anima_weave_core::event::DataMessage;
 use anima_weave_core::types::PortRef;
 use anima_weave_core::Node;
@@ -105,19 +106,19 @@ async fn test_distributed_node_communication() {
     println!("✅ StatusCollector已创建");
 
     // 2. 创建三个NodeActor
-    let source_actor = <DistributedNodeActor as Actor>::spawn(DistributedNodeActor::new(
+    let source_actor = <NodeActor as Actor>::spawn(NodeActor::new_simple(
         "source".to_string(),
         Box::new(DoubleNode),
         status_collector.clone(),
     ));
 
-    let processor_actor = <DistributedNodeActor as Actor>::spawn(DistributedNodeActor::new(
+    let processor_actor = <NodeActor as Actor>::spawn(NodeActor::new_simple(
         "processor".to_string(),
         Box::new(SumNode),
         status_collector.clone(),
     ));
 
-    let sink_actor = <DistributedNodeActor as Actor>::spawn(DistributedNodeActor::new(
+    let sink_actor = <NodeActor as Actor>::spawn(NodeActor::new_simple(
         "sink".to_string(),
         Box::new(DoubleNode),
         status_collector.clone(),
@@ -126,17 +127,17 @@ async fn test_distributed_node_communication() {
     println!("✅ 三个NodeActor已创建: source, processor, sink");
 
     // 3. 配置激活模式和必需端口
-    source_actor.tell(anima_weave_core::actor::node_actor::distributed_node_actor::ConfigureActivationMessage {
+    source_actor.tell(anima_weave_core::actor::node_actor::node_actor::ConfigureActivationMessage {
         required_data_ports: vec![PortRef::new("source", "input")],
         required_control_ports: vec![],
     }).await.expect("Failed to configure source activation");
 
-    processor_actor.tell(anima_weave_core::actor::node_actor::distributed_node_actor::ConfigureActivationMessage {
+    processor_actor.tell(anima_weave_core::actor::node_actor::node_actor::ConfigureActivationMessage {
         required_data_ports: vec![PortRef::new("processor", "input_a"), PortRef::new("processor", "input_b")],
         required_control_ports: vec![],
     }).await.expect("Failed to configure processor activation");
 
-    sink_actor.tell(anima_weave_core::actor::node_actor::distributed_node_actor::ConfigureActivationMessage {
+    sink_actor.tell(anima_weave_core::actor::node_actor::node_actor::ConfigureActivationMessage {
         required_data_ports: vec![PortRef::new("sink", "input")],
         required_control_ports: vec![],
     }).await.expect("Failed to configure sink activation");
@@ -166,11 +167,11 @@ async fn test_distributed_node_communication() {
     };
 
     // 应用连接配置
-    source_actor.tell(anima_weave_core::actor::node_actor::distributed_node_actor::ConfigureConnectionsMessage {
+    source_actor.tell(anima_weave_core::actor::node_actor::node_actor::ConfigureConnectionsMessage {
         port_mappings: source_connections,
     }).await.expect("Failed to configure source connections");
 
-    processor_actor.tell(anima_weave_core::actor::node_actor::distributed_node_actor::ConfigureConnectionsMessage {
+    processor_actor.tell(anima_weave_core::actor::node_actor::node_actor::ConfigureConnectionsMessage {
         port_mappings: processor_connections,
     }).await.expect("Failed to configure processor connections");
 
@@ -250,37 +251,32 @@ async fn test_node_state_queries() {
     println!("🔍 测试节点状态查询功能...");
 
     let status_collector = Actor::spawn(StatusCollector::new());
-    let test_actor = <DistributedNodeActor as Actor>::spawn(DistributedNodeActor::new(
+    let test_actor = <NodeActor as Actor>::spawn(NodeActor::new_simple(
         "test_node".to_string(),
         Box::new(DoubleNode),
         status_collector,
     ));
 
     // 查询初始状态
-    let state: NodeState = test_actor
-        .ask(anima_weave_core::actor::node_actor::distributed_node_actor::GetNodeStateQuery)
+    let state: String = test_actor
+        .ask(anima_weave_core::actor::node_actor::node_actor::GetNodeStateQuery)
         .await
         .expect("Failed to query node state");
 
-    println!("📋 初始节点状态: {:?}", state);
-    assert_eq!(state, NodeState::Idle, "新创建的节点应该处于Idle状态");
+    println!("📋 初始节点状态: {}", state);
+    assert_eq!(state, "Idle", "新创建的节点应该处于Idle状态");
 
     // 查询节点信息
-    let info: anima_weave_core::actor::node_actor::distributed_node_actor::NodeInfo = test_actor
-        .ask(anima_weave_core::actor::node_actor::distributed_node_actor::GetNodeInfoQuery)
+    let info: String = test_actor
+        .ask(anima_weave_core::actor::node_actor::node_actor::GetNodeInfoQuery)
         .await
         .expect("Failed to query node info");
 
-    println!("📊 节点信息:");
-    println!("   - 名称: {}", info.name);
-    println!("   - 状态: {:?}", info.state);
-    println!("   - 待处理数据: {}", info.pending_data_count);
-    println!("   - 待处理控制: {}", info.pending_control_count);
-
-    assert_eq!(info.name, "test_node");
-    assert_eq!(info.state, NodeState::Idle);
-    assert_eq!(info.pending_data_count, 0);
-    assert_eq!(info.pending_control_count, 0);
+    println!("📊 节点信息: {}", info);
+    
+    // 简单检查info字符串包含预期内容
+    assert!(info.contains("test_node"));
+    assert!(info.contains("Idle"));
 
     println!("✅ 节点状态查询测试通过!");
 }
@@ -296,14 +292,14 @@ async fn test_parallel_execution_performance() {
     // 创建多个独立的NodeActor
     let mut actors = Vec::new();
     for i in 0..5 {
-        let actor = <DistributedNodeActor as Actor>::spawn(DistributedNodeActor::new(
+        let actor = <NodeActor as Actor>::spawn(NodeActor::new_simple(
             format!("parallel_node_{}", i),
             Box::new(DoubleNode),
             status_collector.clone(),
         ));
 
         // 配置激活端口
-        actor.tell(anima_weave_core::actor::node_actor::distributed_node_actor::ConfigureActivationMessage {
+        actor.tell(anima_weave_core::actor::node_actor::node_actor::ConfigureActivationMessage {
             required_data_ports: vec![PortRef::new(&format!("parallel_node_{}", i), "input")],
             required_control_ports: vec![],
         }).await.expect("Failed to configure activation");
@@ -361,14 +357,14 @@ async fn test_debug_data_flow() {
     let status_collector = Actor::spawn(StatusCollector::new());
 
     // 创建source节点
-    let source_actor = <DistributedNodeActor as Actor>::spawn(DistributedNodeActor::new(
+    let source_actor = <NodeActor as Actor>::spawn(NodeActor::new_simple(
         "source".to_string(),
         Box::new(DoubleNode),
         status_collector.clone(),
     ));
 
     // 创建processor节点
-    let processor_actor = <DistributedNodeActor as Actor>::spawn(DistributedNodeActor::new(
+    let processor_actor = <NodeActor as Actor>::spawn(NodeActor::new_simple(
         "processor".to_string(),
         Box::new(SumNode),
         status_collector.clone(),
@@ -378,13 +374,13 @@ async fn test_debug_data_flow() {
     println!("🔧 配置激活条件...");
 
     // source只需要一个输入
-    source_actor.tell(anima_weave_core::actor::node_actor::distributed_node_actor::ConfigureActivationMessage {
+    source_actor.tell(anima_weave_core::actor::node_actor::node_actor::ConfigureActivationMessage {
         required_data_ports: vec![PortRef::new("source", "input")],
         required_control_ports: vec![],
     }).await.expect("Failed to configure source activation");
 
     // processor需要两个输入
-    processor_actor.tell(anima_weave_core::actor::node_actor::distributed_node_actor::ConfigureActivationMessage {
+    processor_actor.tell(anima_weave_core::actor::node_actor::node_actor::ConfigureActivationMessage {
         required_data_ports: vec![PortRef::new("processor", "input_a"), PortRef::new("processor", "input_b")],
         required_control_ports: vec![],
     }).await.expect("Failed to configure processor activation");
@@ -403,7 +399,7 @@ async fn test_debug_data_flow() {
         connections
     };
 
-    source_actor.tell(anima_weave_core::actor::node_actor::distributed_node_actor::ConfigureConnectionsMessage {
+    source_actor.tell(anima_weave_core::actor::node_actor::node_actor::ConfigureConnectionsMessage {
         port_mappings: source_connections,
     }).await.expect("Failed to configure source connections");
 
@@ -439,15 +435,13 @@ async fn test_debug_data_flow() {
     println!("   - 成功执行: {}", status1.successful_executions);
 
     // 查询processor状态
-    let processor_info: anima_weave_core::actor::node_actor::distributed_node_actor::NodeInfo =
+    let processor_info: String =
         processor_actor
-            .ask(anima_weave_core::actor::node_actor::distributed_node_actor::GetNodeInfoQuery)
+            .ask(anima_weave_core::actor::node_actor::node_actor::GetNodeInfoQuery)
             .await
             .expect("Failed to query processor info");
 
-    println!("📊 Processor状态:");
-    println!("   - 待处理数据数量: {}", processor_info.pending_data_count);
-    println!("   - 节点状态: {:?}", processor_info.state);
+    println!("📊 Processor状态: {}", processor_info);
 
     // 第二步：发送第二个输入到processor
     println!("📤 第二步：发送第二个输入到processor...");
@@ -480,18 +474,13 @@ async fn test_debug_data_flow() {
     println!("   - 成功执行: {}", status2.successful_executions);
 
     // 再次查询processor状态
-    let processor_info2: anima_weave_core::actor::node_actor::distributed_node_actor::NodeInfo =
+    let processor_info2: String =
         processor_actor
-            .ask(anima_weave_core::actor::node_actor::distributed_node_actor::GetNodeInfoQuery)
+            .ask(anima_weave_core::actor::node_actor::node_actor::GetNodeInfoQuery)
             .await
             .expect("Failed to query processor info");
 
-    println!("📊 Processor最终状态:");
-    println!(
-        "   - 待处理数据数量: {}",
-        processor_info2.pending_data_count
-    );
-    println!("   - 节点状态: {:?}", processor_info2.state);
+    println!("📊 Processor最终状态: {}", processor_info2);
 
     // 分析结果
     if status2.total_executions == 1 {

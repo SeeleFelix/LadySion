@@ -1,4 +1,4 @@
-use anima_weave_core::actor::node_actor::distributed_node_actor::DistributedNodeActor;
+use anima_weave_core::actor::node_actor::node_actor::NodeActor;
 use anima_weave_core::actor::status_collector::{GetStatusQuery, StatusCollector};
 use anima_weave_core::actor::ExecutionStatus;
 use anima_weave_core::event::NodeStatusEvent;
@@ -63,7 +63,7 @@ async fn test_node_actor_status_collector_communication() {
     tokio::time::sleep(Duration::from_millis(100)).await;
 
     // 创建NodeActor，传递同一个StatusCollector引用
-    let node_actor = <DistributedNodeActor as Actor>::spawn(DistributedNodeActor::new(
+    let node_actor = <NodeActor as Actor>::spawn(NodeActor::new_simple(
         "test_node".to_string(),
         Box::new(EmptyNode),
         status_collector.clone(), // 使用相同的StatusCollector
