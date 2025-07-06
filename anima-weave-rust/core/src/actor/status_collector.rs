@@ -229,7 +229,7 @@ impl StatusCollector {
         execution_id: ExecutionId,
         input_count: usize,
     ) {
-        let mut record =
+        let record =
             if let Some(existing_record) = self.all_execution_records.get_mut(&execution_id) {
                 // 使用现有记录
                 existing_record.status = DetailedExecutionStatus::Running;

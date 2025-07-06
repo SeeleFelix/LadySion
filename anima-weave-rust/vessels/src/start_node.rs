@@ -4,7 +4,7 @@
 
 use crate::labels::{NumberLabel, StringLabel};
 use anima_weave_core::{
-    types::PortRef, AnimaWeaveError, NodeDataInputs, NodeDataOutputs, SemanticLabel, SignalLabel,
+    types::PortRef, AnimaWeaveError, NodeDataInputs, NodeDataOutputs, SignalLabel,
 };
 use anima_weave_node::{register_node, Node, NodeInfo, PortDef};
 use std::sync::Arc;
@@ -103,7 +103,7 @@ register_node!("StartNode", StartNode);
 #[cfg(test)]
 mod tests {
     use super::*;
-    use anima_weave_core::{SemanticLabel, SignalLabel};
+    use anima_weave_core::SemanticLabel;
 
     #[test]
     fn test_start_node_basic() {
