@@ -26,4 +26,3 @@ pub enum ActivationMode {
     OR,
     XOR,
 }
-

@@ -98,7 +98,6 @@ dependencies = [
 name = "anima-weave-node"
 version = "0.1.0"
 dependencies = [
- "anima-weave-core",
  "anyhow",
  "inventory",
  "kameo",
@@ -371,6 +370,16 @@ checksum = "1c7a8fb8a9fbf66c1f703fe16184d10ca0ee9d23be5b4436400408ba54a95005"
 [[package]]
 name = "engine"
 version = "0.1.0"
+dependencies = [
+ "anima-weave-core",
+ "anyhow",
+ "inventory",
+ "kameo",
+ "log",
+ "serde",
+ "serde_json",
+ "tokio",
+]
 
 [[package]]
 name = "env_filter"

@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-anima-weave-core = { path = "../core" }
 log.workspace = true
 kameo = { workspace = true, features = ["macros"] }
 uuid = { workspace = true, features = ["v4"] }
