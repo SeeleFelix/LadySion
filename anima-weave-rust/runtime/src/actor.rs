@@ -54,13 +54,14 @@ impl SimpleNodeActor {
         node_name: NodeName,
         node_impl: Box<dyn Node>,
         connected_input_ports: Vec<PortRef>,
+        downstream_connections: HashMap<PortName, Vec<(ActorRef<SimpleNodeActor>, PortRef)>>,
     ) -> Self {
         Self {
             node_name,
             node_impl,
             pending_inputs: HashMap::new(),
             connected_input_ports,
-            downstream_connections: HashMap::new(),
+            downstream_connections,
             status_tracker: None,
             is_executing: false,
             execution_count: 0,
@@ -267,6 +268,24 @@ impl Clone for DataInputMessage {
 
 /// 获取节点状态查询
 #[derive(Debug)]
+/// 设置下游连接的消息
+pub struct SetDownstreamConnectionsMessage {
+    pub connections: HashMap<PortName, Vec<(ActorRef<SimpleNodeActor>, PortRef)>>,
+}
+
+impl Message<SetDownstreamConnectionsMessage> for SimpleNodeActor {
+    type Reply = Result<(), String>;
+
+    async fn handle(
+        &mut self,
+        message: SetDownstreamConnectionsMessage,
+        _ctx: &mut Context<Self, Self::Reply>,
+    ) -> Self::Reply {
+        self.set_downstream_connections(message.connections);
+        Ok(())
+    }
+}
+
 pub struct GetNodeStatusQuery;
 
 #[derive(Debug, Clone, Reply)]
