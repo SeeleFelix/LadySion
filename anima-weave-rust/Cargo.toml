@@ -1,11 +1,11 @@
 [workspace]
 members = [
-    "core",           # 核心类型：DynamicLabel, AnimaEvent, Graph定义
-    "runtime",        # Kameo Actor运行时：CoordinatorActor, NodeActor
+    "core",          # 核心类型和trait
+    "runtime",       # 运行时系统
     "dsl",            # DSL解析器：.anima文件解析和图构建
-    "cli",            # 命令行工具：awakening和执行
+    "cli",           # simplified CLI
     "vessels",
-    "node", "engine"]
+    "node"]
 resolver = "2"
 
 [workspace.dependencies]
