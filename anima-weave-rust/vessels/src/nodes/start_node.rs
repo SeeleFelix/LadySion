@@ -3,11 +3,9 @@
 //! 使用新的Node trait接口实现
 
 use crate::labels::{NumberLabel, StringLabel};
-use anima_weave_core::{
-    types::PortRef, AnimaWeaveError, NodeDataInputs, NodeDataOutputs, SignalLabel,
-};
-use anima_weave_node::{register_node, Node, NodeInfo, PortDef};
-use std::sync::Arc;
+use anima_weave_core::{AnimaWeaveError, NodeDataInputs, NodeDataOutputs, PortRef};
+use anima_weave_node::{Node, NodeInfo, PortDef, register_node};
+use std::boxed::Box;
 
 /// 起始节点实现
 ///
@@ -49,9 +47,8 @@ static START_NODE_INFO: once_cell::sync::Lazy<NodeInfo> = once_cell::sync::Lazy:
             // 起始节点通常不需要输入端口
         ],
         output_ports: vec![
-            PortDef::output_control("start_signal"),
-            PortDef::output_data("number_value", "Number"),
-            PortDef::output_data("string_value", "String"),
+            PortDef::output_data::<NumberLabel>("number_value"),
+            PortDef::output_data::<StringLabel>("string_value"),
         ],
     }
 });
@@ -61,31 +58,30 @@ impl Node for StartNode {
         &START_NODE_INFO
     }
 
-    fn execute(&self, _inputs: &NodeDataInputs) -> Result<NodeDataOutputs, AnimaWeaveError> {
+    fn execute(&self, _inputs: NodeDataInputs) -> Result<NodeDataOutputs, AnimaWeaveError> {
         log::debug!("StartNode executing");
 
         let mut outputs = NodeDataOutputs::new();
 
-        // 产生启动信号
-        let start_signal = SignalLabel::active();
-        outputs.insert(
-            PortRef::new("start", "start_signal"),
-            Arc::new(start_signal),
-        );
-
         // 如果有初始数值，输出它
         if let Some(number) = self.initial_number {
             outputs.insert(
-                PortRef::new("start", "number_value"),
-                Arc::new(NumberLabel { value: number }),
+                PortRef {
+                    node_name: "start".to_string(),
+                    port_name: "number_value".to_string(),
+                },
+                Box::new(NumberLabel { value: number }),
             );
         }
 
         // 如果有初始字符串，输出它
         if let Some(string) = &self.initial_string {
             outputs.insert(
-                PortRef::new("start", "string_value"),
-                Arc::new(StringLabel {
+                PortRef {
+                    node_name: "start".to_string(),
+                    port_name: "string_value".to_string(),
+                },
+                Box::new(StringLabel {
                     value: string.clone(),
                 }),
             );
@@ -98,12 +94,11 @@ impl Node for StartNode {
 }
 
 // 自动注册节点
-register_node!("StartNode", StartNode);
+register_node!(StartNode);
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use anima_weave_core::SemanticLabel;
 
     #[test]
     fn test_start_node_basic() {
@@ -113,7 +108,7 @@ mod tests {
         let info = node.info();
         assert_eq!(info.name, "StartNode");
         assert_eq!(info.input_ports.len(), 0);
-        assert_eq!(info.output_ports.len(), 3);
+        assert_eq!(info.output_ports.len(), 2);
     }
 
     #[test]
@@ -121,17 +116,23 @@ mod tests {
         let node = StartNode::new();
         let inputs = NodeDataInputs::new();
 
-        let result = node.execute(&inputs);
+        let result = node.execute(inputs);
         assert!(result.is_ok());
 
         let outputs = result.unwrap();
-        assert!(outputs.contains_key(&PortRef::new("start", "start_signal")));
+        assert!(outputs.contains_key(&PortRef {
+            node_name: "start".to_string(),
+            port_name: "number_value".to_string(),
+        }));
 
         // 验证输出是Signal类型
-        if let Some(signal_box) = outputs.get(&PortRef::new("start", "start_signal")) {
-            assert_eq!(signal_box.get_semantic_label_type(), "SignalLabel");
+        if let Some(number_box) = outputs.get(&PortRef {
+            node_name: "start".to_string(),
+            port_name: "number_value".to_string(),
+        }) {
+            assert_eq!(number_box.get_semantic_label_type(), "NumberLabel");
         } else {
-            panic!("Expected Signal output");
+            panic!("Expected Number output");
         }
     }
 
@@ -140,15 +141,24 @@ mod tests {
         let node = StartNode::with_number(42.0);
 
         let inputs = NodeDataInputs::new();
-        let result = node.execute(&inputs);
+        let result = node.execute(inputs);
         assert!(result.is_ok());
 
         let outputs = result.unwrap();
-        assert!(outputs.contains_key(&PortRef::new("start", "start_signal")));
-        assert!(outputs.contains_key(&PortRef::new("start", "number_value")));
+        assert!(outputs.contains_key(&PortRef {
+            node_name: "start".to_string(),
+            port_name: "number_value".to_string(),
+        }));
+        assert!(outputs.contains_key(&PortRef {
+            node_name: "start".to_string(),
+            port_name: "string_value".to_string(),
+        }));
 
         // 验证数值输出
-        if let Some(number_box) = outputs.get(&PortRef::new("start", "number_value")) {
+        if let Some(number_box) = outputs.get(&PortRef {
+            node_name: "start".to_string(),
+            port_name: "number_value".to_string(),
+        }) {
             assert_eq!(number_box.get_semantic_label_type(), "NumberLabel");
         } else {
             panic!("Expected Number output");
@@ -160,15 +170,24 @@ mod tests {
         let node = StartNode::with_string("hello".to_string());
 
         let inputs = NodeDataInputs::new();
-        let result = node.execute(&inputs);
+        let result = node.execute(inputs);
         assert!(result.is_ok());
 
         let outputs = result.unwrap();
-        assert!(outputs.contains_key(&PortRef::new("start", "start_signal")));
-        assert!(outputs.contains_key(&PortRef::new("start", "string_value")));
+        assert!(outputs.contains_key(&PortRef {
+            node_name: "start".to_string(),
+            port_name: "number_value".to_string(),
+        }));
+        assert!(outputs.contains_key(&PortRef {
+            node_name: "start".to_string(),
+            port_name: "string_value".to_string(),
+        }));
 
         // 验证字符串输出
-        if let Some(string_box) = outputs.get(&PortRef::new("start", "string_value")) {
+        if let Some(string_box) = outputs.get(&PortRef {
+            node_name: "start".to_string(),
+            port_name: "string_value".to_string(),
+        }) {
             assert_eq!(string_box.get_semantic_label_type(), "StringLabel");
         } else {
             panic!("Expected String output");

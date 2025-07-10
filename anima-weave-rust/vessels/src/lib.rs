@@ -1,21 +1,18 @@
-pub mod add_node;
-pub mod demo_inventory;
 pub mod labels;
-pub mod start_node;
+pub mod nodes;
 
 pub use labels::{number_label::NumberLabel, prompt_label::PromptLabel, string_label::StringLabel};
 
-pub use add_node::AddNode;
-pub use start_node::StartNode;
+pub use nodes::{AddNode, StartNode};
 
 pub use anima_weave_node::{
-    create_node_by_type, create_node_factory, get_registered_node_types, Node,
+    Node, create_node_by_type, create_node_factory, get_registered_node_types,
 };
 
 #[cfg(test)]
 mod integration_tests {
     use super::*;
-    use anima_weave_core::{SemanticLabel, SignalLabel};
+    use anima_weave_core::SemanticLabel;
 
     #[test]
     fn test_cross_package_type_consistency() {
@@ -27,8 +24,6 @@ mod integration_tests {
         let prompt = PromptLabel {
             content: "test".to_string(),
         };
-        let signal = SignalLabel::active();
-
         // 所有标签都应该有不同的type_name
         assert_ne!(
             number.get_semantic_label_type(),
@@ -39,32 +34,18 @@ mod integration_tests {
             prompt.get_semantic_label_type()
         );
         assert_ne!(
-            number.get_semantic_label_type(),
-            signal.get_semantic_label_type()
-        );
-        assert_ne!(
             string.get_semantic_label_type(),
             prompt.get_semantic_label_type()
-        );
-        assert_ne!(
-            string.get_semantic_label_type(),
-            signal.get_semantic_label_type()
-        );
-        assert_ne!(
-            prompt.get_semantic_label_type(),
-            signal.get_semantic_label_type()
         );
 
         // 但都应该实现SemanticLabel trait
         let number_as_trait: &dyn SemanticLabel = &number;
         let string_as_trait: &dyn SemanticLabel = &string;
         let prompt_as_trait: &dyn SemanticLabel = &prompt;
-        let signal_as_trait: &dyn SemanticLabel = &signal;
 
         assert_eq!(number_as_trait.get_semantic_label_type(), "NumberLabel");
         assert_eq!(string_as_trait.get_semantic_label_type(), "StringLabel");
         assert_eq!(prompt_as_trait.get_semantic_label_type(), "PromptLabel");
-        assert_eq!(signal_as_trait.get_semantic_label_type(), "SignalLabel");
     }
 
     #[test]
@@ -104,7 +85,6 @@ mod integration_tests {
             Box::new(PromptLabel {
                 content: "prompt".to_string(),
             }),
-            Box::new(SignalLabel::active()),
         ];
 
         // 每个标签都应该有唯一的类型名
@@ -114,7 +94,7 @@ mod integration_tests {
         }
 
         // 应该有4种不同的类型
-        assert_eq!(type_names.len(), 4);
+        assert_eq!(type_names.len(), 3);
 
         // 每个标签都应该支持as_any转换
         for label in &labels {
@@ -123,7 +103,6 @@ mod integration_tests {
                 any_ref.is::<NumberLabel>()
                     || any_ref.is::<StringLabel>()
                     || any_ref.is::<PromptLabel>()
-                    || any_ref.is::<SignalLabel>()
             );
         }
     }

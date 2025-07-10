@@ -33,7 +33,7 @@ semantic_label! {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use anima_weave_core::{label::TransformError, SemanticLabel};
+    use anima_weave_core::{SemanticLabel, label::TransformError};
 
     #[test]
     fn test_string_label_creation() {

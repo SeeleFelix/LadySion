@@ -1,15 +1,16 @@
 [package]
 name = "anima-weave-vessels"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
-anima-weave-core = { path = "../core" }
+anima_weave_core = { package = "anima-weave-core", path = "../core" }
 anima-weave-node = { path = "../node" }
 once_cell = { workspace = true }
 log = { workspace = true }
 inventory = { workspace = true }
+anyhow = {workspace = true}
 
 [lib]
 name = "anima_weave_vessels"
-path = "src/lib.rs" 
+path = "src/lib.rs"
