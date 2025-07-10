@@ -29,6 +29,13 @@ impl std::fmt::Display for TransformError {
 
 impl std::error::Error for TransformError {}
 
+// 允许 Box<dyn SemanticLabel> 派生 Clone
+impl Clone for Box<dyn SemanticLabel> {
+    fn clone(&self) -> Self {
+        self.clone_box()
+    }
+}
+
 /// 转换函数类型
 pub type ConversionFn =
     Box<dyn Fn(&dyn Any) -> Result<Box<dyn SemanticLabel>, TransformError> + Send + Sync>;
@@ -154,8 +161,8 @@ macro_rules! semantic_label {
             $(pub $field: $field_type,)*
         }
 
-        impl $crate::SemanticLabel for $name {
-            fn clone_box(&self) -> Box<dyn $crate::SemanticLabel> {
+        impl $crate::label::SemanticLabel for $name {
+            fn clone_box(&self) -> Box<dyn $crate::label::SemanticLabel> {
                 Box::new(self.clone())
             }
 
@@ -185,11 +192,11 @@ macro_rules! semantic_label {
                         stringify!($target_type)
                     };
 
-                    map.insert(target_type_name, Box::new(|any: &dyn std::any::Any| -> Result<Box<dyn $crate::SemanticLabel>, $crate::label::TransformError> {
+                    map.insert(target_type_name, Box::new(|any: &dyn std::any::Any| -> Result<Box<dyn $crate::label::SemanticLabel>, $crate::label::TransformError> {
                         if let Some($self_param) = any.downcast_ref::<$name>() {
                             // 确保转换结果类型正确
                             let result: $target_type = $conversion;
-                            Ok(Box::new(result) as Box<dyn $crate::SemanticLabel>)
+                            Ok(Box::new(result) as Box<dyn $crate::label::SemanticLabel>)
                         } else {
                             Err($crate::label::TransformError::ConversionFailed {
                                 reason: format!("Failed to downcast to {}", stringify!($name)),

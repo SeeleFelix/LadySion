@@ -1,34 +1,10 @@
 [package]
 name = "anima-weave-core"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
-log.workspace = true
-kameo = { workspace = true, features = ["macros"] }
-uuid = { workspace = true, features = ["v4"] }
-serde = { workspace = true, features = ["derive"] }
+serde.workspace = true
 serde_json.workspace = true
-thiserror.workspace = true
 anyhow.workspace = true
-once_cell = { workspace = true }
-futures = "0.3"
-tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
-bytes = "1.6.0"
-strum = "0.26.2"
-strum_macros = "0.26.2"
-regex = "1.10.4"
-colored = "2.1.0"
-chrono = "0.4.38"
-petgraph = "0.6.5"
-pest = "2.8.1"
-pest_derive = "2.8.1"
-
-# Core类型和数据结构
-# - SemanticLabel: 语义标签系统
-# - AnimaEvent: 数据事件vs控制事件 (实现kameo::Message)
-# - Graph: 图定义和验证
-# - Omega: 全局执行状态 
-
-[dev-dependencies]
-env_logger = "0.11.3" 
+inventory.workspace = true 
