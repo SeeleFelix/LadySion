@@ -1,7 +1,7 @@
 //! Node factory system
 
-use crate::node::Node;
 use crate::registry::NodeRegistration;
+use anima_weave_core::Node;
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
 

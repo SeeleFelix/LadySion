@@ -1,7 +1,7 @@
 [package]
 name = "anima-weave-node"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 log.workspace = true
@@ -9,4 +9,5 @@ kameo = { workspace = true, features = ["macros"] }
 uuid = { workspace = true, features = ["v4"] }
 once_cell = { workspace = true }
 anyhow = { workspace = true }
-inventory = { workspace = true } 
+inventory = { workspace = true }
+anima_weave_core = { package = "anima-weave-core", path = "../core" } 

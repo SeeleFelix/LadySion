@@ -1,6 +1,6 @@
 //! Node registration system
 
-use crate::node::Node;
+use anima_weave_core::Node;
 
 pub struct NodeRegistration {
     pub name: &'static str,
