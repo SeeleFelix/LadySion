@@ -29,6 +29,7 @@ uuid = { version = "1.8.0", features = ["v4", "serde"] }
 clap = { version = "4.0", features = ["derive"] }
 once_cell = "1.19.0"
 env_logger = "0.11"
+rand = "0.8"
 
 # 节点注册系统
 inventory = "0.3"

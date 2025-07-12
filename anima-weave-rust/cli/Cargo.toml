@@ -7,6 +7,7 @@ edition = "2024"
 anima-weave-core = { path = "../core" }
 anima-weave-node = { path = "../node" }
 anima-weave-vessels = { path = "../vessels" }
+anima-weave-runtime = { path = "../runtime" }
 clap = { workspace = true, features = ["derive"] }
 log = { workspace = true }
 env_logger = { workspace = true }

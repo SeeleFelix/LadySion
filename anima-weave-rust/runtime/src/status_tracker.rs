@@ -3,6 +3,7 @@ use kameo::error::ActorStopReason;
 use kameo::message::{Context, Message};
 use kameo::{Actor, Reply};
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::time::{Duration, SystemTime};
 
 use super::ExecutionId;
@@ -13,11 +14,15 @@ pub struct SimpleStatusTracker {
     /// 节点执行统计
     node_stats: HashMap<NodeName, NodeExecutionStats>,
 
+    /// 剩余未完成节点集合
+    remaining_nodes: HashSet<NodeName>,
+
     /// 系统级统计
     total_executions: u64,
     total_successes: u64,
     total_failures: u64,
     start_time: SystemTime,
+    shutdown_hook: Option<Box<dyn Fn() + Send + Sync + 'static>>,
 }
 
 /// 节点执行统计
@@ -66,10 +71,28 @@ impl SimpleStatusTracker {
     pub fn new() -> Self {
         Self {
             node_stats: HashMap::new(),
+            remaining_nodes: HashSet::new(),
             total_executions: 0,
             total_successes: 0,
             total_failures: 0,
             start_time: SystemTime::now(),
+            shutdown_hook: None,
+        }
+    }
+
+    /// 设置期望执行的节点列表
+    fn set_expected_nodes(&mut self, nodes: Vec<NodeName>) {
+        self.remaining_nodes = nodes.into_iter().collect();
+    }
+
+    /// 当节点首次成功或失败时，从 remaining_nodes 移除
+    fn consume_node(&mut self, node_name: &NodeName) {
+        self.remaining_nodes.remove(node_name);
+        if self.remaining_nodes.is_empty() {
+            log::info!("All nodes have finished at least once. Triggering shutdown hook.");
+            if let Some(hook) = &self.shutdown_hook {
+                (hook)();
+            }
         }
     }
 
@@ -94,6 +117,7 @@ impl SimpleStatusTracker {
         execution_id: ExecutionId,
         duration: Duration,
     ) {
+        self.consume_node(&node_name);
         if let Some(stats) = self.node_stats.get_mut(&node_name) {
             stats.successful_executions += 1;
             stats.total_execution_duration += duration;
@@ -124,6 +148,7 @@ impl SimpleStatusTracker {
         error: String,
         duration: Duration,
     ) {
+        self.consume_node(&node_name);
         if let Some(stats) = self.node_stats.get_mut(&node_name) {
             stats.failed_executions += 1;
             stats.total_execution_duration += duration;
@@ -315,5 +340,47 @@ impl Message<ResetStatsCommand> for SimpleStatusTracker {
         self.start_time = SystemTime::now();
 
         log::info!("Statistics reset");
+    }
+}
+
+/// 设置期望节点列表命令
+#[derive(Debug)]
+pub struct SetExpectedNodesCommand {
+    pub nodes: Vec<NodeName>,
+}
+
+impl Message<SetExpectedNodesCommand> for SimpleStatusTracker {
+    type Reply = ();
+
+    async fn handle(
+        &mut self,
+        cmd: SetExpectedNodesCommand,
+        _ctx: &mut Context<Self, Self::Reply>,
+    ) -> Self::Reply {
+        self.set_expected_nodes(cmd.nodes);
+    }
+}
+
+/// 设置关机钩子命令
+pub struct SetShutdownHookCommand {
+    pub hook: Box<dyn Fn() + Send + Sync + 'static>,
+}
+
+impl std::fmt::Debug for SetShutdownHookCommand {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SetShutdownHookCommand")
+            .finish_non_exhaustive()
+    }
+}
+
+impl Message<SetShutdownHookCommand> for SimpleStatusTracker {
+    type Reply = ();
+
+    async fn handle(
+        &mut self,
+        cmd: SetShutdownHookCommand,
+        _ctx: &mut Context<Self, Self::Reply>,
+    ) -> Self::Reply {
+        self.shutdown_hook = Some(cmd.hook);
     }
 }

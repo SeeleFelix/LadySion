@@ -3,7 +3,7 @@ pub mod nodes;
 
 pub use labels::{number_label::NumberLabel, prompt_label::PromptLabel, string_label::StringLabel};
 
-pub use nodes::{AddNode, StartNode};
+pub use nodes::{AddNode, RandomNode, StartNode};
 
 pub use anima_weave_node::{
     Node, create_node_by_type, create_node_factory, get_registered_node_types,

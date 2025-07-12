@@ -266,6 +266,12 @@ impl Clone for DataInputMessage {
     }
 }
 
+/// 触发执行的消息 - 用于没有输入端口的节点
+#[derive(Debug)]
+pub struct TriggerExecutionMessage {
+    pub execution_id: ExecutionId,
+}
+
 /// 获取节点状态查询
 #[derive(Debug)]
 /// 设置下游连接的消息
@@ -298,6 +304,35 @@ pub struct NodeStatus {
     pub execution_count: u64,
     pub success_count: u64,
     pub failure_count: u64,
+}
+
+impl Message<TriggerExecutionMessage> for SimpleNodeActor {
+    type Reply = Result<(), String>;
+
+    async fn handle(
+        &mut self,
+        _message: TriggerExecutionMessage,
+        _ctx: &mut Context<Self, Self::Reply>,
+    ) -> Self::Reply {
+        log::info!(
+            "TriggerExecutionMessage received for node: {}",
+            self.node_name
+        );
+        // 对于没有输入端口的节点，直接执行
+        if self.connected_input_ports.is_empty() {
+            log::info!(
+                "Node {} has no input ports, executing directly",
+                self.node_name
+            );
+            self.execute().await;
+        } else {
+            log::warn!(
+                "Node {} has input ports, cannot trigger directly",
+                self.node_name
+            );
+        }
+        Ok(())
+    }
 }
 
 impl Message<GetNodeStatusQuery> for SimpleNodeActor {

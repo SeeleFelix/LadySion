@@ -84,7 +84,12 @@ impl Node for AddNode {
             Box::new(result),
         );
 
-        log::debug!("AddNode produced result: {}", result_value);
+        log::info!(
+            "AddNode: {} + {} = {}",
+            a_number.value,
+            b_number.value,
+            result_value
+        );
 
         Ok(outputs)
     }

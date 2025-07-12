@@ -1,5 +1,5 @@
-use crate::actor::{DataInputMessage, SimpleNodeActor};
-use crate::status_tracker::SimpleStatusTracker;
+use crate::actor::{DataInputMessage, SimpleNodeActor, TriggerExecutionMessage};
+use crate::status_tracker::{SetExpectedNodesCommand, SetShutdownHookCommand, SimpleStatusTracker};
 use anima_weave_core::graph::PortRef;
 use anima_weave_core::{Graph, Node, NodeName, PortName};
 use anima_weave_node::create_node_by_type;
@@ -11,55 +11,77 @@ use std::collections::HashMap;
 pub struct GraphRunner {
     actors: HashMap<NodeName, ActorRef<SimpleNodeActor>>,
     status_tracker: Option<ActorRef<SimpleStatusTracker>>,
+    source_nodes: Vec<NodeName>, // 没有输入连接的节点
 }
 
 impl GraphRunner {
     /// 根据图创建 GraphRunner
-    pub async fn build_from_graph(graph: Graph) -> Result<Self> {
+    pub async fn build_from_graph(
+        graph: Graph,
+        shutdown_hook: Option<Box<dyn Fn() + Send + Sync + 'static>>,
+    ) -> Result<Self> {
         // 验证图
         graph.validate()?;
 
+        // 1. 启动状态追踪器
+        let tracker_ref = Actor::spawn(SimpleStatusTracker::new());
+
+        // 如果提供了关机钩子，设置它
+        if let Some(hook) = shutdown_hook {
+            tracker_ref
+                .tell(SetShutdownHookCommand { hook })
+                .await
+                .map_err(|e| anyhow!("Failed to set shutdown hook: {}", e))?;
+        }
+
         let mut runner = Self {
             actors: HashMap::new(),
-            status_tracker: None,
+            status_tracker: Some(tracker_ref.clone()),
+            source_nodes: Vec::new(),
         };
 
-        // 创建 actor 实例
+        // 2. 创建 actor 实例
         runner.create_actors(&graph).await?;
 
-        // 设置连接
+        // 3. 设置连接
         runner.setup_connections(&graph).await?;
+
+        // 4. 将期望节点列表发送给状态追踪器
+        let expected_nodes: Vec<NodeName> = graph.nodes.iter().map(|n| n.name.clone()).collect();
+        tracker_ref
+            .tell(SetExpectedNodesCommand {
+                nodes: expected_nodes,
+            })
+            .await
+            .map_err(|e| anyhow!("Failed to set expected nodes: {}", e))?;
 
         Ok(runner)
     }
 
-    /// 启动指定的起始节点
-    pub async fn launch(&self, start_node_name: &str) -> Result<()> {
-        let start_actor = self
-            .actors
-            .get(start_node_name)
-            .ok_or_else(|| anyhow!("Start node '{}' not found", start_node_name))?;
+    /// 启动所有没有输入端口的节点
+    pub async fn launch(&self) -> Result<()> {
+        log::info!(
+            "Launching {} source nodes: {:?}",
+            self.source_nodes.len(),
+            self.source_nodes
+        );
 
-        // 发送启动消息给起始节点（空输入触发执行）
-        let start_message = DataInputMessage {
-            from_port: PortRef {
-                node_name: "system".to_string(),
-                port_name: "trigger".to_string(),
-            },
-            to_port: PortRef {
-                node_name: start_node_name.to_string(),
-                port_name: "trigger".to_string(),
-            },
-            data: Box::new(anima_weave_vessels::StringLabel {
-                value: "start".to_string(),
-            }),
-            execution_id: "initial".to_string(),
-        };
+        // 启动所有源节点
+        for node_name in &self.source_nodes {
+            let actor_ref = self
+                .actors
+                .get(node_name)
+                .ok_or_else(|| anyhow!("Source node '{}' not found", node_name))?;
 
-        start_actor
-            .tell(start_message)
-            .await
-            .map_err(|e| anyhow!("Failed to start node: {}", e))?;
+            let trigger_message = TriggerExecutionMessage {
+                execution_id: "initial".to_string(),
+            };
+
+            actor_ref
+                .tell(trigger_message)
+                .await
+                .map_err(|e| anyhow!("Failed to start node {}: {}", node_name, e))?;
+        }
 
         Ok(())
     }
@@ -76,6 +98,12 @@ impl GraphRunner {
                 .filter(|conn| conn.to.node_name == node_ref.name)
                 .map(|conn| conn.to.clone())
                 .collect();
+
+            // 如果节点没有输入连接，它就是源节点
+            if connected_input_ports.is_empty() {
+                self.source_nodes.push(node_ref.name.clone());
+                log::info!("Found source node: {}", node_ref.name);
+            }
 
             let mut actor = SimpleNodeActor::new(
                 node_ref.name.clone(),
