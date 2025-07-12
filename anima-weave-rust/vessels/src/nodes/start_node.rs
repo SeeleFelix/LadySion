@@ -63,32 +63,29 @@ impl Node for StartNode {
 
         let mut outputs = NodeDataOutputs::new();
 
-        // 如果有初始数值，输出它
-        if let Some(number) = self.initial_number {
-            outputs.insert(
-                PortRef {
-                    node_name: "start".to_string(),
-                    port_name: "number_value".to_string(),
-                },
-                Box::new(NumberLabel { value: number }),
-            );
-        }
+        // 始终输出number_value
+        outputs.insert(
+            PortRef {
+                node_name: "start".to_string(),
+                port_name: "number_value".to_string(),
+            },
+            Box::new(NumberLabel {
+                value: self.initial_number.unwrap_or(0.0),
+            }),
+        );
 
-        // 如果有初始字符串，输出它
-        if let Some(string) = &self.initial_string {
-            outputs.insert(
-                PortRef {
-                    node_name: "start".to_string(),
-                    port_name: "string_value".to_string(),
-                },
-                Box::new(StringLabel {
-                    value: string.clone(),
-                }),
-            );
-        }
+        // 始终输出string_value
+        outputs.insert(
+            PortRef {
+                node_name: "start".to_string(),
+                port_name: "string_value".to_string(),
+            },
+            Box::new(StringLabel {
+                value: self.initial_string.clone().unwrap_or_default(),
+            }),
+        );
 
         log::debug!("StartNode produced {} outputs", outputs.len());
-
         Ok(outputs)
     }
 }

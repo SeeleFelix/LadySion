@@ -5,7 +5,6 @@
 use crate::labels::NumberLabel;
 use anima_weave_core::{AnimaWeaveError, NodeDataInputs, NodeDataOutputs, PortRef};
 use anima_weave_node::{Node, NodeInfo, PortDef, register_node};
-use anyhow::anyhow;
 use std::boxed::Box;
 
 /// 加法节点实现
@@ -51,22 +50,22 @@ impl Node for AddNode {
 
         let a = inputs
             .get(&a_port)
-            .ok_or_else(|| anyhow!("Missing required input 'a'"))?;
+            .ok_or_else(|| AnimaWeaveError::msg("Missing required input 'a'"))?;
 
         let b = inputs
             .get(&b_port)
-            .ok_or_else(|| anyhow!("Missing required input 'b'"))?;
+            .ok_or_else(|| AnimaWeaveError::msg("Missing required input 'b'"))?;
 
         // 尝试转换为NumberLabel
         let a_number = a
             .as_any()
             .downcast_ref::<NumberLabel>()
-            .ok_or_else(|| anyhow!("Input 'a' must be a number"))?;
+            .ok_or_else(|| AnimaWeaveError::msg("Input 'a' must be a number"))?;
 
         let b_number = b
             .as_any()
             .downcast_ref::<NumberLabel>()
-            .ok_or_else(|| anyhow!("Input 'b' must be a number"))?;
+            .ok_or_else(|| AnimaWeaveError::msg("Input 'b' must be a number"))?;
 
         // 执行加法运算
         let result_value = a_number.value + b_number.value;
@@ -103,7 +102,6 @@ mod tests {
     use super::*;
     use crate::labels::{NumberLabel, StringLabel};
     use anima_weave_core::PortRef;
-    use anyhow;
 
     #[test]
     fn test_add_node_basic() {
@@ -172,7 +170,9 @@ mod tests {
         let result = node.execute(inputs);
         assert!(result.is_err());
 
-        assert!(result.unwrap_err().is::<anyhow::Error>());
+        let err = result.unwrap_err();
+        let err_msg = err.to_string();
+        assert!(err_msg.contains("Missing required input 'b'"));
     }
 
     #[test]
@@ -199,6 +199,8 @@ mod tests {
         let result = node.execute(inputs);
         assert!(result.is_err());
 
-        assert!(result.unwrap_err().is::<anyhow::Error>());
+        let err = result.unwrap_err();
+        let err_msg = err.to_string();
+        assert!(err_msg.contains("Input 'a' must be a number"));
     }
 }
